@@ -17,7 +17,63 @@ In this POC, we put following modules together:
 * **Curated Proofs Market**: the core marketplace where people can transact with each other and curate assets through staking with Ocean tokens.
 
 
-## 2. File Structure
+## 2. Public Interface
+
+The following project exposes the following public interfaces:
+
+### 2.1 Curation Market
+
+```solidity
+//Allows a user to start an application. Takes tokens from user and sets apply stage end time.
+function apply(bytes32 _listingHash, uint _amount, string _data);
+
+// Allows the owner of a listingHash to increase their unstaked deposit.
+function deposit(bytes32 _listingHash, uint _amount);
+
+//Allows the owner of a listingHash to decrease their unstaked deposit.
+function withdraw(bytes32 _listingHash, uint _amount);
+
+// Allows the owner of a listingHash to remove the listingHash from the whitelist
+function exit(bytes32 _listingHash);
+
+// Starts a poll for a listingHash which is either in the apply stage or already in the whitelist. 
+function challenge(bytes32 _listingHash, string _data);
+
+// Updates a listingHash’s status from ‘application’ to ‘listing’ or resolves a challenge if one exists.
+function updateStatus(bytes32 _listingHash);
+
+// Called by a voter to claim their reward for each completed vote.
+function claimReward(uint _challengeID, uint _salt);
+
+// Calculates the provided voter’s token reward for the given poll.
+function voterReward(address _voter, uint _challengeID, uint _salt);
+
+// Determines whether the given listingHash be whitelisted.
+function canBeWhitelisted(bytes32 _listingHash);
+
+// Returns true if the provided listingHash is whitelisted
+function isWhitelisted(bytes32 _listingHash);
+
+// Determines the number of tokens awarded to the winning party in a challenge.
+   function determineReward(uint _challengeID);
+```
+
+### 2.2 Marketplace
+
+```solidity
+// Register provider and assets （upload by changing uploadBits）
+function register(uint256 assetId) public returns (bool success);
+
+// publish consumption information about an Asset
+function publish(uint256 assetId, bytes32 url, bytes32 token) external returns (bool success);
+
+// purchase an asset and get the consumption information
+function purchase(uint256 assetId) external returns (bytes32 url, bytes32 token);
+
+```
+
+
+## 3. File Structure
 There are several folders and each includes solidity source files for each module:
 
 <img src="img/files.jpg" width="250" />
@@ -29,7 +85,7 @@ There are several folders and each includes solidity source files for each modul
 * **zeppelin**: the library files from OpenZeppelin;
 * **market.sol**: curated proofs market (*on-going work*)
 
-## 2. Architecture of Modules
+## 4. Architecture of Modules
 
 The dependency between different modules are illustrated as below:
 
@@ -43,7 +99,7 @@ The dependency between different modules are illustrated as below:
 * TCRs (Registry.sol) send the voting result back to Marketplace (Market.sol).
 
 
-## 3. Compile, Migrate and Test
+## 5. Compile, Migrate and Test
 
 Use `$ truffle compile` to compile those solidity files:
 
@@ -59,46 +115,4 @@ Test them with `$ truffle test test/registry.js`:
 
 <img src="img/js_test.jpg" width="500" />
 
-## 3. User Stories
 
-### 3.1 Should apply, fail challenge, and reject listing
-
-The first user story is to show the failure of listing in the challenge with TCRs.
-
-<img src="img/use1.jpg" width="800" />
-
-The JS testing code is:
-
-<img src="img/use1_js.jpg" width="800" />
- 
-The testing result is below:
-  
-<img src="img/use1_test.jpg" width="500" />
-
-### 3.2 Should apply, pass challenge, and whitelist listing
-
-The second user story is to show the success of listing in the challenge with TCRs.
-
-<img src="img/user2.jpg" width="1000" />
-
-The testing result is following:
-
-<img src="img/use2_test.jpg" width="500" />
-
-Note that:
-
-* Applicant wins the voting but he cannot access the reward tokens + deposit before he exits
-	* Applicant initial fund = 1000 
-	* Pays 10 tokens for application, and balance = 990
-	* After voting is revealed, applicant wins but have no access to these tokens
-	* When applicant exits and removes listing, he receives the rewards and deposit and total is 1005 (half of the deposit from challenger)
-* 	Voter has 1000 tokens as initial fund:
-	*  Pays 10 tokens to vote in the challenge and wins the voting
-	*  Voter receives the reward of 5 tokens (half of challenger 10 token deposit)
-	*  Voter has access to these tokens after he claims the reward
-	*  Final balance is 1005 (initial 1000 tokens + 5 token reward)
-* Challenger has initial 1000 tokens:
-	* Pay 10 tokens to challenge the listing
-	* Lose the voting and his 10 tokens is slashed
-	* Voters and Applicants split Challenger's token deposit
-	* Final balance of challenger is 990
