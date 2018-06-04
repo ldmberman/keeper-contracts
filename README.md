@@ -70,6 +70,8 @@ function publish(uint256 assetId, bytes32 url, bytes32 token) external returns (
 // purchase an asset and get the consumption information
 function purchase(uint256 assetId) external returns (bytes32 url, bytes32 token);
 
+// Return the list of available assets
+function listAssets() external view returns (uint256[50]); 
 ```
 
 
