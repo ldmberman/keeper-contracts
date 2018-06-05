@@ -100,8 +100,11 @@ The dependency between different modules are illustrated as below:
 * BancorFormula calculates the power function (Power.sol).
 * TCRs (Registry.sol) send the voting result back to Marketplace (Market.sol).
 
+## 5. Architecture of solidity Market contract
 
-## 5. Compile, Migrate and Test
+[See the first draft of UML class diagram](Smart contract UML class diagram.pdf)
+
+## 6. Compile, Migrate and Test
 
 Use `$ truffle compile` to compile those solidity files:
 
