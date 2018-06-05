@@ -63,35 +63,9 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
     //  Query function
     ///////////////////////////////////////////////////////////////////
-    function numBuyDrops() public view returns (uint256){
-        require(msg.sender != 0x0);
-        return tokensToMint;
-    }
-
     function dropsBalance(uint256 assetId) public view returns (uint256){
         require(msg.sender != 0x0);
         return mAssets[assetId].drops[msg.sender];
-    }
-
-    function numDownload(uint256 assetId) public view returns (uint256) {
-      require(msg.sender != 0x0);
-      return mAssets[assetId].delivery[msg.sender];
-    }
-
-    function queryRij() public view returns(uint256){
-      return Rij;
-    }
-
-    function queryRdiff() public view returns(uint256){
-      return Rdiff;
-    }
-
-    function queryReward() public view returns(uint256){
-      return reward;
-    }
-
-    function queryRewardPool() public view returns(uint256){
-      return rewardPool;
     }
 
     function tokenBalance() public view returns (uint256) {

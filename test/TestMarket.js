@@ -59,19 +59,21 @@ contract('Market', (accounts) => {
       await token.approve(market.address, ntokens, { from: accounts[1]} );
       // transfer 100 OCN tokens to market and buy drops
       await market.buyDrops(assetId, ntokens, {from:accounts[1]});
+      const drops2 = await market.dropsBalance(assetId, {from:accounts[1]});
+      console.log("User [0] should have " + drops2.toNumber() + " drops now.");
 
 
       // 4. user[1] purchase the dataset - before purcahse, new block reward shall be claimed by marketplace
-      //wait(30000);  //30 seconds in milliseconds
-      //await market.mintToken({from:accounts[0]});
-      //const bal3 = await token.balanceOf.call(market.address);
-      //console.log("market balance with emitted tokens := " + bal3.toNumber());
-      //const rewardpool1 = await market.queryRewardPool.call({from:accounts[0]});
-      //console.log("reward pool has " + rewardpool1.toNumber() + " Ocean tokens");
-      // purchase function will credit provider randomly
+      const tokenBalanceBefore = await token.balanceOf.call(market.address);
+      console.log("provider has escrow balance with reward credit := " + tokenBalanceBefore.toNumber() + " Ocean tokens");
+      wait(30000);
+      await market.mintToken({from:accounts[0]});
+      const bal3 = await token.balanceOf.call(market.address);
+      console.log("market balance with emitted tokens := " + bal3.toNumber());
+
       await market.purchase(assetId, {from:accounts[1]});
-      const tokenBalancee = await market.tokenBalance.call({from:accounts[0]});
-      console.log("2. provider has escrow balance with reward credit := " + tokenBalancee.toNumber() + " Ocean tokens after mintToken");
+      const tokenBalanceAfter = await token.balanceOf.call(market.address);
+      console.log("provider has escrow balance with reward credit := " + tokenBalanceAfter.toNumber() + " Ocean tokens");
 
       // 7. provider sell Drops for Ocean TOKENS
       await market.sellDrops(assetId, drops1.valueOf(), {from:accounts[0]});
@@ -82,7 +84,6 @@ contract('Market', (accounts) => {
       await market.withdraw({from:accounts[0]});
       const bal4  = await token.balanceOf.call(accounts[0]);
       console.log("provider has balance of OCN := " + bal4.toNumber());
-      //assert.equal(bal4.toNumber(), 1875 + 18250,"User should have 20125 OCN tokens now.");
 
     });
 
