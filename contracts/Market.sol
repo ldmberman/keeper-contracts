@@ -22,12 +22,13 @@ contract Market is BancorFormula, Ownable {
           uint256 bitSize;                        // size of asset in bit
           bytes32 url;                            // url of the asset
           bytes32 token;                          // token to get access to the asset
+          bool active;
           mapping (address => uint256) drops;     // mapping provider (address) to their stakes on dataset Sij
           mapping (address => uint256) delivery;  // mapping provider (address) to their #delivery of dataset Dj
     }
     mapping (uint256 => Asset) public mAssets;           // mapping assetId to Asset struct
     uint256[50] public  listAssets;
-    uint256     private  sizeListAssets= 0;
+    uint256     public  sizeListAssets= 0;
 
     // data Provider
     struct Provider{
@@ -56,8 +57,26 @@ contract Market is BancorFormula, Ownable {
     // TCR
     Registry  public  tcr;
 
-    function checkListingStatus(bytes32 listing) public view returns(bool){
+    function checkListingStatus(bytes32 listing, uint256 assetId) public view returns(bool){
+      //bool removed = tcr.isWhitelisted(listing);
+      /*
+      if ( !tcr.isWhitelisted(listing) ){
+        mAssets[assetId].active = false;
+        listAssets[assetId] = 0;
+        sizeListAssets -= 1;
+      }
+      */
       return tcr.isWhitelisted(listing);
+    }
+
+    function changeListingStatus(bytes32 listing, uint256 assetId) public returns(bool){
+      if ( !tcr.isWhitelisted(listing) ){
+        mAssets[assetId].active = false;
+        listAssets[assetId] = 0;
+        sizeListAssets -= 1;
+      }
+      return true;
+
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -68,8 +87,12 @@ contract Market is BancorFormula, Ownable {
         return mAssets[assetId].drops[msg.sender];
     }
 
-    function rnd() public view returns (uint256) {
-      return winProvider;
+    function checkAsset(uint256 assetId) public view returns (bool) {
+      return mAssets[assetId].active;
+    }
+
+    function getInfo(uint256 assetId) public view returns (bool) {
+      return mAssets[assetId].active;
     }
 
     function tokenBalance() public view returns (uint256) {
@@ -104,9 +127,10 @@ contract Market is BancorFormula, Ownable {
 
       // register assets
       uint256 fileSize = 1024;
-      mAssets[assetId] = Asset(msg.sender, 0, fileSize, 0, 0);  // Creates new struct and saves in storage. We leave out the mapping type.
+      mAssets[assetId] = Asset(msg.sender, 0, fileSize, 0, 0, false);  // Creates new struct and saves in storage. We leave out the mapping type.
 
       if (sizeListAssets < 50)  {
+          mAssets[assetId].active = true;
           listAssets[sizeListAssets] = assetId;
           sizeListAssets += 1;
       }
@@ -118,7 +142,7 @@ contract Market is BancorFormula, Ownable {
 
 
     // publish consumption information about an Asset
-    function publish(uint256 assetId, bytes32 _url, bytes32 _token) external returns (bool success) {
+    function publish(uint256 assetId, bytes32 _url, bytes32 _token) public returns (bool success) {
          require(mAssets[assetId].owner != 0x0);
          require(msg.sender == mAssets[assetId].owner);
 
@@ -127,7 +151,7 @@ contract Market is BancorFormula, Ownable {
     }
 
     // purchase an asset and get the consumption information - called by consumer
-    function purchase(uint256 assetId) external returns (bytes32 url, bytes32 token) {
+    function purchase(uint256 assetId) public returns (bytes32, bytes32) {
         require(mAssets[assetId].owner != 0x0);
 
         // increment counter
@@ -148,7 +172,7 @@ contract Market is BancorFormula, Ownable {
         return (mAssets[assetId].url, mAssets[assetId].token);
     }
 
-    function listAssets() external view returns (uint256[50]) {
+    function getListAssets() public constant returns (uint256[50]) {
         return listAssets;
     }
 

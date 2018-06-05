@@ -2,6 +2,12 @@
 var Token = artifacts.require("OceanToken.sol");
 var Market =  artifacts.require("Market.sol");
 
+var Web3 = require("web3");
+var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+var utils = require('web3-utils');
+
+
+
 function wait(ms){
    var start = new Date().getTime();
    var end = start;
@@ -26,10 +32,19 @@ contract('Market', (accounts) => {
       await market.register(assetId, {from:accounts[0]});
 
       // publish data  asset
-      let _url = "http://aws.com";
-      let _token = "aXsTSt";
+      let _url = web3.fromUtf8("http://aws.amazon.com");
+      let _token = web3.fromUtf8("aXsTSt");
       await market.publish(assetId, _url, _token, {from:accounts[0]});
 
+      let list = await market.getListAssets({from:accounts[0]});
+      console.log(list);
+
+      // test get bytes32 from method
+      //await market.getInfo.call();
+      //console.log(web3.toUtf8(url));
+      //let [url_, token_] = await market.getInfo();
+      //console.log("url := " + web3.toUtf8(url_));
+      //console.log("token := " + web3.toUtf8(token_));
 
       // 2. provider request initial tokens 2000
       await market.requestTokens(2000, {from:accounts[0]});
@@ -50,9 +65,7 @@ contract('Market', (accounts) => {
       //assert.equal(bal2.toNumber(), 2000 - ntokens,"User should have 1875 OCN tokens now.");
       const drops1 = await market.dropsBalance(assetId, {from:accounts[0]});
       console.log("User [0] should have " + drops1.toNumber() + " drops now.");
-      //assert.equal(drops1.toNumber(), ndrops,"User should have 1000 drops now.");
-      //const tokenBalanceee = await market.tokenBalance.call({from:accounts[0]});
-      //console.log("1. provider has escrow balance with reward credit := " + tokenBalanceee.toNumber() + " Ocean tokens after serveRequest");
+
 
       // another use purchase drops
       await market.requestTokens(2000, {from:accounts[1]});
@@ -66,18 +79,17 @@ contract('Market', (accounts) => {
       // 4. user[1] purchase the dataset - before purcahse, new block reward shall be claimed by marketplace
       const tokenBalanceBefore = await token.balanceOf.call(market.address);
       console.log("market balance before mintToken := " + tokenBalanceBefore.toNumber() + " Ocean tokens");
-      wait(30000);
+      //wait(30000);
       await market.mintToken({from:accounts[0]});
       const bal3 = await token.balanceOf.call(market.address);
       console.log("market balance with emitted tokens := " + bal3.toNumber());
 
-      await market.purchase(assetId, {from:accounts[1]});
+      let res = await market.purchase(assetId, {from:accounts[1]});
+      console.log(res.length);
+      //console.log("url := " + web3.toUtf8(res[0]));
+      //console.log("token := " + web3.toUtf8(res[1]));
       const tokenBalanceAfter = await token.balanceOf.call(market.address);
       console.log("market balance after mintToken := " + tokenBalanceAfter.toNumber() + " Ocean tokens");
-
-      // test random number generation
-      //let id = await market.rng.call(10, {from:accounts[0]});
-      //console.log("random number generation index := " + id.toNumber() );
 
       // 7. provider sell Drops for Ocean TOKENS
       await market.sellDrops(assetId, drops1.valueOf(), {from:accounts[0]});

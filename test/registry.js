@@ -139,6 +139,14 @@ contract('Market', (accounts) => {
       const token = await Token.deployed();
       const listing = utils.getListingHash('passChallenge.net');
       const minDeposit = bigTen(10);
+      const market = await Market.deployed();
+
+      let assetId = 1;
+      // 1. register provider and dataset
+      await market.register(assetId, {from:accounts[0]});
+      let _url = web3.fromUtf8("http://aws.amazon.com");
+      let _token = web3.fromUtf8("aXsTSt");
+      await market.publish(assetId, _url, _token, {from:accounts[0]});
 
       const applicantBeginBalance = await token.balanceOf.call(accounts[0]);
       console.log("starting balance of applicant := " + applicantBeginBalance);
@@ -178,7 +186,7 @@ contract('Market', (accounts) => {
       //console.log("end of commit period time should be :=" + CET);
 
       let endT = 0;
-      const market = await Market.deployed();
+
       while(true){
         wait(2000);
         endT = await voting.queryTS.call();
@@ -236,7 +244,7 @@ contract('Market', (accounts) => {
        assert.strictEqual(result, true, 'Listing should be whitelisted');
        console.log("Listing is whitelisted now.");
 
-       const isListed2 = await market.checkListingStatus(listing, { from: accounts[0]});
+       const isListed2 = await market.checkListingStatus(listing, assetId, { from: accounts[0]});
        assert.strictEqual(isListed2, true, 'Listing should be whitelisted');
 
        const voterBeforeClaim  = await token.balanceOf.call(accounts[2]);
@@ -272,9 +280,17 @@ contract('Market', (accounts) => {
 
       /// market place check results
       //const market = await Market.deployed();
-      const isListed1 = await market.checkListingStatus(listing, { from: accounts[0]});
-      assert.strictEqual(isListed1, false, 'Listing should be whitelisted');
+      const isListed1 = await market.checkListingStatus(listing, assetId, { from: accounts[0]});
+      assert.strictEqual(isListed1, false, 'Listing should be removed');
       console.log("marketplace queries the voting result of listing");
+
+      //let owner = await market.getInfo(assetId);
+      //console.log(owner);
+
+      const isRemoved = await market.checkAsset(assetId, { from: accounts[0]});
+      //assert.strictEqual(isRemoved, false, 'assetId should be removed');
+      console.log("marketplace has removed the listing");
+
      });
 
 

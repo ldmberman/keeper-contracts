@@ -1,6 +1,6 @@
 {
   "name": "sol-tcr",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A generic, string-keyed TCR in Solidity",
   "scripts": {
     "install": "truffle install",
@@ -28,7 +28,10 @@
     "ethjs-util": "0.1.4",
     "solidity-sha3": "^0.4.1",
     "truffle": "4.1.5",
-    "truffle-hdwallet-provider": "0.0.3"
+    "truffle-hdwallet-provider": "0.0.3",
+    "web": "0.0.2",
+    "web3": "^0.18.4",
+    "web3-utils": "^1.0.0-beta.34"
   },
   "devDependencies": {
     "eslint": "4.15.0",
