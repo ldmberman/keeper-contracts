@@ -102,7 +102,7 @@ The dependency between different modules are illustrated as below:
 
 ## 5. Architecture of solidity Market contract
 
-[See the first draft of UML class diagram](Smart contract UML class diagram.pdf)
+<a href="Smart contract UML class diagram.pdf">First draft of UML class diagram</a>
 
 ## 6. Compile, Migrate and Test
 
