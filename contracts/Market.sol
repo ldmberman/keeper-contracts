@@ -58,14 +58,6 @@ contract Market is BancorFormula, Ownable {
     Registry  public  tcr;
 
     function checkListingStatus(bytes32 listing, uint256 assetId) public view returns(bool){
-      //bool removed = tcr.isWhitelisted(listing);
-      /*
-      if ( !tcr.isWhitelisted(listing) ){
-        mAssets[assetId].active = false;
-        listAssets[assetId] = 0;
-        sizeListAssets -= 1;
-      }
-      */
       return tcr.isWhitelisted(listing);
     }
 

@@ -287,8 +287,11 @@ contract('Market', (accounts) => {
       //let owner = await market.getInfo(assetId);
       //console.log(owner);
 
+      // change internal flag for data asset
+      await market.changeListingStatus(listing, assetId, { from: accounts[0]});
+      // check status
       const isRemoved = await market.checkAsset(assetId, { from: accounts[0]});
-      //assert.strictEqual(isRemoved, false, 'assetId should be removed');
+      assert.strictEqual(isRemoved, false, 'assetId should be removed');
       console.log("marketplace has removed the listing");
 
      });
