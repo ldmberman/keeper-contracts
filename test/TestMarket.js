@@ -41,9 +41,7 @@ contract('Market', (accounts) => {
       // testing: 125 OCN = 1000 drops;  20 OCN = 200 drops
       let ntokens = 10;   // number of drops to purchase
       // calculate number of OCN tokens required for tx
-      let priceForTokens = await market.calcPriceForTokens(ntokens, {from:accounts[0]});
-      await token.approve(market.address, priceForTokens, { from: accounts[0]} );
-      console.log("user 0 approve token allowance for tx: " + priceForTokens.valueOf() + " OCN tokens");
+      await token.approve(market.address, ntokens, { from: accounts[0]} );
       // transfer 100 OCN tokens to market and buy drops
       await market.buyDrops(assetId, ntokens, {from:accounts[0]});
       console.log("buy drops successful!");
@@ -51,27 +49,25 @@ contract('Market', (accounts) => {
       console.log("provider has balance of OCN := " + bal2.valueOf());
       //assert.equal(bal2.toNumber(), 2000 - ntokens,"User should have 1875 OCN tokens now.");
       const drops1 = await market.dropsBalance(assetId, {from:accounts[0]});
-      console.log("User should have " + drops1.toNumber() + " drops now.");
+      console.log("User [0] should have " + drops1.toNumber() + " drops now.");
       //assert.equal(drops1.toNumber(), ndrops,"User should have 1000 drops now.");
       //const tokenBalanceee = await market.tokenBalance.call({from:accounts[0]});
       //console.log("1. provider has escrow balance with reward credit := " + tokenBalanceee.toNumber() + " Ocean tokens after serveRequest");
 
       // another use purchase drops
       await market.requestTokens(2000, {from:accounts[1]});
-      priceForTokens = await market.calcPriceForTokens(10, {from:accounts[1]});
-      await token.approve(market.address, priceForTokens, { from: accounts[1]} );
-      console.log("user 1 approve token allowance for tx: " + priceForTokens.valueOf() + " OCN tokens");
+      await token.approve(market.address, ntokens, { from: accounts[1]} );
       // transfer 100 OCN tokens to market and buy drops
-      await market.buyDrops(assetId, 10, {from:accounts[1]});
+      await market.buyDrops(assetId, ntokens, {from:accounts[1]});
 
 
       // 4. user[1] purchase the dataset - before purcahse, new block reward shall be claimed by marketplace
       //wait(30000);  //30 seconds in milliseconds
-      await market.mintToken({from:accounts[0]});
-      const bal3 = await token.balanceOf.call(market.address);
-      console.log("market balance with emitted tokens := " + bal3.toNumber());
-      const rewardpool1 = await market.queryRewardPool.call({from:accounts[0]});
-      console.log("reward pool has " + rewardpool1.toNumber() + " Ocean tokens");
+      //await market.mintToken({from:accounts[0]});
+      //const bal3 = await token.balanceOf.call(market.address);
+      //console.log("market balance with emitted tokens := " + bal3.toNumber());
+      //const rewardpool1 = await market.queryRewardPool.call({from:accounts[0]});
+      //console.log("reward pool has " + rewardpool1.toNumber() + " Ocean tokens");
       // purchase function will credit provider randomly
       await market.purchase(assetId, {from:accounts[1]});
       const tokenBalancee = await market.tokenBalance.call({from:accounts[0]});

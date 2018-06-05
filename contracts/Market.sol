@@ -46,18 +46,10 @@ contract Market is BancorFormula, Ownable {
     OceanToken  public  mToken;
     uint256     public  mAllowance;             // total available Ocean tokens for transfer (exclude locked tokens)
     uint256     public  rewardPool;             // T_difficulty: total OCN emitted during the interval
-    uint256     public  Rtotal;                 // sum of Rij across all assets, update incrementally every time delivery happens
-    uint256     public  Rdiff;                  // network difficulty R_difficulty
-    uint256     public  Rij;                    // added value of provider i on dataset j
-    uint256     public  reward;                 // reward value of provdier i on dataset j
-
-    // random number generation
-    uint256   random;                           // random number
-    uint256   range = 256;                            // range of random number
 
     // bonding Curve
-    uint256 public totalSupply = 1000;          // initial total supply
-    uint256 public poolBalance = 250;           // poolBalance for specific dataset
+    uint256 public totalSupply = 10;          // initial total supply
+    uint256 public poolBalance = 1;           // poolBalance for specific dataset
     uint32  public reserveRatio = 500000;      // max 1000000, reserveRatio = 20%
     uint256 public tokensToMint = 0;
 
@@ -120,8 +112,6 @@ contract Market is BancorFormula, Ownable {
         mToken.setReceiver(address(this));
         // setReceiver funciton will transfer initial funds to Market contract
         mAllowance = mToken.balanceOf(address(this));
-        // set global R_difficulty
-        //Rdiff = 210000;
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -172,9 +162,9 @@ contract Market is BancorFormula, Ownable {
         // request token rewards for provider
         winProvider = rng(sizeProviders);
         if(rewardPool != 0 && winProvider >= 0 && winProvider < sizeProviders ){
-          rewardPool -= reward;
           address winner = listProviders[winProvider];
-          mProviders[winner].numOCN += reward;
+          mProviders[winner].numOCN += rewardPool;
+          rewardPool = 0 ;
         }
 
         return (mAssets[assetId].url, mAssets[assetId].token);
