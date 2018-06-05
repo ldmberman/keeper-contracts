@@ -60,12 +60,12 @@ contract('Market', (accounts) => {
       // transfer 100 OCN tokens to market and buy drops
       await market.buyDrops(assetId, ntokens, {from:accounts[1]});
       const drops2 = await market.dropsBalance(assetId, {from:accounts[1]});
-      console.log("User [0] should have " + drops2.toNumber() + " drops now.");
+      console.log("User [1] should have " + drops2.toNumber() + " drops now.");
 
 
       // 4. user[1] purchase the dataset - before purcahse, new block reward shall be claimed by marketplace
       const tokenBalanceBefore = await token.balanceOf.call(market.address);
-      console.log("provider has escrow balance with reward credit := " + tokenBalanceBefore.toNumber() + " Ocean tokens");
+      console.log("market balance before mintToken := " + tokenBalanceBefore.toNumber() + " Ocean tokens");
       wait(30000);
       await market.mintToken({from:accounts[0]});
       const bal3 = await token.balanceOf.call(market.address);
@@ -73,12 +73,16 @@ contract('Market', (accounts) => {
 
       await market.purchase(assetId, {from:accounts[1]});
       const tokenBalanceAfter = await token.balanceOf.call(market.address);
-      console.log("provider has escrow balance with reward credit := " + tokenBalanceAfter.toNumber() + " Ocean tokens");
+      console.log("market balance after mintToken := " + tokenBalanceAfter.toNumber() + " Ocean tokens");
+
+      // test random number generation
+      //let id = await market.rng.call(10, {from:accounts[0]});
+      //console.log("random number generation index := " + id.toNumber() );
 
       // 7. provider sell Drops for Ocean TOKENS
       await market.sellDrops(assetId, drops1.valueOf(), {from:accounts[0]});
       const tokenBalance1 = await market.tokenBalance.call({from:accounts[0]});
-      console.log("provider has escrow balance of Ocean tokens := " + tokenBalance1.toNumber());
+      console.log("provider has escrow balance of Ocean tokens := " + tokenBalance1.toNumber() + " (include reward and profit)");
 
       // 8. withdraw Ocean tokens
       await market.withdraw({from:accounts[0]});

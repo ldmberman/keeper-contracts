@@ -68,6 +68,10 @@ contract Market is BancorFormula, Ownable {
         return mAssets[assetId].drops[msg.sender];
     }
 
+    function rnd() public view returns (uint256) {
+      return winProvider;
+    }
+
     function tokenBalance() public view returns (uint256) {
       require(mProviders[msg.sender].provider != 0x0);
       return mProviders[msg.sender].numOCN;
