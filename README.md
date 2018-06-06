@@ -74,6 +74,15 @@ function purchase(uint256 assetId) external returns (bytes32 url, bytes32 token)
 function listAssets() external view returns (uint256[50]); 
 ```
 
+### 2.3 Events
+
+#### Marketplace
+
+```solidity
+event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
+event AssetPublished(uint256 indexed _assetId, address indexed _owner);
+event AssetPurchased(uint256 indexed _assetId, address indexed _owner);
+```
 
 ## 3. File Structure
 There are several folders and each includes solidity source files for each module:

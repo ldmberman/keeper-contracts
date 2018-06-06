@@ -54,6 +54,13 @@ contract Market is BancorFormula, Ownable {
     uint32  public reserveRatio = 500000;      // max 1000000, reserveRatio = 20%
     uint256 public tokensToMint = 0;
 
+
+    // Events
+    event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
+    event AssetPublished(uint256 indexed _assetId, address indexed _owner);
+    event AssetPurchased(uint256 indexed _assetId, address indexed _owner);
+
+
     // TCR
     Registry  public  tcr;
 
@@ -129,6 +136,8 @@ contract Market is BancorFormula, Ownable {
 
       // simulate uploading dataSet
       mProviders[msg.sender].uploadBits = fileSize;
+
+      emit AssetRegistered(assetId, msg.sender);
       return true;
     }
 
@@ -140,6 +149,8 @@ contract Market is BancorFormula, Ownable {
 
         mAssets[assetId].url= _url;
         mAssets[assetId].token= _token;
+        emit AssetPublished(assetId, msg.sender);
+
     }
 
     // purchase an asset and get the consumption information - called by consumer
@@ -160,6 +171,7 @@ contract Market is BancorFormula, Ownable {
           mProviders[winner].numOCN += rewardPool;
           rewardPool = 0 ;
         }
+        emit AssetPublished(assetId, msg.sender);
 
         return (mAssets[assetId].url, mAssets[assetId].token);
     }
