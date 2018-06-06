@@ -60,6 +60,10 @@ contract Market is BancorFormula, Ownable {
     event AssetPublished(uint256 indexed _assetId, address indexed _owner);
     event AssetPurchased(uint256 indexed _assetId, address indexed _owner);
 
+    event TokenWithdraw(address indexed _requester, uint256 amount);
+    event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
+    event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
+
 
     // TCR
     Registry  public  tcr;
@@ -207,6 +211,8 @@ contract Market is BancorFormula, Ownable {
       mAllowance -= amount;
       mProviders[msg.sender].allowanceOCN -= amount;
       require(mToken.transfer(msg.sender, amount));
+
+      emit TokenWithdraw(msg.sender, amount);
       return true;
     }
 
@@ -261,7 +267,9 @@ contract Market is BancorFormula, Ownable {
       mAllowance -= _ocn;
       mAssets[_assetId].drops[msg.sender] += tokensToMint;
 
-      return tokensToMint;
+      emit TokenBuyDrops(msg.sender, _assetId, _ocn, tokensToMint);
+
+    return tokensToMint;
     }
 
     function sellDrops(uint256 _assetId, uint256 _drops) public returns (uint256 _ocn) {
@@ -280,7 +288,10 @@ contract Market is BancorFormula, Ownable {
       mAllowance += ocnAmount;
       // decrement drops balance of actors
       mAssets[_assetId].drops[msg.sender] -= _drops;
-      return ocnAmount;
+
+      emit TokenSellDrops(msg.sender, _assetId, ocnAmount, _drops);
+
+    return ocnAmount;
     }
 
 

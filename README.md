@@ -76,12 +76,16 @@ function listAssets() external view returns (uint256[50]);
 
 ### 2.3 Events
 
-#### Marketplace
-
 ```solidity
+// Asset Events
 event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
 event AssetPublished(uint256 indexed _assetId, address indexed _owner);
 event AssetPurchased(uint256 indexed _assetId, address indexed _owner);
+
+// Token Events
+event TokenWithdraw(address indexed _requester, uint256 amount);
+event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
+event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
 ```
 
 ## 3. File Structure
