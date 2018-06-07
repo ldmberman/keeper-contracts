@@ -8,7 +8,7 @@ module.exports = {
       host: "localhost",
       port: 8545,
       network_id: "*", // Match any network id
-      from: "0x2b9bab61a2606a587c7e5d355b5a8c100eaa01a3",
+      from: "0x7be721995c6ab3600ebb28d80a484826e9722b4a",
       gas: 6600000,
       //gasPrice: 250000,
     },
@@ -19,12 +19,6 @@ module.exports = {
       //from: "0x00bd138abd70e2f00903268f3db08f2d25677c9e",
       //gas: 6600000,
       //gasPrice: 250000,
-    },
-    kovan: {
-      provider: new HDWalletProvider(mnemonic, "https://kovan.infura.io/Kuo1lxDBsFtMnaw6GiN2"),
-      network_id: 42,
-      gas: 4500000,
-      gasPrice: 25000000000,
     },
   },
 };
