@@ -13,6 +13,6 @@ module.exports = function(deployer) {
     Market,
     tokenAddress,
     tcrAddress,
-    {gas: 6000000}
+    {gas: 6600000}
   );
 };
