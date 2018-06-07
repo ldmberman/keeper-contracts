@@ -58,7 +58,7 @@ contract Market is BancorFormula, Ownable {
     // Events
     event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
     event AssetPublished(uint256 indexed _assetId, address indexed _owner);
-    event AssetPurchased(uint256 indexed _assetId, address indexed _owner);
+    event AssetPurchased(uint256 indexed _assetId, bytes32 _url, bytes32 _token, address indexed _owner);
 
     event TokenWithdraw(address indexed _requester, uint256 amount);
     event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
@@ -158,7 +158,7 @@ contract Market is BancorFormula, Ownable {
     }
 
     // purchase an asset and get the consumption information - called by consumer
-    function purchase(uint256 assetId) public returns (bytes32, bytes32) {
+    function purchase(uint256 assetId) public returns (bool) {
         require(mAssets[assetId].owner != 0x0);
 
         // increment counter
@@ -175,9 +175,9 @@ contract Market is BancorFormula, Ownable {
           mProviders[winner].numOCN += rewardPool;
           rewardPool = 0 ;
         }
-        emit AssetPublished(assetId, msg.sender);
+        emit AssetPurchased(assetId, mAssets[assetId].url, mAssets[assetId].token, msg.sender);
 
-        return (mAssets[assetId].url, mAssets[assetId].token);
+        return true;
     }
 
     function getListAssets() public constant returns (uint256[50]) {
