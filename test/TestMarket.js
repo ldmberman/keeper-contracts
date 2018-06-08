@@ -1,6 +1,6 @@
-//var utils = require("../scripts/utils");
-var Token = artifacts.require("OceanToken.sol");
-var Market =  artifacts.require("Market.sol");
+
+const Token = artifacts.require('OceanToken.sol');
+const Market = artifacts.require('Market.sol');
 
 var Web3 = require("web3");
 var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
@@ -37,7 +37,7 @@ contract('Market', (accounts) => {
       await market.publish(assetId, _url, _token, {from:accounts[0]});
 
       let list = await market.getListAssets({from:accounts[0]});
-      console.log(list);
+      //console.log(list);
 
       // test get bytes32 from method
       //await market.getInfo.call();
@@ -56,7 +56,9 @@ contract('Market', (accounts) => {
       // testing: 125 OCN = 1000 drops;  20 OCN = 200 drops
       let ntokens = 10;   // number of drops to purchase
       // calculate number of OCN tokens required for tx
-      await token.approve(market.address, ntokens, { from: accounts[0]} );
+      await token.approve(market.address, 2000, { from: accounts[0]} );
+      console.log("has approved");
+      //await token.approve(market.address, ntokens, { from: accounts[0]} );
       // transfer 100 OCN tokens to market and buy drops
       await market.buyDrops(assetId, ntokens, {from:accounts[0]});
       console.log("buy drops successful!");

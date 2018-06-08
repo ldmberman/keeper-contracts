@@ -139,7 +139,8 @@ contract Market is BancorFormula, Ownable {
 
       // register assets
       uint256 fileSize = 1024;
-      mAssets[assetId] = Asset(msg.sender, 0, 0, fileSize, false, 0, 0);  // Creates new struct and saves in storage. We leave out the mapping type.
+      // ndrops =10, nToken = 1 => phatom tokesn to avoid failure of Bancor formula
+      mAssets[assetId] = Asset(msg.sender, 10, 1, fileSize, false, 0, 0);  // Creates new struct and saves in storage. We leave out the mapping type.
 
       if (sizeListAssets < 50)  {
           mAssets[assetId].active = true;
@@ -252,7 +253,6 @@ contract Market is BancorFormula, Ownable {
 
     // 1. bondingCurve function - buy Drops - call by any actors
     function buyDrops(uint256 _assetId, uint256 _ocn) public returns (uint256 _drops) {
-      //uint256 tokensToMint = 0; mAssets[_assetId].ndrops
       tokensToMint = calculatePurchaseReturn(mAssets[_assetId].ndrops, mAssets[_assetId].nOcean, reserveRatio, _ocn);
       mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.add(tokensToMint);
       mAssets[_assetId].nOcean = mAssets[_assetId].nOcean.add(_ocn);
