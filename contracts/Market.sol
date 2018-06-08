@@ -19,10 +19,11 @@ contract Market is BancorFormula, Ownable {
     struct Asset{
           address owner;                          // owner of the Asset
           uint256 ndrops;                         // total supply of Drops
+          uint256 nOcean;                         // poolBalance of dataset
           uint256 bitSize;                        // size of asset in bit
-          bytes32 url;                            // url of the asset
-          bytes32 token;                          // token to get access to the asset
-          bool active;
+          bool active;                            // status of asset
+          bytes32 url;                            // assetId => url
+          bytes32 token;                          // assetId => token
           mapping (address => uint256) drops;     // mapping provider (address) to their stakes on dataset Sij
           mapping (address => uint256) delivery;  // mapping provider (address) to their #delivery of dataset Dj
     }
@@ -58,7 +59,7 @@ contract Market is BancorFormula, Ownable {
     // Events
     event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
     event AssetPublished(uint256 indexed _assetId, address indexed _owner);
-    event AssetPurchased(uint256 indexed _assetId, bytes32 _url, bytes32 _token, address indexed _owner);
+    event AssetPurchased(uint256 indexed _assetId, address indexed _owner);
 
     event TokenWithdraw(address indexed _requester, uint256 amount);
     event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
@@ -92,6 +93,14 @@ contract Market is BancorFormula, Ownable {
 
     function checkAsset(uint256 assetId) public view returns (bool) {
       return mAssets[assetId].active;
+    }
+
+    function getAssetUrl(uint256 assetId) public view returns (bytes32) {
+      return mAssets[assetId].url;
+    }
+
+    function getAssetToken(uint256 assetId) public view returns (bytes32) {
+      return mAssets[assetId].token;
     }
 
     function getInfo(uint256 assetId) public view returns (bool) {
@@ -130,7 +139,7 @@ contract Market is BancorFormula, Ownable {
 
       // register assets
       uint256 fileSize = 1024;
-      mAssets[assetId] = Asset(msg.sender, 0, fileSize, 0, 0, false);  // Creates new struct and saves in storage. We leave out the mapping type.
+      mAssets[assetId] = Asset(msg.sender, 0, 0, fileSize, false, 0, 0);  // Creates new struct and saves in storage. We leave out the mapping type.
 
       if (sizeListAssets < 50)  {
           mAssets[assetId].active = true;
@@ -151,10 +160,10 @@ contract Market is BancorFormula, Ownable {
          require(mAssets[assetId].owner != 0x0);
          require(msg.sender == mAssets[assetId].owner);
 
-        mAssets[assetId].url= _url;
-        mAssets[assetId].token= _token;
+        mAssets[assetId].url = _url;
+        mAssets[assetId].token = _token;
         emit AssetPublished(assetId, msg.sender);
-
+        return true;
     }
 
     // purchase an asset and get the consumption information - called by consumer
@@ -175,7 +184,7 @@ contract Market is BancorFormula, Ownable {
           mProviders[winner].numOCN += rewardPool;
           rewardPool = 0 ;
         }
-        emit AssetPurchased(assetId, mAssets[assetId].url, mAssets[assetId].token, msg.sender);
+        emit AssetPurchased(assetId, msg.sender);
 
         return true;
     }
@@ -243,16 +252,16 @@ contract Market is BancorFormula, Ownable {
 
     // 1. bondingCurve function - buy Drops - call by any actors
     function buyDrops(uint256 _assetId, uint256 _ocn) public returns (uint256 _drops) {
+      //uint256 tokensToMint = 0; mAssets[_assetId].ndrops
+      tokensToMint = calculatePurchaseReturn(mAssets[_assetId].ndrops, mAssets[_assetId].nOcean, reserveRatio, _ocn);
+      mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.add(tokensToMint);
+      mAssets[_assetId].nOcean = mAssets[_assetId].nOcean.add(_ocn);
+
       // First transfer _ocn tokens into Marketplace escrow account to purchase Drops
       mProviders[msg.sender].numOCN += _ocn;
       mProviders[msg.sender].allowanceOCN += _ocn;
       mAllowance += _ocn;
       require(mToken.transferFrom(msg.sender, address(this), _ocn));
-
-
-      //uint256 tokensToMint = 0; mAssets[_assetId].ndrops
-      tokensToMint = calculatePurchaseReturn(totalSupply, poolBalance, reserveRatio, _ocn);
-      mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.add(tokensToMint);
 
       // 4. update balances
 
@@ -275,13 +284,13 @@ contract Market is BancorFormula, Ownable {
     function sellDrops(uint256 _assetId, uint256 _drops) public returns (uint256 _ocn) {
       require(mProviders[msg.sender].provider != 0x0);
 
-      uint256 ocnAmount = calculateSaleReturn(totalSupply, poolBalance, reserveRatio, _drops);
+      uint256 ocnAmount = calculateSaleReturn(mAssets[_assetId].ndrops, mAssets[_assetId].nOcean, reserveRatio, _drops);
+      mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.sub(_drops);
+      mAssets[_assetId].nOcean = mAssets[_assetId].nOcean.sub(ocnAmount);
 
       // 4. update balances
       totalSupply = totalSupply.sub(_drops);
       poolBalance = poolBalance.sub(ocnAmount);
-      // decrement total ndrops
-      mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.sub(_drops);
       // unlock ocean Tokens
       mProviders[msg.sender].numOCN += ocnAmount;
       mProviders[msg.sender].allowanceOCN += ocnAmount;
