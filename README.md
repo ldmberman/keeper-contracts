@@ -127,7 +127,11 @@ Then deploy them into testRPC `$ truffle migrate`:
 
 <img src="img/migrate.jpg" width="800" />
 
-Note there are `Error: run out of gas` because we try to deploy so many contracts as one single transaction. Tune the `gas` value in `truffle.js` file to make them run through.
+Note:
+
+* there are `Error: run out of gas` because we try to deploy so many contracts as one single transaction. Tune the `gas` value in `truffle.js` file to make them run through.
+* we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as "gas = 5000000"
+* no need to update the "from : 0x3424ft..." in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
 
 Test them with `$ truffle test test/registry.js`:
 
