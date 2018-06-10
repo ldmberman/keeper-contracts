@@ -13,6 +13,5 @@ module.exports = function(deployer) {
     Market,
     tokenAddress,
     tcrAddress,
-    {gas: 6600000}
   );
 };
