@@ -73,6 +73,28 @@ function purchase(uint256 assetId) external returns (bytes32 url, bytes32 token)
 
 // Return the list of available assets
 function listAssets() external view returns (uint256[50]); 
+
+```
+
+### 2.3 Query functions
+
+```solidity
+
+// Return the number of drops associated to the message.sender to an Asset 
+function dropsBalance(uint256 assetId) public view returns (uint256);
+
+// Return true or false if an Asset is active given the assetId
+function checkAsset(uint256 assetId) public view returns (bool);
+
+// Get the url attribute associated to a given the assetId
+function getAssetUrl(uint256 assetId) public view returns (bytes32);
+
+// Get the token attribute associated to a given the assetId
+function getAssetToken(uint256 assetId) public view returns (bytes32);
+
+// Retrieve the msg.sender Provider token balance
+function tokenBalance() public view returns (uint256);
+
 ```
 
 ### 2.3 Events

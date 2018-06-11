@@ -86,19 +86,23 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
     //  Query function
     ///////////////////////////////////////////////////////////////////
+    // Return the number of drops associated to the message.sender to an Asset
     function dropsBalance(uint256 assetId) public view returns (uint256){
         require(msg.sender != 0x0);
         return mAssets[assetId].drops[msg.sender];
     }
 
+    // Return true or false if an Asset is active given the assetId
     function checkAsset(uint256 assetId) public view returns (bool) {
       return mAssets[assetId].active;
     }
 
+    // Get the url attribute associated to a given the assetId
     function getAssetUrl(uint256 assetId) public view returns (bytes32) {
       return mAssets[assetId].url;
     }
 
+    // Get the token attribute associated to a given the assetId
     function getAssetToken(uint256 assetId) public view returns (bytes32) {
       return mAssets[assetId].token;
     }
@@ -107,6 +111,7 @@ contract Market is BancorFormula, Ownable {
       return mAssets[assetId].active;
     }
 
+    // Retrieve the msg.sender Provider token balance
     function tokenBalance() public view returns (uint256) {
       require(mProviders[msg.sender].provider != 0x0);
       return mProviders[msg.sender].numOCN;
