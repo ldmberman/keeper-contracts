@@ -1,10 +1,11 @@
-# POC: Integration of TCRs, CPM and Ocean Tokens with Solidity
+# Integration of TCRs, CPM and Ocean Tokens with Solidity
 
 ```
-name: Demo a prototype integration of TCRs, CPM, and Ocean tokens with Solidity
+name: Integration of TCRs, CPM, and Ocean tokens with Solidity
 type: development
 status: initial draft
 editor: Fang Gong <fang@oceanprotocol.com>
+collaborator: Aitor Argomaniz <aitor@oceanprotocol.com>
 date: 06/01/2018
 ```
 
@@ -13,7 +14,7 @@ date: 06/01/2018
 In this POC, we put following modules together:
 
 * **TCRs**: users create challenges and resolve them through voting to maintain registries;
-* **Ocean Tokens**: the intrinstic tokens circulated inside Ocean network, which is used in the voting of TCRs;
+* **Ocean Tokens**: the intrinsic tokens circulated inside Ocean network, which is used in the voting of TCRs;
 * **Curated Proofs Market**: the core marketplace where people can transact with each other and curate assets through staking with Ocean tokens.
 
 
@@ -91,7 +92,7 @@ event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint2
 ## 3. File Structure
 There are several folders and each includes solidity source files for each module:
 
-<img src="img/files.jpg" width="250" />
+<img src="doc/img/files.jpg" width="250" />
 
 * **bondingCurve**: it caculates the bonding curve values when users purchase drops or sell drops in the marketplace;
 * **plcrvoting**: Partial Lock Commit Reveal Voting System;
@@ -104,7 +105,7 @@ There are several folders and each includes solidity source files for each modul
 
 The dependency between different modules are illustrated as below:
 
-<img src="img/structure.jpg" width="800" />
+<img src="doc/img/structure.jpg" width="800" />
 
 * Marketplace (Market.sol) sends listing hash to TCRs (Registry.sol) so that to create challenges.
 * Users can use Ocean Tokens (OceanToken.sol) to vote for or against (PLCRVoting.sol).
@@ -115,17 +116,17 @@ The dependency between different modules are illustrated as below:
 
 ## 5. Architecture of solidity Market contract
 
-<a href="Smart contract UML class diagram.pdf">First draft of UML class diagram</a>
+<a href="doc/files/Smart-Contract-UML-class-diagram.pdf">First draft of UML class diagram</a>
 
 ## 6. Compile, Migrate and Test
 
 Use `$ truffle compile` to compile those solidity files:
 
-<img src="img/compile.jpg" width="500" />
+<img src="doc/img/compile.jpg" width="500" />
 
 Then deploy them into testRPC `$ truffle migrate`:
 
-<img src="img/migrate.jpg" width="800" />
+<img src="doc/img/migrate.jpg" width="800" />
 
 Note:
 
@@ -135,6 +136,6 @@ Note:
 
 Test them with `$ truffle test test/registry.js`:
 
-<img src="img/js_test.jpg" width="500" />
+<img src="doc/img/js_test.jpg" width="500" />
 
 
