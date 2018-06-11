@@ -142,6 +142,8 @@ The dependency between different modules are illustrated as below:
 
 ## 6. Compile, Migrate and Test
 
+Use `$ npm install` to download all the required libraries
+
 Use `$ truffle compile` to compile those solidity files:
 
 <img src="doc/img/compile.jpg" width="500" />
