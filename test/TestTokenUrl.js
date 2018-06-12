@@ -21,10 +21,10 @@ contract('Market', (accounts) => {
         console.log("user [0] register a new data asset");
 
         // publish data  asset
-        let _url = web3.fromUtf8("http://storage.amazon.com");
-        let _token = web3.fromUtf8("aXsTSt");
+        let _url = web3.fromUtf8("https://testocnfiles.blob.core.windows.net/testfiles/testzkp.pdf?sp=r&st=2018-06-11T11:52:03Z&se=2018-06-11T19:52:03Z&spr=https&sv=2017-11-09&sig=6HFajCLIjCL91pJcACcyYhaDi8Su61L0DXMcpZk8rnw%3D&sr=b");
+        let _token = web3.fromUtf8("https://testocnfiles.blob.core.windows.net/testfiles/testzkp.pdf?sp=r&st=2018-06-11T11:52:03Z&se=2018-06-11T19:52:03Z&spr=https&sv=2017-11-09&sig=6HFajCLIjCL91pJcACcyYhaDi8Su61L0DXMcpZk8rnw%3D&sr=b");
         await market.publish(assetId, _url, _token, {from:accounts[0]});
-        console.log("user [0] publish with url := http://storage.amazon.com and token = aXsTSt ")
+        console.log("user [0] publish with url := https://testocnfiles.blob.core.windows.net/testfiles/testzkp.pdf?sp=r&st=2018-06-11T11:52:03Z&se=2018-06-11T19:52:03Z&spr=https&sv=2017-11-09&sig=6HFajCLIjCL91pJcACcyYhaDi8Su61L0DXMcpZk8rnw%3D&sr=b and token = aXsTSt ")
 
         let info = await market.purchase( assetId, {from:accounts[1]});
         console.log("user [1] purchase the data asset");
