@@ -1,4 +1,6 @@
-# Integration of TCRs, CPM and Ocean Tokens with Solidity
+# Plankton Keeper
+
+> Hackathon Keeper implementation of TCRs, CPM and Ocean Tokens with Solidity. 
 
 ```
 name: Integration of TCRs, CPM, and Ocean tokens with Solidity
@@ -8,6 +10,22 @@ editor: Fang Gong <fang@oceanprotocol.com>
 collaborator: Aitor Argomaniz <aitor@oceanprotocol.com>
 date: 06/01/2018
 ```
+
+## Table of Contents
+
+  - [Get Started](#get-started)
+     - [Testing](#testing)
+  - [Objective](#objective)
+  - [Public Interface](#public-interface)
+     - [Curation Market](#curation-market)
+     - [Marketplace](#marketplace)
+     - [Query functions](#query-functions)
+     - [Events](#events)
+  - [File Structure](#file-structure)
+  - [Architecture of Modules](#architecture-of-modules)
+  - [Architecture of Solidity Market Contract](#architecture-of-solidity-market-contract)
+
+---
 
 ## Get Started
 
@@ -27,7 +45,9 @@ Compile the solidity contracts:
 truffle compile
 ```
 
-In a new terminal, launch the Ethereum RPC client, e.g. [ganache-cli](https://github.com/trufflesuite/ganache-cli):
+<img src="doc/img/compile.jpg" width="400" />
+
+In a new terminal, launch a Ethereum RPC client, e.g. [ganache-cli](https://github.com/trufflesuite/ganache-cli):
 
 ```bash
 ganache-cli
@@ -42,9 +62,27 @@ truffle migrate
 truffle migrate --reset
 ```
 
+<img src="doc/img/migrate.jpg" width="500" />
+
 You are ready to interact with the deployed smart contract from now on. Go sailing! :)
 
-## 1. Objective
+**Notes**
+
+* there are `Error: run out of gas` because we try to deploy so many contracts as one single transaction. Tune the `gas` value in `truffle.js` file to make them run through.
+* we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as "gas = 5000000"
+* no need to update the `from : 0x3424ft...` in `truffle.js`, it will use the first account in testRPC or ganache-cli by default.
+
+### Testing
+
+Run tests with `truffle test`, e.g.:
+
+```bash
+truffle test test/registry.js
+```
+
+<img src="doc/img/js_test.jpg" width="400" />
+
+## Objective
 
 In this POC, we put following modules together:
 
@@ -53,11 +91,11 @@ In this POC, we put following modules together:
 * **Curated Proofs Market**: the core marketplace where people can transact with each other and curate assets through staking with Ocean tokens.
 
 
-## 2. Public Interface
+## Public Interface
 
 The following project exposes the following public interfaces:
 
-### 2.1 Curation Market
+### Curation Market
 
 ```solidity
 //Allows a user to start an application. Takes tokens from user and sets apply stage end time.
@@ -94,7 +132,7 @@ function isWhitelisted(bytes32 _listingHash);
    function determineReward(uint _challengeID);
 ```
 
-### 2.2 Marketplace
+### Marketplace
 
 ```solidity
 // Register provider and assets （upload by changing uploadBits）
@@ -111,7 +149,7 @@ function listAssets() external view returns (uint256[50]);
 
 ```
 
-### 2.3 Query functions
+### Query functions
 
 ```solidity
 
@@ -132,7 +170,7 @@ function tokenBalance() public view returns (uint256);
 
 ```
 
-### 2.3 Events
+### Events
 
 ```solidity
 // Asset Events
@@ -146,7 +184,8 @@ event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint25
 event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
 ```
 
-## 3. File Structure
+## File Structure
+
 There are several folders and each includes solidity source files for each module:
 
 <img src="doc/img/files.jpg" width="250" />
@@ -158,7 +197,7 @@ There are several folders and each includes solidity source files for each modul
 * **zeppelin**: the library files from OpenZeppelin;
 * **market.sol**: curated proofs market (*on-going work*)
 
-## 4. Architecture of Modules
+## Architecture of Modules
 
 The dependency between different modules are illustrated as below:
 
@@ -171,30 +210,6 @@ The dependency between different modules are illustrated as below:
 * BancorFormula calculates the power function (Power.sol).
 * TCRs (Registry.sol) send the voting result back to Marketplace (Market.sol).
 
-## 5. Architecture of solidity Market contract
+## Architecture of Solidity Market Contract
 
-<a href="doc/files/Smart-Contract-UML-class-diagram.pdf">First draft of UML class diagram</a>
-
-## 6. Compile, Migrate and Test
-
-Use `$ npm install` to download all the required libraries
-
-Use `$ truffle compile` to compile those solidity files:
-
-<img src="doc/img/compile.jpg" width="500" />
-
-Then deploy them into testRPC `$ truffle migrate`:
-
-<img src="doc/img/migrate.jpg" width="800" />
-
-Note:
-
-* there are `Error: run out of gas` because we try to deploy so many contracts as one single transaction. Tune the `gas` value in `truffle.js` file to make them run through.
-* we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as "gas = 5000000"
-* no need to update the "from : 0x3424ft..." in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
-
-Test them with `$ truffle test test/registry.js`:
-
-<img src="doc/img/js_test.jpg" width="500" />
-
-
+* [First draft of UML class diagram (pdf)](doc/files/Smart-Contract-UML-class-diagram.pdf)
