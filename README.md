@@ -9,6 +9,41 @@ collaborator: Aitor Argomaniz <aitor@oceanprotocol.com>
 date: 06/01/2018
 ```
 
+## Get Started
+
+Clone project and install all dependencies:
+
+```bash
+git clone git@github.com:oceanprotocol/plankton-keeper.git
+cd plankton-keeper/
+
+# install dependencies
+npm i
+```
+
+Compile the solidity contracts:
+
+```bash
+truffle compile
+```
+
+In a new terminal, launch the Ethereum RPC client, e.g. [ganache-cli](https://github.com/trufflesuite/ganache-cli):
+
+```bash
+ganache-cli
+```
+
+Switch back to your other terminal and deploy the contracts:
+
+```bash
+truffle migrate
+
+# for redeployment run this instead
+truffle migrate --reset
+```
+
+You are ready to interact with the deployed smart contract from now on. Go sailing! :)
+
 ## 1. Objective
 
 In this POC, we put following modules together:
