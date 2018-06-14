@@ -1,0 +1,50 @@
+dist: trusty
+sudo: required
+group: beta
+
+language: node_js
+node_js:
+  - "8"
+
+cache:
+  directories:
+    - node_modules
+env:
+  -
+  - SOLIDITY_COVERAGE=true
+  - SOLC_NIGHTLY=true
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: SOLIDITY_COVERAGE=true
+    - env: SOLC_NIGHTLY=true
+before_script:
+  - truffle version
+
+install:
+  - npm install -g truffle
+  - npm install -g truffle-expect
+  - npm install -g truffle-config
+  - npm install -g ethereumjs-testrpc
+  - npm install -g web3
+
+before_script:
+  - testrpc > testrpc.log &
+
+script:
+  - npm install
+  - npm test
+  - truffle test
+
+after_success:
+  - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
+
+#deploy:
+  # GitHub - Add package to release
+  #- provider: releases
+  #  api_key:
+  #    secure: "YOUR GITHUB API KEY"
+  #  file: ${TRAVIS_BUILD_DIR}${REPO}-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+  #  skip_cleanup: true
+  #  on:
+  #    tags: true
