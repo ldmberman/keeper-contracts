@@ -33,7 +33,6 @@ before_script:
 
 script:
   - npm install
-  - npm test
   - truffle test
 
 after_success:
