@@ -1,3 +1,5 @@
-build/*
-.idea/*
-node_modules/*
+build/
+.idea/
+node_modules/
+package-lock.json
+.DS_Store
