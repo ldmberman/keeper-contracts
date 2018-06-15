@@ -25,7 +25,7 @@ install:
   - npm install -g truffle
   - npm install -g truffle-expect
   - npm install -g truffle-config
-  - npm install -g ethereumjs-testrpc
+  - npm install -g ganache-cli
   - npm install -g web3
 
 before_script:
@@ -36,16 +36,20 @@ jobs:
   include:
     - stage: install
       script:
-      - npm install
-      - truffle test
+        - npm install -g truffle
+        - npm install -g truffle-expect
+        - npm install -g truffle-config
+        - npm install -g ganache-cli
+        - npm install -g web3
+        - npm install
 
     - stage: build
       script:
-      - truffle compile
+        - truffle compile
 
     - stage: test
       script:
-      - truffle test
+        - truffle test
 
     - stage: package
       script:
