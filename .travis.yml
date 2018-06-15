@@ -21,41 +21,32 @@ matrix:
 before_script:
   - truffle version
 
+install:
+  - npm install -g truffle
+  - npm install -g truffle-expect
+  - npm install -g truffle-config
+  - npm install -g ganache-cli
+  - npm install -g web3
+
 before_script:
   - testrpc > testrpc.log &
 
+script:
+  - npm install
+  - truffle test
 
-jobs:
-  include:
-    - stage: install
-      script:
-        - npm install -g truffle
-        - npm install -g truffle-expect
-        - npm install -g truffle-config
-        - npm install -g ganache-cli
-        - npm install -g web3
-        - npm install
+before_deploy:
+  - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
+  - ls -la ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+  - tar tzvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
 
-    - stage: build
-      script:
-        - truffle compile
 
-    - stage: test
-      script:
-        - truffle test
 
-    - stage: package
-      script:
-        - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
-
-    - stage: release github
-    - stage: release npm
-
-#deploy:
-#  provider: releases
-#  api_key: $GITHUB_OAUTH_TOKEN
-#  file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
-#  skip_cleanup: true
-#  on:
-#    tags: true
+deploy:
+  provider: releases
+  api_key: $GITHUB_OAUTH_TOKEN
+  file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
 
