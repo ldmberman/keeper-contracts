@@ -31,20 +31,32 @@ install:
 before_script:
   - testrpc > testrpc.log &
 
-script:
-  - npm install
-  - truffle test
 
-after_success:
-  - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
-  - ls -la ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
-  - tar tzvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+jobs:
+  include:
+    - stage: install
+      script:
+      - npm install
+      - truffle test
 
+    - stage: build
+      script:
+      - truffle compile
 
+    - stage: test
+      script:
+      - truffle test
+
+    - stage: package
+      script:
+        - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
+
+    - stage: release github
+    - stage: release npm
 
 #deploy:
 #  provider: releases
-#  api_key: "GITHUB OAUTH TOKEN"
+#  api_key: $GITHUB_OAUTH_TOKEN
 #  file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
 #  skip_cleanup: true
 #  on:
