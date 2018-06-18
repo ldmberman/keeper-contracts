@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:9
+FROM node:9-alpine
 MAINTAINER Ocean Protocol <devops@oceanprotocol.com>
 
 RUN apk add --no-cache make gcc g++ python git bash
