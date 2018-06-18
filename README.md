@@ -67,6 +67,13 @@ Note:
 * we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as `gas = 5000000`
 * no need to update the `from : 0x3424ft...` in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
 
+#### Docker
+
+The Simplest way to get started with the Docker image:
+```bash
+docker build -t plankton/keeper:0.1 .
+docker run -d -p 8545:8545 plankton/keeper:0.1
+```
 ## Testing
 
 Run tests with `truffle test`, e.g.:
