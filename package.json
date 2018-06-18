@@ -10,8 +10,8 @@
     "deploy-rinkeby": "truffle migrate --network rinkeby",
     "deploy-mainnet": "truffle migrate --network mainnet",
     "test": "npm run lint ./ && truffle test",
-    "fix": "eslint --fix",
-    "lint": "eslint"
+    "lint-fix": "eslint --fix ./**/*.js",
+    "lint": "eslint ./**/*.js"
   },
   "author": "Ocean Protocol",
   "license": "Apache-2.0",
@@ -35,19 +35,18 @@
     "ethjs-abi": "^0.2.1"
   },
   "devDependencies": {
-    "eslint": "^4.15.0",
-    "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.8.0",
+    "babel-eslint": "^8.2.3",
     "babel-polyfill": "^6.23.0",
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-stage-2": "^6.18.0",
-    "babel-preset-stage-3": "^6.17.0",
+    "babel-preset-env": "^6.18.0",
     "babel-register": "^6.23.0",
     "chai": "^4.0.2",
     "chai-as-promised": "^7.0.0",
     "chai-bignumber": "^2.0.0",
     "coveralls": "^3.0.1",
+    "eslint": "^4.19.1",
+    "eslint-config-ascribe": "^3.0.5",
     "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.12.0",
     "eslint-plugin-node": "^5.2.1",
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
@@ -63,7 +62,7 @@
     "webpack-merge": "^4.1.0",
     "zeppelin-solidity": "^1.2.0"
   },
-  "engines" : {
-    "node" : ">=6.11.5"
+  "engines": {
+    "node": ">=6.11.5"
   }
 }

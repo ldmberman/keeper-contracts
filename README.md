@@ -6,6 +6,7 @@
 > [oceanprotocol.com](https://oceanprotocol.com)
 
 [![Build Status](https://travis-ci.com/oceanprotocol/plankton-keeper.svg?token=soMi2nNfCZq19zS1Rx4i&branch=master)](https://travis-ci.com/oceanprotocol/plankton-keeper)
+[![js ascribe](https://img.shields.io/badge/js-ascribe-39BA91.svg)](https://github.com/ascribe/javascript)
 
 Ocean Keeper implementation where we put the following modules together:
 
