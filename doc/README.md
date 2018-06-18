@@ -9,6 +9,10 @@ collaborator: Aitor Argomaniz <aitor@oceanprotocol.com>
 date: 06/01/2018
 ```
 
+## Further Documentation
+
+* [TCR Owner's Manual](owners_manual.md)
+
 ## Objective
 
 In this POC, we put following modules together:

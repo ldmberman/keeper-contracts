@@ -11,8 +11,6 @@ Ocean Keeper implementation where we put the following modules together:
 * **Ocean Tokens**: the intrinsic tokens circulated inside Ocean network, which is used in the voting of TCRs;
 * **Curated Proofs Market**: the core marketplace where people can transact with each other and curate assets through staking with Ocean tokens.
 
----
-
 ## Table of Contents
 
   - [Get Started](#get-started)
@@ -45,8 +43,6 @@ Compile the solidity contracts:
 ```bash
 truffle compile
 ```
-
-Start TestRPC:
 
 In a new terminal, launch an Ethereum RPC client, e.g. [ganache-cli](https://github.com/trufflesuite/ganache-cli):
 
