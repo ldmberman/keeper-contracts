@@ -138,26 +138,4 @@ The dependency between different modules are illustrated as below:
 
 ## Architecture of solidity Market contract
 
-<a href="files/Smart-Contract-UML-class-diagram.pdf">First draft of UML class diagram</a>
-
-## Compile, Migrate and Test
-
-Use `$ npm install` to download all the required libraries
-
-Use `$ truffle compile` to compile those solidity files:
-
-<img src="img/compile.jpg" width="500" />
-
-Then deploy them into testRPC `$ truffle migrate`:
-
-<img src="img/migrate.jpg" width="800" />
-
-Note:
-
-* there are `Error: run out of gas` because we try to deploy so many contracts as one single transaction. Tune the `gas` value in `truffle.js` file to make them run through.
-* we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as "gas = 5000000"
-* no need to update the "from : 0x3424ft..." in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
-
-Test them with `$ truffle test test/registry.js`:
-
-<img src="img/js_test.jpg" width="500" />
+* [First draft of UML class diagram](files/Smart-Contract-UML-class-diagram.pdf)
