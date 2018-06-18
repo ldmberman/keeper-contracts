@@ -1,7 +1,7 @@
 {
-  "name": "sol-tcr",
+  "name": "@oceanprotocol/plankton-keeper",
   "version": "0.1.0",
-  "description": "A generic, string-keyed TCR in Solidity",
+  "description": "Integration of TCRs, CPM and Ocean Tokens in Solidity",
   "scripts": {
     "install": "truffle install",
     "compile": "truffle compile",
@@ -13,8 +13,8 @@
     "fix": "eslint --fix",
     "lint": "eslint"
   },
-  "author": "Irene Lin <irene.lin@consensys.net>, Mira Zeitlin <miranda.zeitlin@consensys.net>, Yorke Rhodes <yorke.rhodesiv@consensys.net>",
-  "license": "ISC",
+  "author": "Ocean Protocol",
+  "license": "Apache-2.0",
   "dependencies": {
     "bignumber.js": "^5.0.0",
     "bip39": "^2.5.0",

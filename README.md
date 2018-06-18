@@ -1,6 +1,6 @@
 [![plankton-keeper](doc/img/repo-banner@2x.png)](https://oceanprotocol.com)
 
-> 💧 Integration of TCRs, CPM and Ocean Tokens
+> 💧 Integration of TCRs, CPM and Ocean Tokens in Solidity
 > [oceanprotocol.com](https://oceanprotocol.com)
 
 [![Build Status](https://travis-ci.com/oceanprotocol/plankton-keeper.svg?token=soMi2nNfCZq19zS1Rx4i&branch=master)](https://travis-ci.com/oceanprotocol/plankton-keeper)
