@@ -1,4 +1,6 @@
-[![plankton-keeper](doc/img/repo-banner@2x.png)](https://oceanprotocol.com)
+[![banner](doc/img/repo-banner@2x.png)](https://oceanprotocol.com)
+
+<h1 align="center">plankton-keeper</h1>
 
 > 💧 Integration of TCRs, CPM and Ocean Tokens in Solidity
 > [oceanprotocol.com](https://oceanprotocol.com)
@@ -75,7 +77,7 @@ truffle test test/registry.js
 ## Documentation
 
 * [**Main Documentation: TCR and CPM and Ocean Tokens**](doc/)
-* [Architecture](doc/files/Smart-Contract-UML-class-diagram.pdf)
+* [Architecture (pdf)](doc/files/Smart-Contract-UML-class-diagram.pdf)
 
 ## Contributing
 
