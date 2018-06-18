@@ -9,7 +9,7 @@ collaborator: Aitor Argomaniz <aitor@oceanprotocol.com>
 date: 06/01/2018
 ```
 
-## 1. Objective
+## Objective
 
 In this POC, we put following modules together:
 
@@ -18,11 +18,11 @@ In this POC, we put following modules together:
 * **Curated Proofs Market**: the core marketplace where people can transact with each other and curate assets through staking with Ocean tokens.
 
 
-## 2. Public Interface
+## Public Interface
 
 The following project exposes the following public interfaces:
 
-### 2.1 Curation Market
+### Curation Market
 
 ```solidity
 //Allows a user to start an application. Takes tokens from user and sets apply stage end time.
@@ -59,7 +59,7 @@ function isWhitelisted(bytes32 _listingHash);
    function determineReward(uint _challengeID);
 ```
 
-### 2.2 Marketplace
+### Marketplace
 
 ```solidity
 // Register provider and assets （upload by changing uploadBits）
@@ -76,7 +76,7 @@ function listAssets() external view returns (uint256[50]);
 
 ```
 
-### 2.3 Query functions
+### Query functions
 
 ```solidity
 
@@ -97,7 +97,7 @@ function tokenBalance() public view returns (uint256);
 
 ```
 
-### 2.3 Events
+###  Events
 
 ```solidity
 // Asset Events
@@ -111,10 +111,10 @@ event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint25
 event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
 ```
 
-## 3. File Structure
+## File Structure
 There are several folders and each includes solidity source files for each module:
 
-<img src="doc/img/files.jpg" width="250" />
+<img src="img/files.jpg" width="250" />
 
 * **bondingCurve**: it caculates the bonding curve values when users purchase drops or sell drops in the marketplace;
 * **plcrvoting**: Partial Lock Commit Reveal Voting System;
@@ -123,11 +123,11 @@ There are several folders and each includes solidity source files for each modul
 * **zeppelin**: the library files from OpenZeppelin;
 * **market.sol**: curated proofs market (*on-going work*)
 
-## 4. Architecture of Modules
+## Architecture of Modules
 
 The dependency between different modules are illustrated as below:
 
-<img src="doc/img/structure.jpg" width="800" />
+<img src="img/structure.jpg" width="800" />
 
 * Marketplace (Market.sol) sends listing hash to TCRs (Registry.sol) so that to create challenges.
 * Users can use Ocean Tokens (OceanToken.sol) to vote for or against (PLCRVoting.sol).
@@ -136,21 +136,21 @@ The dependency between different modules are illustrated as below:
 * BancorFormula calculates the power function (Power.sol).
 * TCRs (Registry.sol) send the voting result back to Marketplace (Market.sol).
 
-## 5. Architecture of solidity Market contract
+## Architecture of solidity Market contract
 
-<a href="doc/files/Smart-Contract-UML-class-diagram.pdf">First draft of UML class diagram</a>
+<a href="files/Smart-Contract-UML-class-diagram.pdf">First draft of UML class diagram</a>
 
-## 6. Compile, Migrate and Test
+## Compile, Migrate and Test
 
 Use `$ npm install` to download all the required libraries
 
 Use `$ truffle compile` to compile those solidity files:
 
-<img src="doc/img/compile.jpg" width="500" />
+<img src="img/compile.jpg" width="500" />
 
 Then deploy them into testRPC `$ truffle migrate`:
 
-<img src="doc/img/migrate.jpg" width="800" />
+<img src="img/migrate.jpg" width="800" />
 
 Note:
 
@@ -160,4 +160,4 @@ Note:
 
 Test them with `$ truffle test test/registry.js`:
 
-<img src="doc/img/js_test.jpg" width="500" />
+<img src="img/js_test.jpg" width="500" />
