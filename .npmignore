@@ -1,0 +1,9 @@
+build/*
+.idea/*
+node_modules/*
+conf/*
+contracts/*
+doc/*
+installed_contracts/*
+migrations/*
+test/*
