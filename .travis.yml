@@ -6,6 +6,9 @@ language: node_js
 node_js:
   - "8"
 
+services:
+  - docker
+
 cache:
   directories:
     - node_modules
@@ -20,6 +23,7 @@ matrix:
     - env: SOLC_NIGHTLY=true
 before_script:
   - truffle version
+  - docker build -t ocean/plankton-keeper .
 
 install:
   - npm install -g truffle truffle-expect truffle-config ganache-cli web3
