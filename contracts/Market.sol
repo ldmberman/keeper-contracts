@@ -201,6 +201,10 @@ contract Market is BancorFormula, Ownable {
         return listAssets;
     }
 
+    function getListAssetsSize() public constant returns (uint256) {
+        return sizeListAssets;
+    }
+
         // 2. request initial fund transfer
     function requestTokens(uint256 amount) public returns (uint256) {
       require(msg.sender != 0x0);
