@@ -1,11 +1,11 @@
 [![banner](doc/img/repo-banner@2x.png)](https://oceanprotocol.com)
 
-<h1 align="center">plankton-keeper</h1>
+<h1 align="center">keeper-contracts</h1>
 
 > 💧 Integration of TCRs, CPM and Ocean Tokens in Solidity
 > [oceanprotocol.com](https://oceanprotocol.com)
 
-[![Build Status](https://travis-ci.com/oceanprotocol/plankton-keeper.svg?token=soMi2nNfCZq19zS1Rx4i&branch=master)](https://travis-ci.com/oceanprotocol/plankton-keeper)
+[![Build Status](https://travis-ci.com/oceanprotocol/keeper-contracts.svg?token=soMi2nNfCZq19zS1Rx4i&branch=master)](https://travis-ci.com/oceanprotocol/keeper-contracts)
 [![js ascribe](https://img.shields.io/badge/js-ascribe-39BA91.svg)](https://github.com/ascribe/javascript)
 
 Ocean Keeper implementation where we put the following modules together:
@@ -31,8 +31,8 @@ As a pre-requisite, you need Node.js >= v6.11.5.
 Clone the project and install all dependencies:
 
 ```bash
-git clone git@github.com:oceanprotocol/plankton-keeper.git
-cd plankton-keeper/
+git clone git@github.com:oceanprotocol/keeper-contracts.git
+cd keeper-contracts/
 
 # install dependencies
 npm i
@@ -82,9 +82,9 @@ truffle test test/registry.js
 
 ## Contributing
 
-Plankton Keeper uses GitHub as a means for maintaining and tracking issues and source code development.
+We use GitHub as a means for maintaining and tracking issues and source code development.
 
-If you would like to contribute, please fork this code, fix the issue then commit, finally send a pull request to maintainers in order to review your changes. 
+If you would like to contribute, please fork this repository, do work in a feature branch, and finally open a pull request for maintainers to review your changes.
 
 Ocean Protocol uses [C4 Standard process](https://github.com/unprotocols/rfc/blob/master/1/README.md) to manage changes in the source code.  Find here more details about [Ocean C4 OEP](https://github.com/oceanprotocol/OEPs/tree/master/1).
 

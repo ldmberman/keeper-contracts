@@ -1,5 +1,5 @@
 {
-  "name": "@oceanprotocol/plankton-keeper",
+  "name": "@oceanprotocol/keeper-contracts",
   "version": "0.1.0",
   "description": "Integration of TCRs, CPM and Ocean Tokens in Solidity",
   "scripts": {

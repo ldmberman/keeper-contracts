@@ -15,7 +15,7 @@ date: 06/01/2018
 
 ## Objective
 
-In this POC, we put following modules together:
+In this project, we put following modules together:
 
 * **TCRs**: users create challenges and resolve them through voting to maintain registries;
 * **Ocean Tokens**: the intrinsic tokens circulated inside Ocean network, which is used in the voting of TCRs;
@@ -24,7 +24,7 @@ In this POC, we put following modules together:
 
 ## Public Interface
 
-The following project exposes the following public interfaces:
+The project exposes the following public interfaces:
 
 ### Curation Market
 
@@ -41,7 +41,7 @@ function withdraw(bytes32 _listingHash, uint _amount);
 // Allows the owner of a listingHash to remove the listingHash from the whitelist
 function exit(bytes32 _listingHash);
 
-// Starts a poll for a listingHash which is either in the apply stage or already in the whitelist. 
+// Starts a poll for a listingHash which is either in the apply stage or already in the whitelist.
 function challenge(bytes32 _listingHash, string _data);
 
 // Updates a listingHash’s status from ‘application’ to ‘listing’ or resolves a challenge if one exists.
@@ -76,15 +76,13 @@ function publish(uint256 assetId, bytes32 url, bytes32 token) external returns (
 function purchase(uint256 assetId) external returns (bytes32 url, bytes32 token);
 
 // Return the list of available assets
-function listAssets() external view returns (uint256[50]); 
-
+function listAssets() external view returns (uint256[50]);
 ```
 
 ### Query functions
 
 ```solidity
-
-// Return the number of drops associated to the message.sender to an Asset 
+// Return the number of drops associated to the message.sender to an Asset
 function dropsBalance(uint256 assetId) public view returns (uint256);
 
 // Return true or false if an Asset is active given the assetId
@@ -98,7 +96,6 @@ function getAssetToken(uint256 assetId) public view returns (bytes32);
 
 // Retrieve the msg.sender Provider token balance
 function tokenBalance() public view returns (uint256);
-
 ```
 
 ###  Events
@@ -116,6 +113,7 @@ event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint2
 ```
 
 ## File Structure
+
 There are several folders and each includes solidity source files for each module:
 
 <img src="img/files.jpg" width="250" />
@@ -140,6 +138,6 @@ The dependency between different modules are illustrated as below:
 * BancorFormula calculates the power function (Power.sol).
 * TCRs (Registry.sol) send the voting result back to Marketplace (Market.sol).
 
-## Architecture of solidity Market contract
+## Architecture of Solidity Market Contract
 
 * [First draft of UML class diagram](files/Smart-Contract-UML-class-diagram.pdf)
