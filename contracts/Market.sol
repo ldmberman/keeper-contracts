@@ -14,6 +14,7 @@ contract Market is BancorFormula, Ownable {
     using SafeMath for uint256;
     using SafeMath for uint;
 
+    bytes public empty;
 
     // data Asset
     struct Asset{
@@ -22,8 +23,8 @@ contract Market is BancorFormula, Ownable {
           uint256 nOcean;                         // poolBalance of dataset
           uint256 bitSize;                        // size of asset in bit
           bool active;                            // status of asset
-          bytes32 url;                            // assetId => url
-          bytes32 token;                          // assetId => token
+          bytes url;                            // assetId => url
+          bytes token;                          // assetId => token
           mapping (address => uint256) drops;     // mapping provider (address) to their stakes on dataset Sij
           mapping (address => uint256) delivery;  // mapping provider (address) to their #delivery of dataset Dj
     }
@@ -98,12 +99,12 @@ contract Market is BancorFormula, Ownable {
     }
 
     // Get the url attribute associated to a given the assetId
-    function getAssetUrl(uint256 assetId) public view returns (bytes32) {
+    function getAssetUrl(uint256 assetId) public view returns (bytes) {
       return mAssets[assetId].url;
     }
 
     // Get the token attribute associated to a given the assetId
-    function getAssetToken(uint256 assetId) public view returns (bytes32) {
+    function getAssetToken(uint256 assetId) public view returns (bytes) {
       return mAssets[assetId].token;
     }
 
@@ -145,7 +146,8 @@ contract Market is BancorFormula, Ownable {
       // register assets
       uint256 fileSize = 1024;
       // ndrops =10, nToken = 1 => phatom tokesn to avoid failure of Bancor formula
-      mAssets[assetId] = Asset(msg.sender, 10, 1, fileSize, false, 0, 0);  // Creates new struct and saves in storage. We leave out the mapping type.
+
+      mAssets[assetId] = Asset(msg.sender, 10, 1, fileSize, false, empty, empty);  // Creates new struct and saves in storage. We leave out the mapping type.
 
       if (sizeListAssets < 50)  {
           mAssets[assetId].active = true;
@@ -162,7 +164,7 @@ contract Market is BancorFormula, Ownable {
 
 
     // publish consumption information about an Asset
-    function publish(uint256 assetId, bytes32 _url, bytes32 _token) public returns (bool success) {
+    function publish(uint256 assetId, bytes _url, bytes _token) public returns (bool success) {
          require(mAssets[assetId].owner != 0x0);
          require(msg.sender == mAssets[assetId].owner);
 

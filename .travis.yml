@@ -1,0 +1,48 @@
+dist: trusty
+sudo: required
+group: beta
+
+language: node_js
+node_js:
+  - "8"
+
+cache:
+  directories:
+    - node_modules
+env:
+  -
+  - SOLIDITY_COVERAGE=true
+  - SOLC_NIGHTLY=true
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: SOLIDITY_COVERAGE=true
+    - env: SOLC_NIGHTLY=true
+before_script:
+  - truffle version
+
+install:
+  - npm install -g truffle truffle-expect truffle-config ganache-cli web3
+
+before_script:
+  - testrpc > testrpc.log &
+
+script:
+  - npm install
+  - truffle test
+
+before_deploy:
+  - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
+  - ls -la ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+  - tar tzvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+
+
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_OAUTH_TOKEN
+  file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
+
