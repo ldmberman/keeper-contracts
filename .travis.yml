@@ -29,7 +29,7 @@ before_script:
 
 script:
   - npm install
-  - truffle test
+  - npm test
 
 before_deploy:
   - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
@@ -38,11 +38,22 @@ before_deploy:
 
 
 
-deploy:
-  provider: releases
-  api_key: $GITHUB_OAUTH_TOKEN
-  file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
-  skip_cleanup: true
-  on:
-    tags: true
+#deploy:
+#  - provider: npm
+#    email: "devops@oceanprotocol.com"
+#    api_key: $NPM_AUTH_TOKEN
+#    on:
+#      tags: true
+
+#  - provider: pypi
+#    user: "Your username"
+#    password:
+#      secure: "Your encrypted password"
+
+#  - provider: releases
+#    api_key: $GITHUB_OAUTH_TOKEN
+#    file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+#    skip_cleanup: true
+#    on:
+#      tags: true
 

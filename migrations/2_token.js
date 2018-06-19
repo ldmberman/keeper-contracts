@@ -1,6 +1,9 @@
 /* global artifacts */
-const Token = artifacts.require("./OceanToken.sol");
 
-module.exports = function(deployer) {
-    deployer.deploy(Token);
-};
+const Token = artifacts.require('./OceanToken.sol')
+
+const token = (deployer) => {
+    deployer.deploy(Token)
+}
+
+module.exports = token

@@ -1,6 +1,7 @@
+build/
+.idea/
+node_modules/
 package-lock.json
-build/*
-.idea/*
-node_modules/*
 .DS_Store
+installed_contracts/
 
