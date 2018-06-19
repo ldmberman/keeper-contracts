@@ -17,6 +17,8 @@ Ocean Keeper implementation where we put the following modules together:
 ## Table of Contents
 
   - [Get Started](#get-started)
+     - [Docker](#docker)
+     - [Local development](#local-development)
   - [Testing](#testing)
   - [Documentation](#documentation)
   - [Contributing](#contributing)
@@ -25,6 +27,24 @@ Ocean Keeper implementation where we put the following modules together:
 ---
 
 ## Get Started
+
+For local developmenty you can either use Docker, or setup the development environment on your machine.
+
+### Docker
+
+The most simple way to get started is with Docker:
+
+```bash
+git clone git@github.com:oceanprotocol/keeper-contracts.git
+cd keeper-contracts/
+
+docker build -t keeper-contracts:0.1 .
+docker run -d -p 8545:8545 keeper-contracts:0.1
+```
+
+Which will expose the Ethereum RPC client with all contracts loaded under [http://localhost:8545](http://localhost:8545)
+
+### Local development
 
 As a pre-requisite, you need Node.js >= v6.11.5.
 
