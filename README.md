@@ -35,11 +35,11 @@ For local developmenty you can either use Docker, or setup the development envir
 The most simple way to get started is with Docker:
 
 ```bash
-git clone git@github.com:oceanprotocol/plankton-keeper.git
-cd plankton-keeper/
+git clone git@github.com:oceanprotocol/keeper-contracts.git
+cd keeper-contracts/
 
-docker build -t plankton/keeper:0.1 .
-docker run -d -p 8545:8545 plankton/keeper:0.1
+docker build -t keeper-contracts:0.1 .
+docker run -d -p 8545:8545 keeper-contracts:0.1
 ```
 
 Which will expose the Ethereum RPC client with all contracts loaded under [http://localhost:8545](http://localhost:8545)
