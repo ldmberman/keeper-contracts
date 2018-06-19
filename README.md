@@ -17,6 +17,8 @@ Ocean Keeper implementation where we put the following modules together:
 ## Table of Contents
 
   - [Get Started](#get-started)
+     - [Docker](#docker)
+     - [Local development](#local-development)
   - [Testing](#testing)
   - [Documentation](#documentation)
   - [Contributing](#contributing)
@@ -25,6 +27,24 @@ Ocean Keeper implementation where we put the following modules together:
 ---
 
 ## Get Started
+
+For local developmenty you can either use Docker, or setup the development environment on your machine.
+
+### Docker
+
+The most simple way to get started is with Docker:
+
+```bash
+git clone git@github.com:oceanprotocol/plankton-keeper.git
+cd plankton-keeper/
+
+docker build -t plankton/keeper:0.1 .
+docker run -d -p 8545:8545 plankton/keeper:0.1
+```
+
+Which will expose the Ethereum RPC client with all contracts loaded under [http://localhost:8545](http://localhost:8545)
+
+### Local development
 
 As a pre-requisite, you need Node.js >= v6.11.5.
 
@@ -67,13 +87,6 @@ Note:
 * we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as `gas = 5000000`
 * no need to update the `from : 0x3424ft...` in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
 
-#### Docker
-
-The Simplest way to get started with the Docker image:
-```bash
-docker build -t plankton/keeper:0.1 .
-docker run -d -p 8545:8545 plankton/keeper:0.1
-```
 ## Testing
 
 Run tests with `truffle test`, e.g.:
