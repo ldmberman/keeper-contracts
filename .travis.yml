@@ -12,27 +12,27 @@ services:
 cache:
   directories:
     - node_modules
+
 env:
   -
   - SOLIDITY_COVERAGE=true
   - SOLC_NIGHTLY=true
+
 matrix:
   fast_finish: true
   allow_failures:
     - env: SOLIDITY_COVERAGE=true
     - env: SOLC_NIGHTLY=true
-before_script:
-  - truffle version
-#  - docker build -t ocean/plankton-keeper .
 
 install:
-  - npm install -g truffle truffle-expect truffle-config ganache-cli web3
+  - npm install
 
 before_script:
+  - truffle version
+# - docker build -t ocean/plankton-keeper .
   - ganache-cli > ganache-cli.log &
 
 script:
-  - npm install
   - npm test
 
 before_deploy:
@@ -40,7 +40,8 @@ before_deploy:
   - ls -la ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
   - tar tzvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
 
-
+notifications:
+  email: false
 
 #deploy:
 #  - provider: npm

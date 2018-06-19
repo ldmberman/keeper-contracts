@@ -42,7 +42,20 @@ docker build -t keeper-contracts:0.1 .
 docker run -d -p 8545:8545 keeper-contracts:0.1
 ```
 
-Which will expose the Ethereum RPC client with all contracts loaded under [http://localhost:8545](http://localhost:8545)
+Which will expose the Ethereum RPC client with all contracts loaded under localhost:8545, which you can add to your `truffle.js`:
+
+```js
+module.exports = {
+    networks: {
+        development: {
+            host: 'localhost',
+            port: 8545,
+            network_id: '*',
+            gas: 6000000
+        },
+    }
+}
+```
 
 ### Local development
 
@@ -83,7 +96,6 @@ truffle migrate --reset
 ```
 
 Note:
-* there are `Error: run out of gas` because we try to deploy so many contracts as one single transaction. Tune the `gas` value in `truffle.js` file to make them run through.
 * we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as `gas = 5000000`
 * no need to update the `from : 0x3424ft...` in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
 
