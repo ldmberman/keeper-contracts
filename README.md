@@ -20,6 +20,7 @@ Ocean Keeper implementation where we put the following modules together:
      - [Docker](#docker)
      - [Local development](#local-development)
   - [Testing](#testing)
+     - [Code Linting](#code-linting)
   - [Documentation](#documentation)
   - [Contributing](#contributing)
   - [License](#license)
@@ -106,6 +107,12 @@ Run tests with `truffle test`, e.g.:
 ```bash
 truffle test test/registry.js
 ```
+
+### Code Linting
+
+Linting is setup for JavaScript with [ESLint](https://eslint.org) & Solidity with [Solium](https://github.com/duaraghav8/Solium).
+
+Code style is enforced through the CI test process, builds will fail if there're any linting errors.
 
 ## Documentation
 
