@@ -1,10 +1,12 @@
+// solium-disable security/no-block-members, emit
+
 pragma solidity ^0.4.11;
 
-//import "./Parameterizer.sol";
-import "../plcrvoting/PLCRVoting.sol";
-//import "zeppelin/math/SafeMath.sol";
+//import './Parameterizer.sol';
+import '../plcrvoting/PLCRVoting.sol';
+//import 'zeppelin/math/SafeMath.sol';
 
-//import "../token/OceanToken.sol";
+//import '../token/OceanToken.sol';
 
 contract Registry {
 
@@ -13,7 +15,13 @@ contract Registry {
     // ------
 
     event _Application(bytes32 indexed listingHash, uint deposit, uint appEndDate, string data, address indexed applicant);
-    event _Challenge(bytes32 indexed listingHash, uint challengeID, string data, uint commitEndDate, uint revealEndDate, address indexed challenger);
+    event _Challenge(
+        bytes32 indexed listingHash,
+        uint challengeID,
+        string data, uint commitEndDate,
+        uint revealEndDate,
+        address indexed challenger
+    );
     event _Deposit(bytes32 indexed listingHash, uint added, uint newTotal, address indexed owner);
     event _Withdrawal(bytes32 indexed listingHash, uint withdrew, uint newTotal, address indexed owner);
     event _ApplicationWhitelisted(bytes32 indexed listingHash);
@@ -89,14 +97,14 @@ contract Registry {
     function apply(bytes32 _listingHash, uint _amount, string _data) external {
         require(!isWhitelisted(_listingHash));
         require(!appWasMade(_listingHash));
-        require(_amount >= 10); //parameterizer.get("minDeposit"));
+        require(_amount >= 10); //parameterizer.get('minDeposit'));
 
         // Sets owner
         Listing storage listing = listings[_listingHash];
         listing.owner = msg.sender;
 
         // Sets apply stage end time
-        listing.applicationExpiry = block.timestamp.add(60);//parameterizer.get("applyStageLen"));
+        listing.applicationExpiry = block.timestamp.add(60);//parameterizer.get('applyStageLen'));
         listing.unstakedDeposit = _amount;
 
         // Transfers tokens from user to Registry contract
@@ -131,7 +139,7 @@ contract Registry {
 
         require(listing.owner == msg.sender);
         require(_amount <= listing.unstakedDeposit);
-        require(listing.unstakedDeposit - _amount >= 10); //parameterizer.get("minDeposit"));
+        require(listing.unstakedDeposit - _amount >= 10); //parameterizer.get('minDeposit'));
 
         listing.unstakedDeposit -= _amount;
         require(token.transfer(msg.sender, _amount));
@@ -171,7 +179,7 @@ contract Registry {
     */
     function challenge(bytes32 _listingHash, string _data) external returns (uint challengeID) {
         Listing storage listing = listings[_listingHash];
-        uint deposit = 10; //parameterizer.get("minDeposit");
+        uint deposit = 10; //parameterizer.get('minDeposit');
 
         // Listing must be in apply stage or already on the whitelist
         require(appWasMade(_listingHash) || listing.whitelisted);
@@ -187,14 +195,15 @@ contract Registry {
 
         // Starts poll
         uint pollID = voting.startPoll(
-            50,  //parameterizer.get("voteQuorum"),
-            10, //parameterizer.get("commitStageLen"),
-            10  //parameterizer.get("revealStageLen")
+            50,  //parameterizer.get('voteQuorum'),
+            10, //parameterizer.get('commitStageLen'),
+            10  //parameterizer.get('revealStageLen')
         );
 
         challenges[pollID] = Challenge({
             challenger: msg.sender,
-            rewardPool: ((100 - 50) * deposit) / 100,  //parameterizer.get("dispensationPct") = 50
+            //parameterizer.get('dispensationPct') = 50
+            rewardPool: ((100 - 50) * deposit) / 100,
             stake: deposit,
             resolved: false,
             totalTokens: 0
@@ -222,11 +231,11 @@ contract Registry {
     */
     function updateStatus(bytes32 _listingHash) public {
         if (canBeWhitelisted(_listingHash)) {
-          whitelistApplication(_listingHash);
+            whitelistApplication(_listingHash);
         } else if (challengeCanBeResolved(_listingHash)) {
-          resolveChallenge(_listingHash);
+            resolveChallenge(_listingHash);
         } else {
-          revert();
+            revert();
         }
     }
 
@@ -292,11 +301,10 @@ contract Registry {
         // the listingHash can be whitelisted,
         // and either: the challengeID == 0, or the challenge has been resolved.
         if (
-            appWasMade(_listingHash) &&
-            listings[_listingHash].applicationExpiry < now &&
-            !isWhitelisted(_listingHash) &&
-            (challengeID == 0 || challenges[challengeID].resolved == true)
-        ) { return true; }
+            appWasMade(_listingHash) && listings[_listingHash].applicationExpiry < now && !isWhitelisted(_listingHash) && (challengeID == 0 || challenges[challengeID].resolved == true)
+        ) {
+            return true;
+        }
 
         return false;
     }
@@ -361,7 +369,7 @@ contract Registry {
     @param _voter       The voter whose claim status to query for the provided challengeID
     */
     function tokenClaims(uint _challengeID, address _voter) public view returns (bool) {
-      return challenges[_challengeID].tokenClaims[_voter];
+        return challenges[_challengeID].tokenClaims[_voter];
     }
 
     // ----------------
@@ -384,8 +392,7 @@ contract Registry {
         challenges[challengeID].resolved = true;
 
         // Stores the total tokens used for voting by the winning side for reward purposes
-        challenges[challengeID].totalTokens =
-            voting.getTotalNumberOfTokensForWinningOption(challengeID);
+        challenges[challengeID].totalTokens = voting.getTotalNumberOfTokensForWinningOption(challengeID);
 
         // Case: challenge failed
         if (voting.isPassed(challengeID)) {
@@ -412,7 +419,9 @@ contract Registry {
     @param _listingHash The listingHash of an application/listingHash to be whitelisted
     */
     function whitelistApplication(bytes32 _listingHash) private {
-        if (!listings[_listingHash].whitelisted) { _ApplicationWhitelisted(_listingHash); }
+        if (!listings[_listingHash].whitelisted) {
+            _ApplicationWhitelisted(_listingHash);
+        }
         listings[_listingHash].whitelisted = true;
     }
 

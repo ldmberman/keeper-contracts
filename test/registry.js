@@ -191,7 +191,7 @@ contract('Market', (accounts) => {
 
             let endT = 0
 
-            /* eslint-disable no-await-in-loop */
+            /* eslint-disable no-await-in-loop, no-constant-condition */
             while (true) {
                 wait(2000)
                 endT = await voting.queryTS.call()
