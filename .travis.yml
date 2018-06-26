@@ -6,43 +6,59 @@ language: node_js
 node_js:
   - "8"
 
+services:
+  - docker
+
 cache:
   directories:
     - node_modules
+
 env:
   -
   - SOLIDITY_COVERAGE=true
   - SOLC_NIGHTLY=true
+
 matrix:
   fast_finish: true
   allow_failures:
     - env: SOLIDITY_COVERAGE=true
     - env: SOLC_NIGHTLY=true
-before_script:
-  - truffle version
 
 install:
-  - npm install -g truffle truffle-expect truffle-config ganache-cli web3
+  - npm install
 
 before_script:
-  - testrpc > testrpc.log &
+  - truffle version
+# - docker build -t ocean/plankton-keeper .
+  - ganache-cli > ganache-cli.log &
 
 script:
-  - npm install
-  - truffle test
+  - npm test
 
 before_deploy:
   - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
   - ls -la ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
   - tar tzvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
 
-
+notifications:
+  email: false
 
 deploy:
-  provider: releases
-  api_key: $GITHUB_OAUTH_TOKEN
-  file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
-  skip_cleanup: true
-  on:
-    tags: true
+  - provider: npm
+    email: "devops@oceanprotocol.com"
+    api_key: "QJqM+3HLHa2Q+XAqBLA2Sy0hCv0n1YbQHmHd8GBt/pGIJ9r/px4m7IN/Ohaz5GOPVBzoGMLXpWg2oq78lWC3dnZFbc9jsffJRMfV5hPQk20jFmKVcC7VDPevLz6aSK1/9WPxKwipHDHT1XJDaowyjCK+VBGL/woVn2TEuttG7A3l5I1QCsb5Z9uJ0ruzTrCdHEy2oZyalK0+1jQ/GG2UNQSpeu40PZaYsNv/FPagUV6pXrmy1CJk4QTi24y41kGaW2tG/yYoj2OcnXQ57GgXTYQyROJd9FriOI/x552DByMRRo/sN8LLNVLDnarhL2I/zhvQtaN0QNVX3eoaNBSVyd7WXJwlnfb6nmYBdMIdLuyOC9EFlbnTbVxzLZ4dgDDqrArBaUfpkfvWK4cklToXD1zYPfw1rnBsMOLbKg9/xywxxA5+/eNzsvyZmhsd1m/0qNn9rbK/Uyqs8Bh/kibAD7/HNoMiiekfxlkYOM7HHdwygRB8zN1ObwTCDbvv5HcjuQ27FEM3NQIyDKc7xrKmsU2kfHt/DKoyKqQWHzQSWvKHlrJiEJZQaodlwC/dCWDvli3s8tUqXtOPcZ62HNArOo1HUs+P1BqbTUyT5rcEDHJFtXk8VxZF5t6vzdRGVhlFwn8B7wwb0jla90WMZT1y3T7P/woB9AsEXCeW/XV4QWA="
+    on:
+      tags: true
+
+#  - provider: pypi
+#    user: "Your username"
+#    password:
+#      secure: "Your encrypted password"
+
+#  - provider: releases
+#    api_key: $GITHUB_OAUTH_TOKEN
+#    file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+#    skip_cleanup: true
+#    on:
+#      tags: true
 

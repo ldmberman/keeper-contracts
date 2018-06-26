@@ -1,22 +1,9 @@
 {
-  "package_name": "tcr",
-  "version": "1.0.0",
-  "description": "A generic, hash-keyed TCR",
+  "package_name": "@oceanprotocol/keeper-contracts",
+  "version": "0.1.0",
+  "description": "Integration of TCRs, CPM and Ocean Tokens in Solidity",
   "authors": [
-    "Mike Goldin",
-    "Isaac Kang",
-    "Terry Li",
-    "Irene Lin",
-    "Cem Ozer",
-    "Aspyn Palatnick",
-    "Yorke Rhodes",
-    "Mira Zeitlin"
-  ],
-  "keywords": [
-    "consensys",
-    "plcr",
-    "tokens",
-    "tcr"
+    "Ocean Protocol"
   ],
   "dependencies": {
     "tokens": "1.0.0",
