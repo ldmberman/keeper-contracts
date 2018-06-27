@@ -15,15 +15,22 @@ Versions of the library must be modified in the **package.json** file.
 {
   "name": "@oceanprotocol/keeper-contracts",
   "version": "0.0.2",
+
+  ..
+
+}
 ```
 
-Typically you can't overwrite existing versions of the libraries, so if you are testing with new versions, it's recommended to play with the patch numbers.
+Typically you can't overwrite NPM already published versions of the libraries.
+This package uses [Semantic Versioning](https://semver.org/), so if you are testing with new versions, it's recommended to play with the patch numbers.
+
+
 
 If you need to build a local version of the package you need to run the following commands:
 
 ```bash
-npm build .
-npm install .
+npm install
+npm run build
 ```
 
 If you need to release a new version of the library before tagging, you need to execute the following command:
