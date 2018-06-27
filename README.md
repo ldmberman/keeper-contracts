@@ -23,6 +23,7 @@ Ocean Keeper implementation where we put the following modules together:
      - [Code Linting](#code-linting)
   - [Documentation](#documentation)
   - [Contributing](#contributing)
+  - [Prior Art](#prior-art)
   - [License](#license)
 
 ---
@@ -127,6 +128,16 @@ We use GitHub as a means for maintaining and tracking issues and source code dev
 If you would like to contribute, please fork this repository, do work in a feature branch, and finally open a pull request for maintainers to review your changes.
 
 Ocean Protocol uses [C4 Standard process](https://github.com/unprotocols/rfc/blob/master/1/README.md) to manage changes in the source code.  Find here more details about [Ocean C4 OEP](https://github.com/oceanprotocol/OEPs/tree/master/1).
+
+## Prior Art
+
+This project builds on top of the work done in multiple open source projects:
+
+- [ConsenSys/PLCRVoting](https://github.com/ConsenSys/PLCRVoting)
+- [skmgoldin/tcr](https://github.com/skmgoldin/tcr)
+- [OpenZeppelin/openzeppelin-solidity](https://github.com/OpenZeppelin/openzeppelin-solidity)
+- [relevant-community/contracts](https://github.com/relevant-community/contracts/tree/bondingCurves/contracts)
+
 
 ## License
 
