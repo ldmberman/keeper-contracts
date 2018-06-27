@@ -2,6 +2,12 @@
   "name": "@oceanprotocol/keeper-contracts",
   "version": "0.0.6",
   "description": "Integration of TCRs, CPM and Ocean Tokens in Solidity",
+  "bugs": {
+    "url": "https://github.com/oceanprotocol/keeper-contracts/issues"
+  },
+  "homepage": "https://github.com/oceanprotocol/keeper-contracts#readme",
+  "main": "truffle.js",
+
   "scripts": {
     "install": "truffle install",
     "compile": "truffle compile",
@@ -55,9 +61,4 @@
   "engines": {
     "node": ">=6.11.5"
   }
-  "bugs": {
-    "url": "https://github.com/oceanprotocol/keeper-contracts/issues"
-  },
-  "homepage": "https://github.com/oceanprotocol/keeper-contracts#readme",
-  "main": "truffle.js"}
 }
