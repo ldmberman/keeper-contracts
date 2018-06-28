@@ -1,165 +1,139 @@
-# Integration of TCRs, CPM and Ocean Tokens with Solidity
+[![banner](doc/img/repo-banner@2x.png)](https://oceanprotocol.com)
 
-```
-name: Integration of TCRs, CPM, and Ocean tokens with Solidity
-type: development
-status: initial draft
-editor: Fang Gong <fang@oceanprotocol.com>
-collaborator: Aitor Argomaniz <aitor@oceanprotocol.com>
-date: 06/01/2018
-```
+<h1 align="center">keeper-contracts</h1>
 
-## 1. Objective
+> 💧 Integration of TCRs, CPM and Ocean Tokens in Solidity
+> [oceanprotocol.com](https://oceanprotocol.com)
 
-In this POC, we put following modules together:
+[![Build Status](https://travis-ci.com/oceanprotocol/keeper-contracts.svg?token=soMi2nNfCZq19zS1Rx4i&branch=master)](https://travis-ci.com/oceanprotocol/keeper-contracts)
+[![js ascribe](https://img.shields.io/badge/js-ascribe-39BA91.svg)](https://github.com/ascribe/javascript)
+
+Ocean Keeper implementation where we put the following modules together:
 
 * **TCRs**: users create challenges and resolve them through voting to maintain registries;
 * **Ocean Tokens**: the intrinsic tokens circulated inside Ocean network, which is used in the voting of TCRs;
 * **Curated Proofs Market**: the core marketplace where people can transact with each other and curate assets through staking with Ocean tokens.
 
+## Table of Contents
 
-## 2. Public Interface
+  - [Get Started](#get-started)
+     - [Docker](#docker)
+     - [Local development](#local-development)
+  - [Testing](#testing)
+  - [Documentation](#documentation)
+  - [Contributing](#contributing)
+  - [License](#license)
 
-The following project exposes the following public interfaces:
+---
 
-### 2.1 Curation Market
+## Get Started
 
-```solidity
-//Allows a user to start an application. Takes tokens from user and sets apply stage end time.
-function apply(bytes32 _listingHash, uint _amount, string _data);
+For local developmenty you can either use Docker, or setup the development environment on your machine.
 
-// Allows the owner of a listingHash to increase their unstaked deposit.
-function deposit(bytes32 _listingHash, uint _amount);
+### Docker
 
-//Allows the owner of a listingHash to decrease their unstaked deposit.
-function withdraw(bytes32 _listingHash, uint _amount);
+The most simple way to get started is with Docker:
 
-// Allows the owner of a listingHash to remove the listingHash from the whitelist
-function exit(bytes32 _listingHash);
+```bash
+git clone git@github.com:oceanprotocol/keeper-contracts.git
+cd keeper-contracts/
 
-// Starts a poll for a listingHash which is either in the apply stage or already in the whitelist. 
-function challenge(bytes32 _listingHash, string _data);
-
-// Updates a listingHash’s status from ‘application’ to ‘listing’ or resolves a challenge if one exists.
-function updateStatus(bytes32 _listingHash);
-
-// Called by a voter to claim their reward for each completed vote.
-function claimReward(uint _challengeID, uint _salt);
-
-// Calculates the provided voter’s token reward for the given poll.
-function voterReward(address _voter, uint _challengeID, uint _salt);
-
-// Determines whether the given listingHash be whitelisted.
-function canBeWhitelisted(bytes32 _listingHash);
-
-// Returns true if the provided listingHash is whitelisted
-function isWhitelisted(bytes32 _listingHash);
-
-// Determines the number of tokens awarded to the winning party in a challenge.
-   function determineReward(uint _challengeID);
+docker build -t keeper-contracts:0.1 .
+docker run -d -p 8545:8545 keeper-contracts:0.1
 ```
 
-### 2.2 Marketplace
+Which will expose the Ethereum RPC client with all contracts loaded under localhost:8545, which you can add to your `truffle.js`:
 
-```solidity
-// Register provider and assets （upload by changing uploadBits）
-function register(uint256 assetId) public returns (bool success);
-
-// publish consumption information about an Asset
-function publish(uint256 assetId, bytes32 url, bytes32 token) external returns (bool success);
-
-// purchase an asset and get the consumption information
-function purchase(uint256 assetId) external returns (bytes32 url, bytes32 token);
-
-// Return the list of available assets
-function listAssets() external view returns (uint256[50]); 
-
+```js
+module.exports = {
+    networks: {
+        development: {
+            host: 'localhost',
+            port: 8545,
+            network_id: '*',
+            gas: 6000000
+        },
+    }
+}
 ```
 
-### 2.3 Query functions
+### Local development
 
-```solidity
+As a pre-requisite, you need Node.js >= v6.11.5.
 
-// Return the number of drops associated to the message.sender to an Asset 
-function dropsBalance(uint256 assetId) public view returns (uint256);
+Clone the project and install all dependencies:
 
-// Return true or false if an Asset is active given the assetId
-function checkAsset(uint256 assetId) public view returns (bool);
+```bash
+git clone git@github.com:oceanprotocol/keeper-contracts.git
+cd keeper-contracts/
 
-// Get the url attribute associated to a given the assetId
-function getAssetUrl(uint256 assetId) public view returns (bytes32);
+# install dependencies
+npm i
 
-// Get the token attribute associated to a given the assetId
-function getAssetToken(uint256 assetId) public view returns (bytes32);
-
-// Retrieve the msg.sender Provider token balance
-function tokenBalance() public view returns (uint256);
-
+# install RPC client globally
+npm install -g ganache-cli
 ```
 
-### 2.3 Events
+Compile the solidity contracts:
 
-```solidity
-// Asset Events
-event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
-event AssetPublished(uint256 indexed _assetId, address indexed _owner);
-event AssetPurchased(uint256 indexed _assetId, address indexed _owner);
-
-// Token Events
-event TokenWithdraw(address indexed _requester, uint256 amount);
-event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
-event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
+```bash
+truffle compile
 ```
 
-## 3. File Structure
-There are several folders and each includes solidity source files for each module:
+In a new terminal, launch an Ethereum RPC client, e.g. [ganache-cli](https://github.com/trufflesuite/ganache-cli):
 
-<img src="doc/img/files.jpg" width="250" />
+```bash
+ganache-cli
+```
 
-* **bondingCurve**: it caculates the bonding curve values when users purchase drops or sell drops in the marketplace;
-* **plcrvoting**: Partial Lock Commit Reveal Voting System;
-* **tcr**: the TCRs related files;
-* **token**: Ocean tokens based on ERC20 standard;
-* **zeppelin**: the library files from OpenZeppelin;
-* **market.sol**: curated proofs market (*on-going work*)
+Switch back to your other terminal and deploy the contracts:
 
-## 4. Architecture of Modules
+```bash
+truffle migrate
 
-The dependency between different modules are illustrated as below:
-
-<img src="doc/img/structure.jpg" width="800" />
-
-* Marketplace (Market.sol) sends listing hash to TCRs (Registry.sol) so that to create challenges.
-* Users can use Ocean Tokens (OceanToken.sol) to vote for or against (PLCRVoting.sol).
-* Voting is configured with the parameters (Parameterizer.sol).
-* Marketplace uses bonding curve (BancorFormula.sol) to determine the price of drops.
-* BancorFormula calculates the power function (Power.sol).
-* TCRs (Registry.sol) send the voting result back to Marketplace (Market.sol).
-
-## 5. Architecture of solidity Market contract
-
-<a href="doc/files/Smart-Contract-UML-class-diagram.pdf">First draft of UML class diagram</a>
-
-## 6. Compile, Migrate and Test
-
-Use `$ npm install` to download all the required libraries
-
-Use `$ truffle compile` to compile those solidity files:
-
-<img src="doc/img/compile.jpg" width="500" />
-
-Then deploy them into testRPC `$ truffle migrate`:
-
-<img src="doc/img/migrate.jpg" width="800" />
+# for redeployment run this instead
+truffle migrate --reset
+```
 
 Note:
+* we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as `gas = 5000000`
+* no need to update the `from : 0x3424ft...` in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
 
-* there are `Error: run out of gas` because we try to deploy so many contracts as one single transaction. Tune the `gas` value in `truffle.js` file to make them run through.
-* we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as "gas = 5000000"
-* no need to update the "from : 0x3424ft..." in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
+## Testing
 
-Test them with `$ truffle test test/registry.js`:
+Run tests with `truffle test`, e.g.:
 
-<img src="doc/img/js_test.jpg" width="500" />
+```bash
+truffle test test/registry.js
+```
 
+## Documentation
 
+* [**Main Documentation: TCR and CPM and Ocean Tokens**](doc/)
+* [Architecture (pdf)](doc/files/Smart-Contract-UML-class-diagram.pdf)
+
+## Contributing
+
+We use GitHub as a means for maintaining and tracking issues and source code development.
+
+If you would like to contribute, please fork this repository, do work in a feature branch, and finally open a pull request for maintainers to review your changes.
+
+Ocean Protocol uses [C4 Standard process](https://github.com/unprotocols/rfc/blob/master/1/README.md) to manage changes in the source code.  Find here more details about [Ocean C4 OEP](https://github.com/oceanprotocol/OEPs/tree/master/1).
+
+## License
+
+```
+Copyright 2018 Ocean Protocol Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```

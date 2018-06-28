@@ -6,47 +6,59 @@ language: node_js
 node_js:
   - "8"
 
+services:
+  - docker
+
 cache:
   directories:
     - node_modules
+
 env:
   -
   - SOLIDITY_COVERAGE=true
   - SOLC_NIGHTLY=true
+
 matrix:
   fast_finish: true
   allow_failures:
     - env: SOLIDITY_COVERAGE=true
     - env: SOLC_NIGHTLY=true
-before_script:
-  - truffle version
 
 install:
-  - npm install -g truffle
-  - npm install -g truffle-expect
-  - npm install -g truffle-config
-  - npm install -g ganache-cli
-  - npm install -g web3
+  - npm install
 
 before_script:
-  - testrpc > testrpc.log &
+  - truffle version
+# - docker build -t ocean/plankton-keeper .
+  - ganache-cli > ganache-cli.log &
 
 script:
-  - npm install
-  - truffle test
+  - npm test
 
 before_deploy:
   - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
   - ls -la ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
   - tar tzvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
 
+notifications:
+  email: false
 
+#deploy:
+#  - provider: npm
+#    email: "devops@oceanprotocol.com"
+#    api_key: $NPM_AUTH_TOKEN
+#    on:
+#      tags: true
 
-deploy:
-  provider: releases
-  api_key: $GITHUB_OAUTH_TOKEN
-  file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
-  skip_cleanup: true
-  on:
-    tags: true
+#  - provider: pypi
+#    user: "Your username"
+#    password:
+#      secure: "Your encrypted password"
+
+#  - provider: releases
+#    api_key: $GITHUB_OAUTH_TOKEN
+#    file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+#    skip_cleanup: true
+#    on:
+#      tags: true
 
