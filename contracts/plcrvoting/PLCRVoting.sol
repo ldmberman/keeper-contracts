@@ -1,9 +1,12 @@
+// solium-disable security/no-block-members, emit, no-constant
+
 pragma solidity ^0.4.8;
-//import "tokens/eip20/EIP20Interface.sol";
-import "../token/OceanToken.sol";
-import "dll/DLL.sol";
-import "attrstore/AttributeStore.sol";
-import "../zeppelin/SafeMath.sol";
+
+//import 'tokens/eip20/EIP20Interface.sol';
+import '../token/OceanToken.sol';
+import 'dll/DLL.sol';
+import 'attrstore/AttributeStore.sol';
+import '../zeppelin/SafeMath.sol';
 
 /**
 @title Partial-Lock-Commit-Reveal Voting scheme with ERC20 tokens
@@ -139,8 +142,8 @@ contract PLCRVoting {
 
         bytes32 UUID = attrUUID(msg.sender, _pollID);
 
-        store.setAttribute(UUID, "numTokens", _numTokens);
-        store.setAttribute(UUID, "commitHash", uint(_secretHash));
+        store.setAttribute(UUID, 'numTokens', _numTokens);
+        store.setAttribute(UUID, 'commitHash', uint(_secretHash));
 
         pollMap[_pollID].didCommit[msg.sender] = true;
         _VoteCommitted(_pollID, _numTokens, msg.sender);
@@ -154,7 +157,12 @@ contract PLCRVoting {
     @param _numTokens The number of tokens to be committed towards the poll (used for sorting)
     @return valid Boolean indication of if the specified position maintains the sort
     */
-    function validPosition(uint _prevID, uint _nextID, address _voter, uint _numTokens) public constant returns (bool valid) {
+    function validPosition(
+        uint _prevID,
+        uint _nextID,
+        address _voter,
+        uint _numTokens
+    ) public constant returns (bool valid) {
         bool prevValid = (_numTokens >= getNumTokens(_voter, _prevID));
         // if next is zero node, _numTokens does not need to be greater
         bool nextValid = (_numTokens <= getNumTokens(_voter, _nextID) || _nextID == 0);
@@ -170,9 +178,15 @@ contract PLCRVoting {
     function revealVote(uint _pollID, uint _voteOption, uint _salt) external {
         // Make sure the reveal period is active
         require(revealPeriodActive(_pollID));
-        require(pollMap[_pollID].didCommit[msg.sender]);                         // make sure user has committed a vote for this poll
-        require(!pollMap[_pollID].didReveal[msg.sender]);                        // prevent user from revealing multiple times
-        require(keccak256(_voteOption, _salt) == getCommitHash(msg.sender, _pollID)); // compare resultant hash from inputs to original commitHash
+
+        // make sure user has committed a vote for this poll
+        require(pollMap[_pollID].didCommit[msg.sender]);
+
+        // prevent user from revealing multiple times
+        require(!pollMap[_pollID].didReveal[msg.sender]);
+
+        // compare resultant hash from inputs to original commitHash
+        require(keccak256(_voteOption, _salt) == getCommitHash(msg.sender, _pollID));
 
         uint numTokens = getNumTokens(msg.sender, _pollID);
 
@@ -342,7 +356,7 @@ contract PLCRVoting {
     @return Bytes32 hash property attached to target poll
     */
     function getCommitHash(address _voter, uint _pollID) constant public returns (bytes32 commitHash) {
-        return bytes32(store.getAttribute(attrUUID(_voter, _pollID), "commitHash"));
+        return bytes32(store.getAttribute(attrUUID(_voter, _pollID), 'commitHash'));
     }
 
     /**
@@ -352,7 +366,7 @@ contract PLCRVoting {
     @return Number of tokens committed to poll in sorted poll-linked-list
     */
     function getNumTokens(address _voter, uint _pollID) constant public returns (uint numTokens) {
-        return store.getAttribute(attrUUID(_voter, _pollID), "numTokens");
+        return store.getAttribute(attrUUID(_voter, _pollID), 'numTokens');
     }
 
     /**
@@ -383,30 +397,33 @@ contract PLCRVoting {
     @param _numTokens The value for the numTokens attribute in the node to be inserted
     @return the node which the propoded node should be inserted after
     */
-    function getInsertPointForNumTokens(address _voter, uint _numTokens, uint _pollID)
-    constant public returns (uint prevNode) {
-      // Get the last node in the list and the number of tokens in that node
-      uint nodeID = getLastNode(_voter);
-      uint tokensInNode = getNumTokens(_voter, nodeID);
+    function getInsertPointForNumTokens(
+        address _voter,
+        uint _numTokens,
+        uint _pollID
+    ) constant public returns (uint prevNode) {
+        // Get the last node in the list and the number of tokens in that node
+        uint nodeID = getLastNode(_voter);
+        uint tokensInNode = getNumTokens(_voter, nodeID);
 
-      // Iterate backwards through the list until reaching the root node
-      while(nodeID != 0) {
-        // Get the number of tokens in the current node
-        tokensInNode = getNumTokens(_voter, nodeID);
-        if(tokensInNode <= _numTokens) { // We found the insert point!
-          if(nodeID == _pollID) {
-            // This is an in-place update. Return the prev node of the node being updated
+        // Iterate backwards through the list until reaching the root node
+        while(nodeID != 0) {
+            // Get the number of tokens in the current node
+            tokensInNode = getNumTokens(_voter, nodeID);
+            if(tokensInNode <= _numTokens) { // We found the insert point!
+                if(nodeID == _pollID) {
+                    // This is an in-place update. Return the prev node of the node being updated
+                    nodeID = dllMap[_voter].getPrev(nodeID);
+                }
+                // Return the insert point
+                return nodeID;
+            }
+            // We did not find the insert point. Continue iterating backwards through the list
             nodeID = dllMap[_voter].getPrev(nodeID);
-          }
-          // Return the insert point
-          return nodeID;
         }
-        // We did not find the insert point. Continue iterating backwards through the list
-        nodeID = dllMap[_voter].getPrev(nodeID);
-      }
 
-      // The list is empty, or a smaller value than anything else in the list is being inserted
-      return nodeID;
+        // The list is empty, or a smaller value than anything else in the list is being inserted
+        return nodeID;
     }
 
     // ----------------
@@ -423,15 +440,15 @@ contract PLCRVoting {
     }
 
     function queryTS() constant public returns(uint){
-      return block.timestamp;
+        return block.timestamp;
     }
 
     function queryCommitEndDate(uint _pollID) public returns (uint){
-      return pollMap[_pollID].commitEndDate;
+        return pollMap[_pollID].commitEndDate;
     }
 
     function queryRevealEndDate(uint _pollID) public returns (uint){
-      return pollMap[_pollID].revealEndDate;
+        return pollMap[_pollID].revealEndDate;
     }
 
     /**
