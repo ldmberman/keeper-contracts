@@ -5,3 +5,6 @@ package-lock.json
 .DS_Store
 installed_contracts/
 coverage*
+dist
+keeper_contracts.egg-info
+venv
