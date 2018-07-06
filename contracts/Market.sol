@@ -358,5 +358,13 @@ contract Market is BancorFormula, Ownable {
         }
     }
 
+    // counter
+    uint256 public counter = 0;
+
+    function increment() public returns (bool) {
+        counter.add(1);
+        return true;
+    }
+
 
 }
