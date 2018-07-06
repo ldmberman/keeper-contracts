@@ -186,23 +186,8 @@ contract('Market', (accounts) => {
 
             // Reveal
             // await utils.increaseTime(10 + 1);
-            const CET = await voting.queryCommitEndDate.call(pollID)
-            // console.log("end of commit period time should be :=" + CET);
-
-            let endT = 0
-
-            /* eslint-disable no-await-in-loop */
-            while (true) {
-                wait(2000)
-                endT = await voting.queryTS.call()
-                // console.log("current timestamp :=" + endT);
-
-                await market.register(endT, { from: accounts[0] })
-
-                if (endT >= CET) {
-                    break
-                }
-            }
+            wait(20000)
+            await market.increment({ from: accounts[0] })
             /* eslint-enable no-await-in-loop */
 
             // Make sure commit period is inactive
@@ -219,23 +204,8 @@ contract('Market', (accounts) => {
             await voting.revealVote(pollID, voteOption, salt, { from: accounts[2] }) // voter
 
             // End reveal period
-            // await utils.increaseTime(paramConfig.revealStageLength + 1);
-            // wait(11000);
-            const RET = await voting.queryRevealEndDate.call(pollID)
-            // console.log("end of reveal period time should be :=" + RET);
-
-            /* eslint-disable no-await-in-loop */
-            while (true) {
-                wait(2000)
-                endT = await voting.queryTS.call()
-                // console.log("current timestamp :=" + endT);
-
-                await market.register(endT, { from: accounts[0] })
-
-                if (endT >= RET) {
-                    break
-                }
-            }
+            wait(20000)
+            await market.increment({ from: accounts[0] })
             /* eslint-enable no-await-in-loop */
 
             rpa = await voting.revealPeriodActive.call(pollID)
