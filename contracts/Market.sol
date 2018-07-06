@@ -362,8 +362,8 @@ contract Market is BancorFormula, Ownable {
     uint256 public counter = 0;
 
     function increment() public returns (bool) {
-      counter.add(1);
-      return true;
+        counter.add(1);
+        return true;
     }
 
 
