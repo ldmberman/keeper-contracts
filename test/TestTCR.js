@@ -6,10 +6,7 @@ const Token = artifacts.require('OceanToken.sol')
 const Market = artifacts.require('Market.sol')
 const PLCRVoting = artifacts.require('PLCRVoting.sol')
 const BN = require('bignumber.js')
-const Web3 = require('web3')
 const utils = require('./utils.js')
-
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
 
 const bigTen = number => new BN(number.toString(10), 10)
 
@@ -60,83 +57,6 @@ contract('Market', (accounts) => {
             await token.approve(plcr.address, 1000, { from: accounts[4] })
         })
 
-
-        /*
-  it('should successfully challenge an application', async () => {
-      const registry = await Registry.deployed();
-      const token = Token.at(await registry.token.call());
-      const listing = utils.getListingHash('failure.net');
-
-      const challengerStartingBalance = await token.balanceOf.call(accounts[0]);
-
-      await utils.as(accounts[0], registry.apply, listing, 10, '');
-      await utils.challengeAndGetPollID(listing, accounts[1]);
-      //await utils.increaseTime(10 + 10 + 1);
-      wait(21000);
-      await registry.updateStatus(listing);
-
-      const isWhitelisted = await registry.isWhitelisted.call(listing);
-      assert.strictEqual(isWhitelisted, false, 'An application which should have failed succeeded');
-
-      const challengerFinalBalance = await token.balanceOf.call(accounts[1]);
-      // Note edge case: no voters, so challenger gets entire stake
-      const expectedFinalBalance =
-        challengerStartingBalance.add(new BN(10, 10));
-      assert.strictEqual(
-        challengerFinalBalance.toString(10), expectedFinalBalance.toString(10),
-        'Reward not properly disbursed to challenger',
-      );
-    });
-
-
-  it('should apply, fail challenge, and reject listing', async () => {
-      const registry = await Registry.deployed();
-      const token = Token.at(await registry.token.call());
-      const challengerStartingBalance = await token.balanceOf.call(accounts[1]);
-
-      const applicantBeginBalance = await token.balanceOf.call(accounts[0]);
-      console.log("starting balance of applicant := " + applicantBeginBalance);
-
-      const challengerBeginBalance = await token.balanceOf.call(accounts[1]);
-      console.log("starting balance of challenger := " + challengerBeginBalance);
-
-      const listing = utils.getListingHash('failChallenge.net'); // listing to apply with
-      await registry.apply(listing, 10, '', { from: accounts[0] });
-      console.log("applicant submits an application of listing");
-      await registry.challenge(listing, '', { from: accounts[1]});
-      console.log("challenger creates an challenge of listing");
-
-      wait(21000);
-      console.log("application expires after 20 seconds");
-      await registry.updateStatus(listing);
-
-      // should not have been added to whitelist
-      const result = await registry.isWhitelisted(listing);
-      assert.strictEqual(result, false, 'listing should not be whitelisted');
-
-      const challengerFinalBalance = await token.balanceOf.call(accounts[1]);
-      // Note edge case: no voters, so challenger gets entire stake
-      const expectedFinalBalance =
-        challengerStartingBalance.add(new BN(10, 10));
-      assert.strictEqual(
-        challengerFinalBalance.toString(10), expectedFinalBalance.toString(10),
-        'Reward not properly disbursed to challenger',
-      );
-
-      const applicantAfterBalance = await token.balanceOf.call(accounts[0]);
-      console.log("final balance of applicant := " + applicantAfterBalance);
-
-      const challengerAfterBalance = await token.balanceOf.call(accounts[1]);
-      console.log("final balance of challenger := " + challengerAfterBalance);
-
-      /// market place check results
-      const market = await Market.deployed();
-      const isListed1 = await market.checkListingStatus(listing, { from: accounts[0]});
-      assert.strictEqual(isListed1, false, 'Listing should be whitelisted');
-      console.log("marketplace queries the voting result of listing");
-    });
-    */
-
         it('should apply, pass challenge, and whitelist listing', async () => {
             const registry = await Registry.deployed()
             const voting = await utils.getVoting()
@@ -146,11 +66,9 @@ contract('Market', (accounts) => {
             const market = await Market.deployed()
 
             const assetId = 1
-            // 1. register provider and dataset
-            await market.register(assetId, { from: accounts[0] })
-            const _url = web3.fromUtf8('http://aws.amazon.com')
-            const _token = web3.fromUtf8('aXsTSt')
-            await market.publish(assetId, _url, _token, { from: accounts[0] })
+            const assetPrice = 100
+            // 1. register dataset
+            await market.register(assetId, assetPrice, { from: accounts[0] })
 
             const applicantBeginBalance = await token.balanceOf.call(accounts[0])
             console.log(`starting balance of applicant := ${applicantBeginBalance}`)
@@ -185,11 +103,8 @@ contract('Market', (accounts) => {
             assert.strictEqual(numTokens.toString(10), tokensArg.toString(10), 'Should have committed the correct number of tokens')
 
             // Reveal
-            // await utils.increaseTime(10 + 1);
             wait(20000)
             await market.increment({ from: accounts[0] })
-            /* eslint-enable no-await-in-loop */
-
             // Make sure commit period is inactive
             const commitPeriodActive = await voting.commitPeriodActive.call(pollID)
             assert.strictEqual(commitPeriodActive, false, 'Commit period should be inactive')
@@ -206,7 +121,6 @@ contract('Market', (accounts) => {
             // End reveal period
             wait(20000)
             await market.increment({ from: accounts[0] })
-            /* eslint-enable no-await-in-loop */
 
             rpa = await voting.revealPeriodActive.call(pollID)
             assert.strictEqual(rpa, false, 'Reveal period should not be active')
@@ -261,9 +175,6 @@ contract('Market', (accounts) => {
             const isListed1 = await market.checkListingStatus(listing, assetId, { from: accounts[0] })
             assert.strictEqual(isListed1, false, 'Listing should be removed')
             console.log('marketplace queries the voting result of listing')
-
-            // let owner = await market.getInfo(assetId);
-            // console.log(owner);
 
             // change internal flag for data asset
             await market.changeListingStatus(listing, assetId, { from: accounts[0] })

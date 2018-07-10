@@ -12,23 +12,17 @@ contract Market is BancorFormula, Ownable {
     using SafeMath for uint256;
     using SafeMath for uint;
 
-    bytes public empty;
-
     // data Asset
     struct Asset{
         address owner;                          // owner of the Asset
         uint256 ndrops;                         // total supply of Drops
         uint256 nOcean;                         // poolBalance of dataset
-        uint256 bitSize;                        // size of asset in bit
+        uint256 price;                          // price of asset
         bool active;                            // status of asset
-        bytes url;                            // assetId => url
-        bytes token;                          // assetId => token
         mapping (address => uint256) drops;     // mapping provider (address) to their stakes on dataset Sij
         mapping (address => uint256) delivery;  // mapping provider (address) to their #delivery of dataset Dj
     }
     mapping (uint256 => Asset) public mAssets;           // mapping assetId to Asset struct
-    uint256[50] public  listAssets;
-    uint256     public  sizeListAssets= 0;
 
     // data Provider
     struct Provider{
@@ -39,9 +33,6 @@ contract Market is BancorFormula, Ownable {
         uint256 downloadBits;                  // total number of bits that download across all data assets with stakes
     }
     mapping (address => Provider) public mProviders;    // mapping providerId to Provider struct
-    address[50] public  listProviders;
-    uint256     public sizeProviders= 0;
-    uint256     public winProvider = 0;
 
     // marketplace global variables
     OceanToken  public  mToken;
@@ -55,10 +46,25 @@ contract Market is BancorFormula, Ownable {
     uint256 public tokensToMint = 0;
 
 
+    ////////////////// plankton mvp 2.0 ///////////////////
+    //order
+    struct Order {
+        uint256 assetId;
+        address provider;
+        address consumer;
+        bool    delivered;
+        bool    paid;
+        string  url;
+        string  token;
+    }
+    mapping (uint256 => Order ) public mOrders;
+    string empty;
+    //////////////////////////////////////////////////////
+
     // Events
     event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
-    event AssetPublished(uint256 indexed _assetId, address indexed _owner);
-    event AssetPurchased(uint256 indexed _assetId, address indexed _owner);
+    event AssetPublished(uint256 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
+    event AssetPurchased(uint256 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
 
     event TokenWithdraw(address indexed _requester, uint256 amount);
     event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
@@ -75,8 +81,6 @@ contract Market is BancorFormula, Ownable {
     function changeListingStatus(bytes32 listing, uint256 assetId) public returns(bool){
         if ( !tcr.isWhitelisted(listing) ){
             mAssets[assetId].active = false;
-            listAssets[assetId] = 0;
-            sizeListAssets -= 1;
         }
         return true;
     }
@@ -84,6 +88,19 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
     //  Query function
     ///////////////////////////////////////////////////////////////////
+    // query encrypted url by Consumer
+    function getEncUrl(uint256 orderId) public view returns (string) {
+        require(msg.sender == mOrders[orderId].consumer);
+        return mOrders[orderId].url;
+    }
+
+    // query encrypted token by Consumer
+    function getEncToken(uint256 orderId) public view returns (string) {
+        require(msg.sender == mOrders[orderId].consumer);
+        return mOrders[orderId].token;
+    }
+
+
     // Return the number of drops associated to the message.sender to an Asset
     function dropsBalance(uint256 assetId) public view returns (uint256){
         require(msg.sender != 0x0);
@@ -92,20 +109,6 @@ contract Market is BancorFormula, Ownable {
 
     // Return true or false if an Asset is active given the assetId
     function checkAsset(uint256 assetId) public view returns (bool) {
-        return mAssets[assetId].active;
-    }
-
-    // Get the url attribute associated to a given the assetId
-    function getAssetUrl(uint256 assetId) public view returns (bytes) {
-        return mAssets[assetId].url;
-    }
-
-    // Get the token attribute associated to a given the assetId
-    function getAssetToken(uint256 assetId) public view returns (bytes) {
-        return mAssets[assetId].token;
-    }
-
-    function getInfo(uint256 assetId) public view returns (bool) {
         return mAssets[assetId].active;
     }
 
@@ -135,26 +138,14 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
 
     // 1. register provider and assets （upload by changing uploadBits）
-    function register(uint256 assetId) public returns (bool success) {
+    function register(uint256 assetId, uint256 price) public returns (bool success) {
         require(msg.sender != 0x0);
         // register provider
         mProviders[msg.sender] = Provider(msg.sender, 0, 0, 0, 0);
 
-        // register assets
-        uint256 fileSize = 1024;
         // ndrops =10, nToken = 1 => phatom tokesn to avoid failure of Bancor formula
-
-        // Creates new struct and saves in storage. We leave out the mapping type.
-        mAssets[assetId] = Asset(msg.sender, 10, 1, fileSize, false, empty, empty);
-
-        if (sizeListAssets < 50)  {
-            mAssets[assetId].active = true;
-            listAssets[sizeListAssets] = assetId;
-            sizeListAssets += 1;
-        }
-
-        // simulate uploading dataSet
-        mProviders[msg.sender].uploadBits = fileSize;
+        mAssets[assetId] = Asset(msg.sender, 10, 1, price, false);  // Creates new struct and saves in storage. We leave out the mapping type.
+        mAssets[assetId].active = true;
 
         emit AssetRegistered(assetId, msg.sender);
         return true;
@@ -162,45 +153,62 @@ contract Market is BancorFormula, Ownable {
 
 
     // publish consumption information about an Asset
-    function publish(uint256 assetId, bytes _url, bytes _token) public returns (bool success) {
+    function publish(uint256 assetId, uint256 orderId, string _url, string _token) public returns (bool success) {
         require(mAssets[assetId].owner != 0x0);
+        // only owner of data asset can publish the accessing token for consumers
         require(msg.sender == mAssets[assetId].owner);
+        // order must be paid first
+        require(mOrders[orderId].paid == true);
 
-        mAssets[assetId].url = _url;
-        mAssets[assetId].token = _token;
-        emit AssetPublished(assetId, msg.sender);
+        mOrders[orderId].url = _url;
+        mOrders[orderId].token = _token;
+        emit AssetPublished(assetId, orderId, msg.sender);
         return true;
     }
 
     // purchase an asset and get the consumption information - called by consumer
-    function purchase(uint256 assetId) public returns (bool) {
+    function purchase(uint256 assetId, uint256 orderId) public returns (bool) {
+        // data asset exists
         require(mAssets[assetId].owner != 0x0);
 
-        // increment counter
-        if (sizeProviders < 50)  {
-            listProviders[sizeProviders] = mAssets[assetId].owner;
-            sizeProviders += 1;
-            mAssets[assetId].delivery[mAssets[assetId].owner] += 1;
-        }
+        mOrders[orderId] = Order(assetId, 0x0, msg.sender, false, false, empty, empty);
+        // transfer fund
+        require(mOrders[orderId].paid == false);
+        mOrders[orderId].paid = true;
+        require(mToken.transferFrom(msg.sender, address(this), mAssets[assetId].price));
 
-        // request token rewards for provider
-        winProvider = rng(sizeProviders);
-        if(rewardPool != 0 && winProvider >= 0 && winProvider < sizeProviders ){
-            address winner = listProviders[winProvider];
-            mProviders[winner].numOCN += rewardPool;
-            rewardPool = 0;
-        }
-        emit AssetPurchased(assetId, msg.sender);
+        emit AssetPurchased(assetId, orderId, msg.sender);
 
         return true;
     }
 
-    function getListAssets() public constant returns (uint256[50]) { // solium-disable-line no-constant
-        return listAssets;
+    // provider set himself as the provider
+    function setOrderProvider(uint256 orderId) public returns (bool) {
+        require(msg.sender != 0x0);
+        // order must be paid first
+        require(mOrders[orderId].paid == true);
+        // set himself as the provider
+        mOrders[orderId].provider = msg.sender;
+        return true;
     }
 
-    function getListAssetsSize() public constant returns (uint256) { // solium-disable-line no-constant
-        return sizeListAssets;
+    // consumer confirms the confirmDelivery
+    function confirmDelivery(uint256 orderId) public returns (bool) {
+        require(msg.sender == mOrders[orderId].consumer);
+        mOrders[orderId].delivered = true;
+        return true;
+    }
+
+    // provider request payment for serving the download request
+    function requestPayment(uint256 orderId) public returns (bool) {
+        // provider must served the download request
+        require(mOrders[orderId].delivered == true);
+        // the requester of payment must be the provider of this order
+        require(mOrders[orderId].provider == msg.sender);
+        // initiate the transfer
+        var assetId = mOrders[orderId].assetId;
+        require(mToken.transfer(msg.sender, mAssets[assetId].price));
+        return true;
     }
 
         // 2. request initial fund transfer
@@ -214,7 +222,7 @@ contract Market is BancorFormula, Ownable {
             nToken = mAllowance;
         }
         // withdraw tokens from Marketplace -> remember to decrease allowance first!!
-        mAllowance -= nToken;
+        mAllowance = mAllowance.sub(nToken);
         // the OCN tokens is held in user wallet rather than market escrow accounts -> do not change provider balances
         require(mToken.transfer(msg.sender, nToken));
         return nToken;
@@ -227,8 +235,8 @@ contract Market is BancorFormula, Ownable {
         //require(mAllowance >= mProviders[msg.sender].numOCN);
         uint256 amount = mProviders[msg.sender].numOCN;
         mProviders[msg.sender].numOCN = 0;
-        mAllowance -= amount;
-        mProviders[msg.sender].allowanceOCN -= amount;
+        mAllowance.sub(amount);
+        mProviders[msg.sender].allowanceOCN.sub(amount);
         require(mToken.transfer(msg.sender, amount));
 
         emit TokenWithdraw(msg.sender, amount);
@@ -248,10 +256,10 @@ contract Market is BancorFormula, Ownable {
         require(mToken.emitTokens());
         uint256 current = mToken.balanceOf(address(this));
         // credit emitted tokens to block reward pool
-        rewardPool += current - previous;
+        rewardPool = rewardPool.add(current.sub(previous));
 
         // raise the limit of token allowance for marketplace
-        mAllowance += current - previous;
+        mAllowance = mAllowance.add(current.sub(previous));
         // return the current token balance
         return current;
     }
@@ -267,23 +275,23 @@ contract Market is BancorFormula, Ownable {
         mAssets[_assetId].nOcean = mAssets[_assetId].nOcean.add(_ocn);
 
         // First transfer _ocn tokens into Marketplace escrow account to purchase Drops
-        mProviders[msg.sender].numOCN += _ocn;
-        mProviders[msg.sender].allowanceOCN += _ocn;
-        mAllowance += _ocn;
+        mProviders[msg.sender].numOCN = mProviders[msg.sender].numOCN.add(_ocn);
+        mProviders[msg.sender].allowanceOCN = mProviders[msg.sender].allowanceOCN.add(_ocn);
+        mAllowance = mAllowance.add(_ocn);
         require(mToken.transferFrom(msg.sender, address(this), _ocn));
 
         // 4. update balances
 
         // increment total ndrops
-        totalSupply += tokensToMint;
+        totalSupply = totalSupply.add(tokensToMint);
         poolBalance = poolBalance.add(_ocn);
 
         //mAssets[_assetId].ndrops += tokensToMint;
         // lock ocean Tokens
-        mProviders[msg.sender].numOCN -= _ocn;
-        mProviders[msg.sender].allowanceOCN -= _ocn;
-        mAllowance -= _ocn;
-        mAssets[_assetId].drops[msg.sender] += tokensToMint;
+        mProviders[msg.sender].numOCN = mProviders[msg.sender].numOCN.sub(_ocn);
+        mProviders[msg.sender].allowanceOCN = mProviders[msg.sender].allowanceOCN.sub(_ocn);
+        mAllowance = mAllowance.sub(_ocn);
+        mAssets[_assetId].drops[msg.sender] = mAssets[_assetId].drops[msg.sender].add(tokensToMint);
 
         emit TokenBuyDrops(msg.sender, _assetId, _ocn, tokensToMint);
 
@@ -301,11 +309,11 @@ contract Market is BancorFormula, Ownable {
         totalSupply = totalSupply.sub(_drops);
         poolBalance = poolBalance.sub(ocnAmount);
         // unlock ocean Tokens
-        mProviders[msg.sender].numOCN += ocnAmount;
-        mProviders[msg.sender].allowanceOCN += ocnAmount;
-        mAllowance += ocnAmount;
+        mProviders[msg.sender].numOCN = mProviders[msg.sender].numOCN.add(ocnAmount);
+        mProviders[msg.sender].allowanceOCN = mProviders[msg.sender].allowanceOCN.add(ocnAmount);
+        mAllowance = mAllowance.add(ocnAmount);
         // decrement drops balance of actors
-        mAssets[_assetId].drops[msg.sender] -= _drops;
+        mAssets[_assetId].drops[msg.sender] = mAssets[_assetId].drops[msg.sender].sub(_drops);
 
         emit TokenSellDrops(msg.sender, _assetId, ocnAmount, _drops);
 
@@ -337,11 +345,12 @@ contract Market is BancorFormula, Ownable {
     function sqrt(uint x) internal pure returns (uint y) {
         if (x == 0) return 0;
         else if (x <= 3) return 1;
-        uint z = (x + 1) / 2;
+        uint z = (x + 1).div(2);
         y = x;
         while (z < y){
             y = z;
-            z = (x / z + z) / 2;
+            // z = (x/z + z) / 2
+            z = (x.div(z).add(z)).div(2);
         }
     }
 
@@ -358,9 +367,8 @@ contract Market is BancorFormula, Ownable {
         }
     }
 
-    // counter
+    // for debugging use only
     uint256 public counter = 0;
-
     function increment() public returns (bool) {
         counter.add(1);
         return true;
