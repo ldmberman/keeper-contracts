@@ -1,22 +1,9 @@
 /* global artifacts, assert, contract, describe, it */
 /* eslint-disable no-console, max-len */
+/* This testing demos the buy and sell of drops according to bonding curve */
 
 const Token = artifacts.require('OceanToken.sol')
 const Market = artifacts.require('Market.sol')
-
-const Web3 = require('web3')
-
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
-// const utils = require('web3-utils')
-
-
-// function wait(ms) {
-//     const start = new Date().getTime()
-//     let end = start
-//     while (end < start + ms) {
-//         end = new Date().getTime()
-//     }
-// }
 
 contract('Market', (accounts) => {
     describe('Test User stories', () => {
@@ -26,25 +13,10 @@ contract('Market', (accounts) => {
             const token = await Token.deployed()
             const market = await Market.deployed()
 
-
             const assetId = 1
-            // 1. register provider and dataset
-            await market.register(assetId, { from: accounts[0] })
-
-            // publish data  asset
-            const _url = web3.fromUtf8('http://aws.amazon.com')
-            const _token = web3.fromUtf8('aXsTSt')
-            await market.publish(assetId, _url, _token, { from: accounts[0] })
-
-            // const list = await market.getListAssets({ from: accounts[0] })
-            // console.log(list);
-
-            // test get bytes32 from method
-            // await market.getInfo.call();
-            // console.log(web3.toUtf8(url));
-            // let [url_, token_] = await market.getInfo();
-            // console.log("url := " + web3.toUtf8(url_));
-            // console.log("token := " + web3.toUtf8(token_));
+            const assetPrice = 100
+            // 1. register dataset
+            await market.register(assetId, assetPrice, { from: accounts[0] })
 
             // 2. provider request initial tokens 2000
             await market.requestTokens(2000, { from: accounts[0] })
@@ -85,13 +57,9 @@ contract('Market', (accounts) => {
             await market.mintToken({ from: accounts[0] })
             const bal3 = await token.balanceOf.call(market.address)
             console.log(`market balance with emitted tokens := ${bal3.toNumber()}`)
-
-            const res = await market.purchase(assetId, { from: accounts[1] })
-            console.log(res.length)
-            // console.log("url := " + web3.toUtf8(res[0]));
-            // console.log("token := " + web3.toUtf8(res[1]));
             const tokenBalanceAfter = await token.balanceOf.call(market.address)
             console.log(`market balance after mintToken := ${tokenBalanceAfter.toNumber()} Ocean tokens`)
+
 
             // 7. provider sell Drops for Ocean TOKENS
             await market.sellDrops(assetId, drops1.valueOf(), { from: accounts[0] })
