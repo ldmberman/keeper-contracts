@@ -83,6 +83,12 @@ function confirmDelivery(uint256 orderId) public returns (bool);
 
 // Provider requests the payment for serving the download request
 function requestPayment(uint256 orderId) public returns (bool);
+
+// Generate Unique Id for asset using input string parameter
+function generateStr2Id(string contents) public pure returns (bytes32);
+
+// Generate Unique Id for asset using input bytes parameter
+function generateBytes2Id(bytes contents) public pure returns (bytes32);
 ```
 
 ### Query functions

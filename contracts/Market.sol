@@ -367,6 +367,18 @@ contract Market is BancorFormula, Ownable {
         }
     }
 
+    // calculate hash of input parameter - string
+    function generateStr2Id(string contents) public pure returns (bytes32) {
+        // Generate the hash of input bytes
+        return bytes32(keccak256(contents));
+    }
+
+    // calculate hash of input parameter - bytes
+    function generateBytes2Id(bytes contents) public pure returns (bytes32) {
+        // Generate the hash of input bytes
+        return bytes32(keccak256(contents));
+    }
+
     // for debugging use only
     uint256 public counter = 0;
     function increment() public returns (bool) {
