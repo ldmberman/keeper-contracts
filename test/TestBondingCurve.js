@@ -13,7 +13,7 @@ contract('Market', (accounts) => {
             const token = await Token.deployed()
             const market = await Market.deployed()
 
-            const assetId = 1
+            const assetId = '0x7ace91f25e0838f9ed7ae259670bdf4156b3d82a76db72092f1baf06f31f5038'
             const assetPrice = 100
             // 1. register dataset
             await market.register(assetId, assetPrice, { from: accounts[0] })
@@ -64,7 +64,7 @@ contract('Market', (accounts) => {
             // 7. provider sell Drops for Ocean TOKENS
             await market.sellDrops(assetId, drops1.valueOf(), { from: accounts[0] })
             const tokenBalance1 = await market.tokenBalance.call({ from: accounts[0] })
-            console.log(`provider has escrow balance of Ocean tokens := ${tokenBalance1.toNumber()} (include reward and profit)`)
+            console.log(`provider has escrow balance of Ocean tokens := ${tokenBalance1.toNumber()}`)
 
             // 8. withdraw Ocean tokens
             await market.withdraw({ from: accounts[0] })

@@ -65,7 +65,7 @@ contract('Market', (accounts) => {
             const minDeposit = bigTen(10)
             const market = await Market.deployed()
 
-            const assetId = 1
+            const assetId = '0x7ace91f25e0838f9ed7ae259670bdf4156b3d82a76db72092f1baf06f31f5038'
             const assetPrice = 100
             // 1. register dataset
             await market.register(assetId, assetPrice, { from: accounts[0] })

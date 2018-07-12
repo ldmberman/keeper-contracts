@@ -22,15 +22,13 @@ contract Market is BancorFormula, Ownable {
         mapping (address => uint256) drops;     // mapping provider (address) to their stakes on dataset Sij
         mapping (address => uint256) delivery;  // mapping provider (address) to their #delivery of dataset Dj
     }
-    mapping (uint256 => Asset) public mAssets;           // mapping assetId to Asset struct
+    mapping (bytes32 => Asset) public mAssets;           // mapping assetId to Asset struct
 
     // data Provider
     struct Provider{
         address provider;
         uint256 numOCN;                        // Ocean token balance
         uint256 allowanceOCN;                  // available Ocean tokens for transfer excuding locked tokens for staking
-        uint256 uploadBits;                    // total number of bits that served across all data assets with stakes
-        uint256 downloadBits;                  // total number of bits that download across all data assets with stakes
     }
     mapping (address => Provider) public mProviders;    // mapping providerId to Provider struct
 
@@ -49,7 +47,7 @@ contract Market is BancorFormula, Ownable {
     ////////////////// plankton mvp 2.0 ///////////////////
     //order
     struct Order {
-        uint256 assetId;
+        bytes32 assetId;
         address provider;
         address consumer;
         bool    delivered;
@@ -57,28 +55,28 @@ contract Market is BancorFormula, Ownable {
         string  url;
         string  token;
     }
-    mapping (uint256 => Order ) public mOrders;
+    mapping (uint256 => Order ) public mOrders;   // mapping orderId to associated Order struct
     string empty;
     //////////////////////////////////////////////////////
 
     // Events
-    event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
-    event AssetPublished(uint256 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
-    event AssetPurchased(uint256 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
+    event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
+    event AssetPublished(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
+    event AssetPurchased(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
 
     event TokenWithdraw(address indexed _requester, uint256 amount);
-    event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
-    event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
+    event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
+    event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
 
 
     // TCR
     Registry  public  tcr;
 
-    function checkListingStatus(bytes32 listing, uint256 assetId) public view returns(bool){
+    function checkListingStatus(bytes32 listing, bytes32 assetId) public view returns(bool){
         return tcr.isWhitelisted(listing);
     }
 
-    function changeListingStatus(bytes32 listing, uint256 assetId) public returns(bool){
+    function changeListingStatus(bytes32 listing, bytes32 assetId) public returns(bool){
         if ( !tcr.isWhitelisted(listing) ){
             mAssets[assetId].active = false;
         }
@@ -88,6 +86,22 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
     //  Query function
     ///////////////////////////////////////////////////////////////////
+
+    // query Id is unique or not - return true if unique; otherwise return false
+    function checkUniqueId(bytes32 assetId) public view returns (bool){
+        if(mAssets[assetId].owner != 0x0) return false; // duplicate Id
+        // unique Id
+        return true;
+    }
+
+    // query Id is valid assetId for registered assets - return true if registered
+    function checkValidId(bytes32 assetId) public view returns (bool){
+        if(mAssets[assetId].owner != 0x0) return true; // valid Id
+        // invalid Id
+        return false;
+    }
+
+
     // query encrypted url by Consumer
     function getEncUrl(uint256 orderId) public view returns (string) {
         require(msg.sender == mOrders[orderId].consumer);
@@ -102,13 +116,13 @@ contract Market is BancorFormula, Ownable {
 
 
     // Return the number of drops associated to the message.sender to an Asset
-    function dropsBalance(uint256 assetId) public view returns (uint256){
+    function dropsBalance(bytes32 assetId) public view returns (uint256){
         require(msg.sender != 0x0);
         return mAssets[assetId].drops[msg.sender];
     }
 
     // Return true or false if an Asset is active given the assetId
-    function checkAsset(uint256 assetId) public view returns (bool) {
+    function checkAsset(bytes32 assetId) public view returns (bool) {
         return mAssets[assetId].active;
     }
 
@@ -138,10 +152,14 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
 
     // 1. register provider and assets （upload by changing uploadBits）
-    function register(uint256 assetId, uint256 price) public returns (bool success) {
+    function register(bytes32 assetId, uint256 price) public returns (bool success) {
         require(msg.sender != 0x0);
-        // register provider
-        mProviders[msg.sender] = Provider(msg.sender, 0, 0, 0, 0);
+        // check for unique assetId
+        require(mAssets[assetId].owner == 0x0);
+        // register provider if not exists
+        if (mProviders[msg.sender].provider == 0x0 ){
+            mProviders[msg.sender] = Provider(msg.sender, 0, 0);
+        }
 
         // ndrops =10, nToken = 1 => phatom tokesn to avoid failure of Bancor formula
         mAssets[assetId] = Asset(msg.sender, 10, 1, price, false);  // Creates new struct and saves in storage. We leave out the mapping type.
@@ -153,7 +171,7 @@ contract Market is BancorFormula, Ownable {
 
 
     // publish consumption information about an Asset
-    function publish(uint256 assetId, uint256 orderId, string _url, string _token) public returns (bool success) {
+    function publish(bytes32 assetId, uint256 orderId, string _url, string _token) public returns (bool success) {
         require(mAssets[assetId].owner != 0x0);
         // only owner of data asset can publish the accessing token for consumers
         require(msg.sender == mAssets[assetId].owner);
@@ -167,7 +185,7 @@ contract Market is BancorFormula, Ownable {
     }
 
     // purchase an asset and get the consumption information - called by consumer
-    function purchase(uint256 assetId, uint256 orderId) public returns (bool) {
+    function purchase(bytes32 assetId, uint256 orderId) public returns (bool) {
         // data asset exists
         require(mAssets[assetId].owner != 0x0);
 
@@ -269,7 +287,7 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
 
     // 1. bondingCurve function - buy Drops - call by any actors
-    function buyDrops(uint256 _assetId, uint256 _ocn) public returns (uint256 _drops) {
+    function buyDrops(bytes32 _assetId, uint256 _ocn) public returns (uint256 _drops) {
         tokensToMint = calculatePurchaseReturn(mAssets[_assetId].ndrops, mAssets[_assetId].nOcean, reserveRatio, _ocn);
         mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.add(tokensToMint);
         mAssets[_assetId].nOcean = mAssets[_assetId].nOcean.add(_ocn);
@@ -298,7 +316,7 @@ contract Market is BancorFormula, Ownable {
         return tokensToMint;
     }
 
-    function sellDrops(uint256 _assetId, uint256 _drops) public returns (uint256 _ocn) {
+    function sellDrops(bytes32 _assetId, uint256 _drops) public returns (uint256 _ocn) {
         require(mProviders[msg.sender].provider != 0x0);
 
         uint256 ocnAmount = calculateSaleReturn(mAssets[_assetId].ndrops, mAssets[_assetId].nOcean, reserveRatio, _drops);
@@ -319,16 +337,6 @@ contract Market is BancorFormula, Ownable {
 
         return ocnAmount;
     }
-
-
-    ///////////////////////////////////////////////////////////////////
-    // XOR random number generator
-    ///////////////////////////////////////////////////////////////////
-
-    function rng(uint256 limit) public view returns (uint256) {
-        return uint256(uint256(keccak256(block.timestamp, block.difficulty))%limit); // solium-disable-line security/no-block-members
-    }
-
 
     ///////////////////////////////////////////////////////////////////
     // Utility Functions
@@ -365,6 +373,18 @@ contract Market is BancorFormula, Ownable {
         } else {
             return i2;
         }
+    }
+
+    // calculate hash of input parameter - string
+    function generateStr2Id(string contents) public pure returns (bytes32) {
+        // Generate the hash of input bytes
+        return bytes32(keccak256(contents));
+    }
+
+    // calculate hash of input parameter - bytes
+    function generateBytes2Id(bytes contents) public pure returns (bytes32) {
+        // Generate the hash of input bytes
+        return bytes32(keccak256(contents));
     }
 
     // for debugging use only
