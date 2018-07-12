@@ -67,13 +67,13 @@ function isWhitelisted(bytes32 _listingHash);
 
 ```solidity
 // Register provider and assets （upload by changing uploadBits）
-function register(uint256 assetId, uint256 price) public returns (bool success);
+function register(bytes32 assetId, uint256 price) public returns (bool success);
 
 // publish consumption information about an Asset
-function publish(uint256 assetId, uint256 orderId, string _url, string _token) public returns (bool success);
+function publish(bytes32 assetId, uint256 orderId, string _url, string _token) public returns (bool success);
 
 // purchase an asset and get the consumption information
-function purchase(uint256 assetId, uint256 orderId) public returns (bool);
+function purchase(bytes32 assetId, uint256 orderId) public returns (bool);
 
 // Set the provider of order for download request
 function setOrderProvider(uint256 orderId) public returns (bool);
@@ -94,6 +94,12 @@ function generateBytes2Id(bytes contents) public pure returns (bytes32);
 ### Query functions
 
 ```solidity
+// Return true if assetId is unique; otherwise, return false 
+function checkUniqueId(bytes32 assetId) public view returns (bool);
+
+// Return true if assetId is valid for registered asset
+function checkValidId(bytes32 assetId) public view returns (bool);
+
 // Return the encrypted url by Consumer
 function getEncUrl(uint256 orderId) public view returns (string);
 
@@ -101,10 +107,10 @@ function getEncUrl(uint256 orderId) public view returns (string);
 function getEncToken(uint256 orderId) public view returns (string);
 
 // Return the number of drops associated to the message.sender to an Asset
-function dropsBalance(uint256 assetId) public view returns (uint256);
+function dropsBalance(bytes32 assetId) public view returns (uint256);
 
 // Return true or false if an Asset is active given the assetId
-function checkAsset(uint256 assetId) public view returns (bool);
+function checkAsset(bytes32 assetId) public view returns (bool);
 
 // Retrieve the msg.sender Provider token balance
 function tokenBalance() public view returns (uint256);
@@ -114,14 +120,14 @@ function tokenBalance() public view returns (uint256);
 
 ```solidity
 // Asset Events
-event AssetRegistered(uint256 indexed _assetId, address indexed _owner);
-event AssetPublished(uint256 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
-event AssetPurchased(uint256 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
+event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
+event AssetPublished(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
+event AssetPurchased(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
 
 // Token Events
 event TokenWithdraw(address indexed _requester, uint256 amount);
-event TokenBuyDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
-event TokenSellDrops(address indexed _requester, uint256 indexed _assetId, uint256 _ocn, uint256 _drops);
+event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
+event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
 ```
 
 ## File Structure
