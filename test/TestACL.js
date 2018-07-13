@@ -14,7 +14,7 @@ contract('Market', (accounts) => {
             // const marketPlace = await Market.deployed();
             const token = await Token.deployed()
             const market = await Market.deployed()
-            const acl = await ACL.deployed();
+            const acl = await ACL.deployed()
 
             const str = 'resource'
             const resourceId = await market.generateStr2Id(str, { from: accounts[0] })
@@ -37,7 +37,7 @@ contract('Market', (accounts) => {
             console.log('consumer creates an order with id : ', orderId)
 
             // 3. provider confirms the order
-            await acl.providerConfirm(orderId, { from: accounts[0] });
+            await acl.providerConfirm(orderId, { from: accounts[0] })
             console.log('provider has confirmed the order')
 
             // 4. consumer pay the order
@@ -52,16 +52,14 @@ contract('Market', (accounts) => {
             const modulusBit = 512
             const key = ursa.generatePrivateKey(modulusBit, 65537)
             const privatePem = ursa.createPrivateKey(key.toPrivatePem())
-            //const privateKey = privatePem.toPrivatePem('utf8')
             const publicPem = ursa.createPublicKey(key.toPublicPem())
-            //const publicKey = publicPem.toPublicPem('utf8')
             const publickKey = 'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOp2wpN8TfJ12S+zpmDg+A+702K06gbVgHtcKZ656N4JGV/GucjURl4q10GMu7Zx90xGl4kq456U7wDqQMDVpNECAwEAAQ=='
             // consumer add temp public key
             await acl.addTempPubKey(orderId, publickKey, { from: accounts[1] })
             console.log('consumer has added the temp public key')
 
             // 6. provider query the temp public key
-            const TempPubKey = await acl.queryTempKey(orderId, { from: accounts[0] })
+            await acl.queryTempKey(orderId, { from: accounts[0] })
             console.log('provider has retrieved the temp public key')
 
             // 7. provider encrypt the JWT token
@@ -81,7 +79,8 @@ contract('Market', (accounts) => {
             const pbal = await token.balanceOf.call(accounts[0])
             console.log(`provider has balance := ${pbal.valueOf()} now`)
 
-
+            const mbal = await token.balanceOf.call(market.address)
+            console.log(`market has balance := ${mbal.valueOf()} now`)
         })
     })
 })
