@@ -43,27 +43,8 @@ contract Market is BancorFormula, Ownable {
     uint32  public reserveRatio = 500000;      // max 1000000, reserveRatio = 20%
     uint256 public tokensToMint = 0;
 
-
-    ////////////////// plankton mvp 2.0 ///////////////////
-    //order
-    struct Order {
-        bytes32 assetId;
-        address provider;
-        address consumer;
-        bool    delivered;
-        bool    paid;
-        string  url;
-        string  token;
-    }
-    mapping (uint256 => Order ) public mOrders;   // mapping orderId to associated Order struct
-    string empty;
-    //////////////////////////////////////////////////////
-
     // Events
     event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
-    event AssetPublished(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
-    event AssetPurchased(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
-
     event TokenWithdraw(address indexed _requester, uint256 amount);
     event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
     event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
@@ -100,20 +81,6 @@ contract Market is BancorFormula, Ownable {
         // invalid Id
         return false;
     }
-
-
-    // query encrypted url by Consumer
-    function getEncUrl(uint256 orderId) public view returns (string) {
-        require(msg.sender == mOrders[orderId].consumer);
-        return mOrders[orderId].url;
-    }
-
-    // query encrypted token by Consumer
-    function getEncToken(uint256 orderId) public view returns (string) {
-        require(msg.sender == mOrders[orderId].consumer);
-        return mOrders[orderId].token;
-    }
-
 
     // Return the number of drops associated to the message.sender to an Asset
     function dropsBalance(bytes32 assetId) public view returns (uint256){
@@ -169,63 +136,17 @@ contract Market is BancorFormula, Ownable {
         return true;
     }
 
-
-    // publish consumption information about an Asset
-    function publish(bytes32 assetId, uint256 orderId, string _url, string _token) public returns (bool success) {
-        require(mAssets[assetId].owner != 0x0);
-        // only owner of data asset can publish the accessing token for consumers
-        require(msg.sender == mAssets[assetId].owner);
-        // order must be paid first
-        require(mOrders[orderId].paid == true);
-
-        mOrders[orderId].url = _url;
-        mOrders[orderId].token = _token;
-        emit AssetPublished(assetId, orderId, msg.sender);
+    // ACL contract call this function to allow consumer to make payment
+    function makePayment(address sender, bytes32 assetId) public returns (bool) {
+        require(mToken.transferFrom(sender, address(this), mAssets[assetId].price));
         return true;
     }
 
-    // purchase an asset and get the consumption information - called by consumer
-    function purchase(bytes32 assetId, uint256 orderId) public returns (bool) {
-        // data asset exists
-        require(mAssets[assetId].owner != 0x0);
 
-        mOrders[orderId] = Order(assetId, 0x0, msg.sender, false, false, empty, empty);
-        // transfer fund
-        require(mOrders[orderId].paid == false);
-        mOrders[orderId].paid = true;
-        require(mToken.transferFrom(msg.sender, address(this), mAssets[assetId].price));
 
-        emit AssetPurchased(assetId, orderId, msg.sender);
-
-        return true;
-    }
-
-    // provider set himself as the provider
-    function setOrderProvider(uint256 orderId) public returns (bool) {
-        require(msg.sender != 0x0);
-        // order must be paid first
-        require(mOrders[orderId].paid == true);
-        // set himself as the provider
-        mOrders[orderId].provider = msg.sender;
-        return true;
-    }
-
-    // consumer confirms the confirmDelivery
-    function confirmDelivery(uint256 orderId) public returns (bool) {
-        require(msg.sender == mOrders[orderId].consumer);
-        mOrders[orderId].delivered = true;
-        return true;
-    }
-
-    // provider request payment for serving the download request
-    function requestPayment(uint256 orderId) public returns (bool) {
-        // provider must served the download request
-        require(mOrders[orderId].delivered == true);
-        // the requester of payment must be the provider of this order
-        require(mOrders[orderId].provider == msg.sender);
-        // initiate the transfer
-        var assetId = mOrders[orderId].assetId;
-        require(mToken.transfer(msg.sender, mAssets[assetId].price));
+    // ACL contract call this to release fund to provider
+    function requestPayment(address receiver, bytes32 assetId) public returns (bool) {
+        require(mToken.transfer(receiver, mAssets[assetId].price));
         return true;
     }
 
