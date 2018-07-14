@@ -12,6 +12,7 @@ date: 06/01/2018
 ## Further Documentation
 
 * [TCR Owner's Manual](owners_manual.md)
+* [On-chain Authorization Manual](authorization.md)
 
 ## Objective
 
