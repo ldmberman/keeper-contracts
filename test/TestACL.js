@@ -53,17 +53,25 @@ contract('Market', (accounts) => {
             const key = ursa.generatePrivateKey(modulusBit, 65537)
             const privatePem = ursa.createPrivateKey(key.toPrivatePem())
             const publicPem = ursa.createPublicKey(key.toPublicPem())
-            const publickKey = 'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOp2wpN8TfJ12S+zpmDg+A+702K06gbVgHtcKZ656N4JGV/GucjURl4q10GMu7Zx90xGl4kq456U7wDqQMDVpNECAwEAAQ=='
+            // convert public key into string so that to store on-chain
+            const publicKey = publicPem.toPublicPem('utf8')
+            console.log('public key is: = ', publicKey)
+
             // consumer add temp public key
-            await acl.addTempPubKey(orderId, publickKey, { from: accounts[1] })
+            await acl.addTempPubKey(orderId, publicKey, { from: accounts[1] })
             console.log('consumer has added the temp public key')
 
-            // 6. provider query the temp public key
-            await acl.queryTempKey(orderId, { from: accounts[0] })
+            // 6. provider query the temp public key string from on-chain order
+            const OnChainPubKey = await acl.queryTempKey(orderId, { from: accounts[0] })
             console.log('provider has retrieved the temp public key')
+            assert.strictEqual(publicKey, OnChainPubKey, 'two public keys should match.')
 
             // 7. provider encrypt the JWT token
-            const encJWT = publicPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'base64')
+            // provider convert the retrieved public key string into Public Key
+            const getPubKeyPem = ursa.coerceKey(OnChainPubKey)
+            // encrypt the JWT token using public key
+            const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'base64')
+            // const encJWT = publicPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'base64')
             await acl.addToken(orderId, encJWT, { from: accounts[0] })
             console.log('provider has commited the encrypted JWT token :', encJWT.toString())
 
