@@ -69,21 +69,12 @@ function isWhitelisted(bytes32 _listingHash);
 // Register provider and assets （upload by changing uploadBits）
 function register(bytes32 assetId, uint256 price) public returns (bool success);
 
-// publish consumption information about an Asset
-function publish(bytes32 assetId, uint256 orderId, string _url, string _token) public returns (bool success);
+// Authorization contract call this function so that consumer can make payment
+function makePayment(address sender, bytes32 assetId) public returns (bool);
 
-// purchase an asset and get the consumption information
-function purchase(bytes32 assetId, uint256 orderId) public returns (bool);
-
-// Set the provider of order for download request
-function setOrderProvider(uint256 orderId) public returns (bool);
-
-// Consumer confirms the delivery of data asset
-function confirmDelivery(uint256 orderId) public returns (bool);
-
-// Provider requests the payment for serving the download request
-function requestPayment(uint256 orderId) public returns (bool);
-
+// Authorization contract call this function to release fund to provider
+function requestPayment(address receiver, bytes32 assetId) public returns (bool);
+    
 // Generate Unique Id for asset using input string parameter
 function generateStr2Id(string contents) public pure returns (bytes32);
 
@@ -91,20 +82,46 @@ function generateStr2Id(string contents) public pure returns (bytes32);
 function generateBytes2Id(bytes contents) public pure returns (bytes32);
 ```
 
+
+### On-Chain Authorization
+
+```solidity
+// consumer create an order
+function createOrder(bytes32 resourceId, bytes32 orderId, address provider) public returns (bool success);
+
+// proivder needs to confirm the order
+function providerConfirm(bytes32 orderId) public returns (bool success);
+
+// consumer pay the order and transfer funds to marketplace contract
+function payOrder(bytes32 orderId) public returns (bool success);
+
+// consumer publish temp public key
+function addTempPubKey(bytes32 orderId, string tempPubKey) public returns (bool success);
+
+// provider add encrypted access token on-chain
+function addToken(bytes32 orderId, string token) public returns (bool success);
+
+// consumer confirms the delivery of resource
+function confirmDelivery(bytes32 orderId) public returns (bool);
+
+// generate order Id (bytes32 hash value)
+function generateOrderId(string contents) public pure returns (bytes32);
+```
+
 ### Query functions
 
 ```solidity
+// provider query the temp public key of order
+function queryTempKey(bytes32 orderId) public view returns (string);
+
+// consumer query the encrypted access token of order
+function queryToken(bytes32 orderId) public view returns (string);
+
 // Return true if assetId is unique; otherwise, return false 
 function checkUniqueId(bytes32 assetId) public view returns (bool);
 
 // Return true if assetId is valid for registered asset
 function checkValidId(bytes32 assetId) public view returns (bool);
-
-// Return the encrypted url by Consumer
-function getEncUrl(uint256 orderId) public view returns (string);
-
-// Return the encrypted Token by Consumer
-function getEncToken(uint256 orderId) public view returns (string);
 
 // Return the number of drops associated to the message.sender to an Asset
 function dropsBalance(bytes32 assetId) public view returns (uint256);
@@ -121,8 +138,14 @@ function tokenBalance() public view returns (uint256);
 ```solidity
 // Asset Events
 event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
-event AssetPublished(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
-event AssetPurchased(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
+
+// Order Events
+event OrderCreated(bytes32 indexed _resourceId, bytes32 indexed _orderId, address indexed _consumer);
+event OrderConfirmed(bytes32 indexed _orderId, address indexed _provider);
+event OrderPaid(bytes32 indexed _orderId, address indexed _provider);
+event OrderDelivered(bytes32 indexed _orderId, address indexed _consumer);
+event TempKeyCreated(bytes32 indexed _orderId, string _tempPublicKey, address indexed _consumer);
+event TokenCreated(bytes32 indexed _orderId, address indexed _provider);
 
 // Token Events
 event TokenWithdraw(address indexed _requester, uint256 amount);

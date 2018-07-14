@@ -144,7 +144,7 @@ contract Market is BancorFormula, Ownable {
 
 
 
-    // ACL contract call this to release fund to provider
+    // ACL contract call this function to release fund to provider
     function requestPayment(address receiver, bytes32 assetId) public returns (bool) {
         require(mToken.transfer(receiver, mAssets[assetId].price));
         return true;

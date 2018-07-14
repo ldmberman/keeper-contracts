@@ -89,7 +89,6 @@ contract ACL {
     }
 
     // 3. consumer pay the order and transfer funds to marketplace contract
-    //require(mToken.transferFrom(msg.sender, address(this), mAssets[assetId].price));
     function payOrder(bytes32 orderId) public returns (bool success) {
         // consumer address cannot be empty
         require(msg.sender != 0x0);
