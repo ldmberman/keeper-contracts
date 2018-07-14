@@ -78,7 +78,7 @@ The related testing file is `test/TestACL.js`. It implements beow testing:
 7. provider generates JWT and encrypt it with temp public key;
 8. provider adds the encrypted JWT to the order stored on-chain;
 9. consumer retrieves the encrypted JWT and decrypt using temp private key;
-10. consumer confirms the delivery of resource;
+10. consumer confirms the delivery of resource by updating `bool delivered = true`;
 11. ACL contract asks Market contract to release the consumer's payment to provider
 	* provider has 100 Ocean tokens paid by consumer now;
 	* Market contract transfer 100 Ocean tokens to provider, therefore, its account balance is reduced by 100 tokens.  
