@@ -1,6 +1,6 @@
 /* global artifacts */
 const Market = artifacts.require('Market.sol')
-const AccessControl = artifacts.require('acl.sol')
+const AccessControl = artifacts.require('ACL.sol')
 
 const deployACL = (deployer) => {
     const MarketAddress = Market.address
