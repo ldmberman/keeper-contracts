@@ -3,11 +3,11 @@
 
 const Token = artifacts.require('OceanToken.sol')
 const Market = artifacts.require('Market.sol')
-const ACL = artifacts.require('acl.sol')
+const ACL = artifacts.require('ACL.sol')
 
 const ursa = require('ursa')
 
-contract('Market', (accounts) => {
+contract('ACL', (accounts) => {
     describe('Test On-chain Authorization', () => {
         // support upto 50 assets and providers; each asset has one single provider at this time
         it('Should walk through Authorization Process', async () => {
