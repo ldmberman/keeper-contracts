@@ -12,8 +12,8 @@ contract OceanToken is StandardToken {
     string public constant symbol = 'OCN';                              // Set the token symbol for display
 
     // SUPPLY
-    uint8 public constant decimals = 2;  // 8;                          // Set the number of decimals for display
-    uint256 public constant TOTAL_SUPPLY = 80000; //1400000000 * 10**8; // 1.4 billion OceanToken specified in Grains
+    uint8 public constant decimals = 2;                           // Set the number of decimals for display
+    uint256 public constant TOTAL_SUPPLY = 80000;                 // OceanToken total supply
     uint256 public INITIAL_SUPPLY = TOTAL_SUPPLY.mul(55).div(100);    // 55% tokens is available initially
     uint256 public REWARD_SUPPLY = TOTAL_SUPPLY.sub(INITIAL_SUPPLY);  // 45% of totalSupply is used for block rewards
     uint256 public numReward = 0;                                     // number of reward tokens
