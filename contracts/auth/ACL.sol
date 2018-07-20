@@ -1,158 +1,197 @@
 pragma solidity ^0.4.21;
 
-import '../Market.sol';
+contract Auth {
 
-import '../zeppelin/StandardToken.sol';
-import '../zeppelin/Ownable.sol';
-
-contract ACL {
-
-    using SafeMath for uint256;
-    using SafeMath for uint;
-
-    // marketplace global variables
-    Market  public  market;
-
-    struct Order {
-        bytes32 resourceId;       // resource identifier
-        address provider;         // provider address
-        address consumer;         // consumer address
-        bool    delivered;        // resource delivered - true
-        bool    paid;             // order is paid - true
-        bool    confirmed;        // order is confirmed by provider - true
-        string tmpPubKey;        // consumer generated temp public key
-        string  token;            // provider generated encrypted access token
+    // Sevice level agreement published on immutable storage
+    struct SLA {
+        string reference; // reference link or i.e IPFS hash
+        string type; // type such as PDF/DOC/JSON/XML file.
     }
-    mapping (bytes32 => Order ) public mOrders;   // mapping orderId to associated Order struct
-    string empty;
 
-    // Events
-    event OrderCreated(bytes32 indexed _resourceId, bytes32 indexed _orderId, address indexed _consumer);
-    event OrderConfirmed(bytes32 indexed _orderId, address indexed _provider);
-    event OrderPaid(bytes32 indexed _orderId, address indexed _provider);
-    event OrderDelivered(bytes32 indexed _orderId, address indexed _consumer);
+    // final agreement
+    struct Commitment {
+        bytes32 jwtHash; // committed by the provider (it could be ssh keys/ jwt token/ OTP)
+        string encJWT;  // encrypted JWT using consumer's temp public key
+    }
 
-    event TempKeyCreated(bytes32 indexed _orderId, string _tempPublicKey, address indexed _consumer);
-    event TokenCreated(bytes32 indexed _orderId, address indexed _provider);
-
-    ///////////////////////////////////////////////////////////////////
-    //  Constructor function
-    ///////////////////////////////////////////////////////////////////
-    // 1. constructor
-    function ACL(address _marketAddress) public {
-        require(_marketAddress != address(0));
-        // instance of Market
-        market = Market(_marketAddress);
+    // consent (initial agreement) that provide details about the service availability given by the provider.
+    struct Consent {
+        bytes32 resource; // resource id
+        string permissions; // comma sparated permissions in one string
+        SLA serviceLevelAgreement;
+        bool available; // availability of the resource
+        uint256 timestamp; // in seconds
+        uint256 expire;  // in seconds
+        string discovery; // this is for authorization server configuration in the provider side
+        uint256 timeout; // if the consumer didn't receive verified claim from the provider within timeout
+                         // the consumer can cancel the request and refund the payment from market contract
     }
 
 
-    ///////////////////////////////////////////////////////////////////
-    // Query Functions
-    ///////////////////////////////////////////////////////////////////
-    // provider query the temp public key of order
-    function queryTempKey(bytes32 orderId) public view returns (string) {
-        return mOrders[orderId].tmpPubKey;
+    struct ACL {
+        address consumer;
+        address provider;
+        bytes32 resource;
+        Consent consent;
+        bytes pubkey; // temp public key for access token encryption
+        Commitment commitment;
+        string status; // Requested, Committed, Delivered, Revoked, refund
     }
 
-    // consumer query the encrypted access token of order
-    function queryToken(bytes32 orderId) public view returns (string) {
-        return mOrders[orderId].token;
+    mapping(bytes32 => ACL) aclEntries;
+
+    enum AccessStatus {Requested, Committed, Delivered, Revoked};
+
+    // modifiers and access control
+    modifier isAccessRequested(bytes32 challenge) {
+        require(aclEntries[challenge].status == string(AccessStatus.Requested));
+        _;
     }
 
+    modifier onlyProvider(bytes32 challenge) {
+        require(aclEntries[challenge].provider == msg.sender);
+        _;
+    }
 
-    ///////////////////////////////////////////////////////////////////
-    // Transaction Functions
-    ///////////////////////////////////////////////////////////////////
-    // 1. consumer create an order
-    function createOrder(bytes32 resourceId, bytes32 orderId, address provider) public returns (bool success) {
-        // consumer address cannot be empty
-        require(msg.sender != 0x0);
-        // order Id shall be unique
-        require(mOrders[orderId].consumer == 0x0);
-        // create an order using input orderId
-        mOrders[orderId] = Order(resourceId, provider, msg.sender, false, false, false, empty, empty);
-        // emit event
-        emit OrderCreated(resourceId, orderId, msg.sender);
+    modifier onlyConsumer(bytes32 challenge) {
+        require(aclEntries[challenge].consumer == msg.sender);
+        _;
+    }
+
+    // events
+    event RequestAccessConsent(bytes32 _challenge, address _consumer, address _provider, byte32 _paymentReceipt, bytes32 _resource, uint _timeout);
+    event IssueConsent(bytes32 _challenge, address _consumer, address _provider, unit256 _expire, string _discovery, bytes32 _resource, string _permissions, string slaLink);
+    event RefundPayment(address _consumer, address _provider, bytes32 _challenge, bytes32 _receipt, string _status);
+    event PublishEncryptedToken(bytes32 _challenge, string encJWT);
+    event ReleasePayment(address _consumer, address _provider, bytes32 _challenge, bytes32 _receipt, string _status);
+
+    //1. Access Request Phase
+    function initiateAccessRequest(bytes32 resourceId, address provider, bytes pub_key, uint256 timeout) public returns (bool) {
+        // generate challege id
+        challengeId = keccak256(abi.encodePacked(resourceId, msg.sender, provider, pub_key, timeout));
+        // initialize SLA, Commitment, and claim
+        SLA memory sla = SLA(new string(0), new string(0));
+        Commitment memory commitment = Commitment(bytes32(0), bytes32(0), false);
+        Consent memory consent = Consent(resourceId, new string(0), sla, false, 0, 0, new string(0), timeout);
+        // initialize acl handler
+        ACL memory acl = ACL(
+            msg.sender,
+            provider,
+            resourceId,
+            consent,
+            pub_key, // temp public key
+            commitment,
+            string(AccessStatus.Requested), // set access status to requested
+        );
+        aclEntries[challengeId] = acl;
+        emit RequestAccessConsent(challengeId, msg.sender, provider, paymentReceipt, resourceId, timeout);
         return true;
     }
 
-    // 2. proivder needs to confirm the order
-    function providerConfirm(bytes32 orderId) public returns (bool success) {
-        // must be provider of this order to confirm the order
-        require(msg.sender == mOrders[orderId].provider);
-        require(mOrders[orderId].confirmed == false);
-        // confirm the order
-        mOrders[orderId].confirmed = true;
-        // emit an event
-        emit OrderConfirmed(orderId, msg.sender);
+    // provider commit the Access Request
+    function commitAccessRequest(bytes32 challenge, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType, bytes32 jwtHash)
+    public
+    onlyProvider
+    isAccessRequested(challenge) returns (bool){
+        if (available && now < expire){
+                aclEntries[challenge].consent.available = available;
+                aclEntries[challenge].consent.expire = expire;
+                aclEntries[challenge].consent.timestamp = now;
+                aclEntries[challenge].consent.discovery = discovery;
+                aclEntries[challenge].consent.permissions = permissions;
+                accessHandlers[challenge].commitment.jwtHash = jwtHash;
+                aclEntries[challenge].status = string(AccessStatus.Committed);
+                SLA memory sla = SLA(
+                    slaLink,
+                    slaType
+                );
+                aclEntries[challenge].consent.serviceLevelAgreement = sla;
+                emit IssueConsent(challenge, consumer, provider, expire, discovery, aclEntries[challenge].consent.resource, permissions, slaLink);
+                 return true;
+        }
+
+        // otherwise, send refund
+        aclEntries[challenge].status = string(AccessStatus.Revoked);
+        emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+        return false;
+    }
+
+    // you can cancel consent and do refund only after timeout.
+    function cancelConsent(bytes32 challenge)
+    public
+    isAccessRequested(challenge) {
+        // timeout
+        if (now > aclEntries[challenge].consent.timeout){
+            aclEntries[challenge].status = string(AccessStatus.Revoked);
+            emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+        }
+    }
+
+    // 2. consumer make payments via Market contract
+    //    consumer does not need to commit again; once consumer makes payment, he commits at the same time.
+
+
+    //3. Delivery phase
+    // provider encypts the JWT using temp public key from cunsumer and publish it to on-chain
+    function deliverAccessToken(bytes32 challenge, string encryptedJWT)
+    public
+    onlyProvider
+    isAccessCommitted(challenge) returns (bool){
+        accessHandlers[challenge].commitment.encJWT = encryptedJWT;
+        emit PublishEncryptedToken(challenge, encJWT);
         return true;
     }
 
-    // 3. consumer pay the order and transfer funds to marketplace contract
-    function payOrder(bytes32 orderId) public returns (bool success) {
-        // consumer address cannot be empty
-        require(msg.sender != 0x0);
-        // must be consumer of the order to make payment
-        require(msg.sender == mOrders[orderId].consumer);
-        // order must be confirmed by provider First
-        require(mOrders[orderId].confirmed = true);
-        // call makePayment function in Market contract
-        require(mOrders[orderId].paid == false);
-        require(market.makePayment(msg.sender, mOrders[orderId].resourceId));
-        // update order status
-        mOrders[orderId].paid = true;
-        // emit an event
-        emit OrderPaid(orderId, msg.sender);
-        return true;
+    // Consumer get the encrypted JWT from on-chain
+    function getEncJWT(bytes32 challenge)
+    public view
+    onlyConsumer
+    isAccessCommitted(challenge) returns (string){
+      return accessHandlers[challenge].commitment.encJWT;
     }
 
-    // 4. consumer publish temp public key
-    function addTempPubKey(bytes32 orderId, string tempPubKey) public returns (bool success) {
-        // consumer address cannot be empty
-        require(msg.sender != 0x0);
-        // must be consumer of the order to make payment
-        require(msg.sender == mOrders[orderId].consumer);
-        // must be paid first
-        require(mOrders[orderId].paid == true);
-        // add temp public key
-        mOrders[orderId].tmpPubKey = tempPubKey;
-        // emit an event
-        emit TempKeyCreated(orderId, tempPubKey, msg.sender);
-        return true;
+    /*
+    Off-chain activities:
+    1. consumer decrypt the encJWT using temp private key;
+    2. consumer encrypt JWT using wallet private key and send signedJWT to provider with off-chain communication
+    3. provide decrypt signedJWT with consumer public address and compare with record
+    4. provider generates hash of the decrypted JWT (bytes32 receivedJWTHash) and compare it with on-chain record
+
+    On-chain activity:
+    1. provider verify the challege is not expired
+    2. provider verify the received JWThash from consumer matches the original JWT hash generated by himself
+    */
+
+    function verifyAccessTokenDelivery(bytes challenge, bytes32 receivedJWTHash)
+    public
+    onlyProvider
+    isAccessCommitted(challenge){
+        // expire
+        if(accessHandler[challenge].consent.expire < now){
+            // this means that consumer didn't make the request
+            // revoke the access then raise event for refund
+            aclEntries[challenge].status = string(AccessStatus.Revoked);
+            emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+        }
+        else{
+            // provider generates hash of the decrypted JWT which matches on-chain jwtHash value -> JWT delivered
+            if (aclEntries[challenge].commitment.jwtHash == receivedJWTHash){
+                aclEntries[challenge].status = string(AccessStatus.Delivered);
+                // send money to provider
+                emit ReleasePayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+            }else{
+                aclEntries[challenge].status = string(AccessStatus.Revoked);
+                emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+            }
+        }
     }
 
-    // 5. provider add encrypted token on-chain
-    function addToken(bytes32 orderId, string token) public returns (bool success) {
-        // consumer address cannot be empty
-        require(msg.sender != 0x0);
-        // must be consumer of the order to make payment
-        require(msg.sender == mOrders[orderId].provider);
-        // add encrypted token to Order
-        mOrders[orderId].token = token;
-        // emit an event
-        emit TokenCreated(orderId, msg.sender);
-        return true;
+    // Utility function: provider/consumer use this function to check access request status
+    function verifyAccessStatus(bytes32 challenge, string status) public returns(bool){
+        if(aclEntries[challenge].status == status){
+            return true;
+        }
+        return false;
     }
 
-    // 6. consumer confirms the delivery of resource
-    function confirmDelivery(bytes32 orderId) public returns (bool) {
-        // must be consumer to confirm the order
-        require(msg.sender == mOrders[orderId].consumer);
-        // order must be not marked as delivered at this time
-        require(mOrders[orderId].delivered == false);
-        // update order status to be delivered
-        mOrders[orderId].delivered = true;
-        // release fund to provider - interact with market contract
-        require(market.requestPayment(mOrders[orderId].provider, mOrders[orderId].resourceId));
-        // emit an event
-        emit OrderDelivered(orderId, msg.sender);
-        return true;
-    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Utility Functions
-    ///////////////////////////////////////////////////////////////////
-    function generateOrderId(string contents) public pure returns (bytes32) {
-        return bytes32(keccak256(contents));
-    }
 }

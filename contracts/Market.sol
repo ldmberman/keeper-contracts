@@ -32,6 +32,17 @@ contract Market is BancorFormula, Ownable {
     }
     mapping (address => Provider) public mProviders;    // mapping providerId to Provider struct
 
+    struct Payment {
+       address sender; 	      // consumer or anyone else would like to make the payment (automatically set to be msg.sender)
+       address receiver;      // provider or anyone (set by the sender of funds)
+       PaymentState state;		// payment state
+       uint256 amount; 	      // amount of tokens to be transferred
+       uint256 date; 	        // timestamp of the payment event (in sec.)
+       uint256 expiration;    // consumer may request refund after expiration timestamp (in sec.)
+    }
+    enum PaymentState {Paid, Released, Refunded}
+    mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
+
     // marketplace global variables
     OceanToken  public  mToken;
     uint256     public  mAllowance;             // total available Ocean tokens for transfer (exclude locked tokens)
@@ -49,6 +60,16 @@ contract Market is BancorFormula, Ownable {
     event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
     event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
 
+    // modifier
+    modifier validAddress(address sender) {
+        require(sender != 0x0);
+        _;
+    }
+
+    modifier isPaid(bytes32 _id) {
+      require(mPayments[_id].state == string(PaymentState.Paid));
+      _;
+    }
 
     // TCR
     Registry  public  tcr;
@@ -83,8 +104,7 @@ contract Market is BancorFormula, Ownable {
     }
 
     // Return the number of drops associated to the message.sender to an Asset
-    function dropsBalance(bytes32 assetId) public view returns (uint256){
-        require(msg.sender != 0x0);
+    function dropsBalance(bytes32 assetId) public view validAddress(msg.sender) returns (uint256){
         return mAssets[assetId].drops[msg.sender];
     }
 
@@ -94,8 +114,7 @@ contract Market is BancorFormula, Ownable {
     }
 
     // Retrieve the msg.sender Provider token balance
-    function tokenBalance() public view returns (uint256) {
-        require(mProviders[msg.sender].provider != 0x0);
+    function tokenBalance() public view validAddress(mProviders[msg.sender].provider) returns (uint256) {
         return mProviders[msg.sender].numOCN;
     }
     ///////////////////////////////////////////////////////////////////
@@ -119,8 +138,7 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
 
     // 1. register provider and assets （upload by changing uploadBits）
-    function register(bytes32 assetId, uint256 price) public returns (bool success) {
-        require(msg.sender != 0x0);
+    function register(bytes32 assetId, uint256 price) public validAddress(msg.sender) returns (bool success) {
         // check for unique assetId
         require(mAssets[assetId].owner == 0x0);
         // register provider if not exists
@@ -136,23 +154,39 @@ contract Market is BancorFormula, Ownable {
         return true;
     }
 
-    // ACL contract call this function to allow consumer to make payment
-    function makePayment(address sender, bytes32 assetId) public returns (bool) {
-        require(mToken.transferFrom(sender, address(this), mAssets[assetId].price));
-        return true;
+    // the sender makes payment
+    function sendPayment(bytes32 _id, address _receiver, uint256 _amount, uint256 _expire) public returns (bool){
+      // consumer make payment to Market contract
+      require(mToken.transferFrom(msg.sender, address(this), mAssets[assetId].price));
+      mPayments[_id] = Payment(msg.sender, _receiver, string(PaymentState.Paid), _amount, now, _expire);
+      return true;
     }
 
+    // the consumer release payment to receiver
+    function releasePayment(bytes32 _id) public onlySenderAccount isPaid(_id) returns (bool){
+      // update state to avoid re-entry attack
+      mPayments[_id].state == string(PaymentState.Released);
+      require(mToken.transfer(mPayments[_id].receiver, mPayments[_id].amount));
+      return true;
+    }
 
+    // refund payment
+    function refundPayment(bytes32 _id) public isPaid(_id) returns (bool){
+      mPayments[_id].state == string(PaymentState.Refunded);
+      require(mToken.transfer(mPayments[_id].sender, mPayments[_id].amount));
+      return true;
+    }
 
-    // ACL contract call this function to release fund to provider
-    function requestPayment(address receiver, bytes32 assetId) public returns (bool) {
-        require(mToken.transfer(receiver, mAssets[assetId].price));
-        return true;
+    // utitlity function - verify the payment
+    function verifyPayment(bytes32 challenge, string status) public view returns(bool){
+        if(mPayments[_id].state == status){
+            return true;
+        }
+        return false;
     }
 
         // 2. request initial fund transfer
-    function requestTokens(uint256 amount) public returns (uint256) {
-        require(msg.sender != 0x0);
+    function requestTokens(uint256 amount) public validAddress(msg.sender) returns (uint256) {
         // find amount of tokens need or can be transferred
         uint256 nToken = 0;
         if (mAllowance >= amount){
@@ -237,9 +271,7 @@ contract Market is BancorFormula, Ownable {
         return tokensToMint;
     }
 
-    function sellDrops(bytes32 _assetId, uint256 _drops) public returns (uint256 _ocn) {
-        require(mProviders[msg.sender].provider != 0x0);
-
+    function sellDrops(bytes32 _assetId, uint256 _drops) public returns validAddress(mProviders[msg.sender].provider) (uint256 _ocn) {
         uint256 ocnAmount = calculateSaleReturn(mAssets[_assetId].ndrops, mAssets[_assetId].nOcean, reserveRatio, _drops);
         mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.sub(_drops);
         mAssets[_assetId].nOcean = mAssets[_assetId].nOcean.sub(ocnAmount);
