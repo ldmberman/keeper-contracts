@@ -66,8 +66,8 @@ contract Market is BancorFormula, Ownable {
         _;
     }
 
-    modifier isPaid(bytes32 _id) {
-      require(mPayments[_id].state == string(PaymentState.Paid));
+    modifier isPaid(bytes32 _paymentId) {
+      require(mPayments[_paymentId].state == string(PaymentState.Paid));
       _;
     }
 
@@ -155,31 +155,31 @@ contract Market is BancorFormula, Ownable {
     }
 
     // the sender makes payment
-    function sendPayment(bytes32 _id, address _receiver, uint256 _amount, uint256 _expire) public returns (bool){
+    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public validAddress(msg.sender) returns (bool){
       // consumer make payment to Market contract
       require(mToken.transferFrom(msg.sender, address(this), mAssets[assetId].price));
-      mPayments[_id] = Payment(msg.sender, _receiver, string(PaymentState.Paid), _amount, now, _expire);
+      mPayments[_paymentId] = Payment(msg.sender, _receiver, string(PaymentState.Paid), _amount, now, _expire);
       return true;
     }
 
     // the consumer release payment to receiver
-    function releasePayment(bytes32 _id) public onlySenderAccount isPaid(_id) returns (bool){
+    function releasePayment(bytes32 _paymentId) public onlySenderAccount isPaid(_paymentId) returns (bool){
       // update state to avoid re-entry attack
-      mPayments[_id].state == string(PaymentState.Released);
-      require(mToken.transfer(mPayments[_id].receiver, mPayments[_id].amount));
+      mPayments[_paymentId].state == string(PaymentState.Released);
+      require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount));
       return true;
     }
 
     // refund payment
-    function refundPayment(bytes32 _id) public isPaid(_id) returns (bool){
-      mPayments[_id].state == string(PaymentState.Refunded);
-      require(mToken.transfer(mPayments[_id].sender, mPayments[_id].amount));
+    function refundPayment(bytes32 _paymentId) public isPaid(_paymentId) returns (bool){
+      mPayments[_paymentId].state == string(PaymentState.Refunded);
+      require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount));
       return true;
     }
 
     // utitlity function - verify the payment
-    function verifyPayment(bytes32 challenge, string status) public view returns(bool){
-        if(mPayments[_id].state == status){
+    function verifyPayment(bytes32 _paymentId, string status) public view returns(bool){
+        if(mPayments[_paymentId].state == status){
             return true;
         }
         return false;
