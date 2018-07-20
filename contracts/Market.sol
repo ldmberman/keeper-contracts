@@ -178,8 +178,8 @@ contract Market is BancorFormula, Ownable {
     }
 
     // utitlity function - verify the payment
-    function verifyPayment(bytes32 _paymentId, string status) public view returns(bool){
-        if(mPayments[_paymentId].state == status){
+    function verifyPayment(bytes32 _paymentId, string _status) public view returns(bool){
+        if(mPayments[_paymentId].state == _status){
             return true;
         }
         return false;
