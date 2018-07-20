@@ -56,6 +56,10 @@ contract Market is BancorFormula, Ownable {
 
     // Events
     event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
+    event PaymentReceived(bytes32 indexed _paymentId, address indexed _receiver, uint256 _amount, uint256 _expire);
+    event PaymentReleased(bytes32 indexed _paymentId, address indexed _receiver);
+    event PaymentRefunded(bytes32 indexed _paymentId, address indexed _sender);
+
     event TokenWithdraw(address indexed _requester, uint256 amount);
     event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
     event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
@@ -159,6 +163,7 @@ contract Market is BancorFormula, Ownable {
       // consumer make payment to Market contract
       require(mToken.transferFrom(msg.sender, address(this), mAssets[assetId].price));
       mPayments[_paymentId] = Payment(msg.sender, _receiver, string(PaymentState.Paid), _amount, now, _expire);
+      emit PaymentReceived(_paymentId, _receiver, _amount, _expire);
       return true;
     }
 
@@ -167,6 +172,7 @@ contract Market is BancorFormula, Ownable {
       // update state to avoid re-entry attack
       mPayments[_paymentId].state == string(PaymentState.Released);
       require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount));
+      emit PaymentReleased(_paymentId, mPayments[_paymentId].receiver);
       return true;
     }
 
@@ -174,6 +180,7 @@ contract Market is BancorFormula, Ownable {
     function refundPayment(bytes32 _paymentId) public isPaid(_paymentId) returns (bool){
       mPayments[_paymentId].state == string(PaymentState.Refunded);
       require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount));
+      emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);
       return true;
     }
 
