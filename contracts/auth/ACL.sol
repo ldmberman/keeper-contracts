@@ -1,4 +1,5 @@
-pragma solidity ^0.4.21;
+pragma solidity 0.4.21;
+
 
 contract Auth {
 
@@ -24,9 +25,8 @@ contract Auth {
         uint256 expire;  // in seconds
         string discovery; // this is for authorization server configuration in the provider side
         uint256 timeout; // if the consumer didn't receive verified claim from the provider within timeout
-                         // the consumer can cancel the request and refund the payment from market contract
+        // the consumer can cancel the request and refund the payment from market contract
     }
-
 
     struct ACL {
         address consumer;
@@ -38,7 +38,7 @@ contract Auth {
         string status; // Requested, Committed, Delivered, Revoked, refund
     }
 
-    mapping(bytes32 => ACL) aclEntries;
+    mapping(bytes32 => ACL) private aclEntries;
 
     enum AccessStatus {Requested, Committed, Delivered, Revoked}
 
@@ -59,16 +59,23 @@ contract Auth {
     }
 
     // events
-    event RequestAccessConsent(bytes32 _challenge, address _consumer, address _provider, byte32 _paymentReceipt, bytes32 _resource, uint _timeout);
-    event IssueConsent(bytes32 _challenge, address _consumer, address _provider, unit256 _expire, string _discovery, bytes32 _resource, string _permissions, string slaLink);
+    event RequestAccessConsent(bytes32 _challenge, address _consumer, address _provider, byte32 _paymentReceipt,
+        bytes32 _resource, uint _timeout);
+
+    event IssueConsent(bytes32 _challenge, address _consumer, address _provider, uint256 _expire, string _discovery,
+        bytes32 _resource, string _permissions, string slaLink);
+
     event RefundPayment(address _consumer, address _provider, bytes32 _challenge, bytes32 _receipt, string _status);
+
     event PublishEncryptedToken(bytes32 _challenge, string encJWT);
+
     event ReleasePayment(address _consumer, address _provider, bytes32 _challenge, bytes32 _receipt, string _status);
 
     //1. Access Request Phase
-    function initiateAccessRequest(bytes32 resourceId, address provider, bytes pub_key, uint256 timeout) public returns (bool) {
+    function initiateAccessRequest(bytes32 resourceId, address provider, bytes pubKey, uint256 timeout)
+    public returns (bool) {
         // generate challege id
-        challengeId = keccak256(abi.encodePacked(resourceId, msg.sender, provider, pub_key, timeout));
+        challengeId = keccak256(abi.encodePacked(resourceId, msg.sender, provider, pubKey, timeout));
         // initialize SLA, Commitment, and claim
         SLA memory sla = SLA(new string(0), new string(0));
         Commitment memory commitment = Commitment(bytes32(0), bytes32(0), false);
@@ -79,40 +86,44 @@ contract Auth {
             provider,
             resourceId,
             consent,
-            pub_key, // temp public key
+            pubKey, // temp public key
             commitment,
             string(AccessStatus.Requested) // set access status to requested
         );
         aclEntries[challengeId] = acl;
         emit RequestAccessConsent(challengeId, msg.sender, provider, paymentReceipt, resourceId, timeout);
+
         return true;
     }
 
     // provider commit the Access Request
-    function commitAccessRequest(bytes32 challenge, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType, bytes32 jwtHash)
+    function commitAccessRequest(bytes32 challenge, bool available, uint256 expire, string discovery,
+        string permissions, string slaLink, string slaType, bytes32 jwtHash)
     public
     onlyProvider
-    isAccessRequested(challenge) returns (bool){
-        if (available && now < expire){
-                aclEntries[challenge].consent.available = available;
-                aclEntries[challenge].consent.expire = expire;
-                aclEntries[challenge].consent.timestamp = now;
-                aclEntries[challenge].consent.discovery = discovery;
-                aclEntries[challenge].consent.permissions = permissions;
-                accessHandlers[challenge].commitment.jwtHash = jwtHash;
-                aclEntries[challenge].status = string(AccessStatus.Committed);
-                SLA memory sla = SLA(
-                    slaLink,
-                    slaType
-                );
-                aclEntries[challenge].consent.serviceLevelAgreement = sla;
-                emit IssueConsent(challenge, consumer, provider, expire, discovery, aclEntries[challenge].consent.resource, permissions, slaLink);
-                 return true;
+    isAccessRequested(challenge) returns (bool) {
+        if (available && now < expire) {
+            aclEntries[challenge].consent.available = available;
+            aclEntries[challenge].consent.expire = expire;
+            aclEntries[challenge].consent.timestamp = now;
+            aclEntries[challenge].consent.discovery = discovery;
+            aclEntries[challenge].consent.permissions = permissions;
+            accessHandlers[challenge].commitment.jwtHash = jwtHash;
+            aclEntries[challenge].status = string(AccessStatus.Committed);
+            SLA memory sla = SLA(
+                slaLink,
+                slaType
+            );
+            aclEntries[challenge].consent.serviceLevelAgreement = sla;
+            emit IssueConsent(challenge, consumer, provider, expire, discovery, aclEntries[challenge].consent.resource,
+                permissions, slaLink);
+            return true;
         }
 
         // otherwise, send refund
         aclEntries[challenge].status = string(AccessStatus.Revoked);
-        emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+        emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge,
+            acccessHandlers[challenge].receipt, aclEntries[challenge].status);
         return false;
     }
 
@@ -121,22 +132,20 @@ contract Auth {
     public
     isAccessRequested(challenge) {
         // timeout
-        if (now > aclEntries[challenge].consent.timeout){
+        if (now > aclEntries[challenge].consent.timeout) {
             aclEntries[challenge].status = string(AccessStatus.Revoked);
-            emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+            emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge,
+                acccessHandlers[challenge].receipt, aclEntries[challenge].status);
         }
     }
 
     // 2. consumer make payments via Market contract
     //    consumer does not need to commit again; once consumer makes payment, he commits at the same time.
-
-
     //3. Delivery phase
     // provider encypts the JWT using temp public key from cunsumer and publish it to on-chain
     function deliverAccessToken(bytes32 challenge, string encryptedJWT)
-    public
-    onlyProvider
-    isAccessCommitted(challenge) returns (bool){
+    public onlyProvider isAccessCommitted(challenge) returns (bool) {
+
         accessHandlers[challenge].commitment.encJWT = encryptedJWT;
         emit PublishEncryptedToken(challenge, encJWT);
         return true;
@@ -146,8 +155,8 @@ contract Auth {
     function getEncJWT(bytes32 challenge)
     public view
     onlyConsumer
-    isAccessCommitted(challenge) returns (string){
-      return accessHandlers[challenge].commitment.encJWT;
+    isAccessCommitted(challenge) returns (string) {
+        return accessHandlers[challenge].commitment.encJWT;
     }
 
     /*
@@ -155,40 +164,43 @@ contract Auth {
     1. consumer decrypt the encJWT using temp private key;
     2. consumer encrypt JWT using wallet private key and send signedJWT to provider with off-chain communication
     3. provide decrypt signedJWT with consumer wallet public key
-    4. provider generates hash of the decrypted JWT (`bytes32 receivedJWTHash`) and compare it with on-chain record `aclEntries[challenge].commitment.jwtHash`
+    4. provider generates hash of the decrypted JWT (`bytes32 receivedJWTHash`) and compare it with on-chain record
+    `aclEntries[challenge].commitment.jwtHash`
 
     On-chain activity:
     1. provider verify the challege is not expired
     2. provider verify `bytes32 receivedJWTHash` matches the original JWT hash generated by himself
     */
+    function verifyAccessTokenDelivery(bytes challenge, bytes32 receivedJWTHash) public onlyProvider
+    isAccessCommitted(challenge) {
 
-    function verifyAccessTokenDelivery(bytes challenge, bytes32 receivedJWTHash)
-    public
-    onlyProvider
-    isAccessCommitted(challenge){
         // expire
-        if(accessHandler[challenge].consent.expire < now){
+        if (accessHandler[challenge].consent.expire < now) {
             // this means that consumer didn't make the request
             // revoke the access then raise event for refund
             aclEntries[challenge].status = string(AccessStatus.Revoked);
-            emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
-        }
-        else{
+
+            emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge,
+                acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+        } else {
             // provider generates hash of the decrypted JWT which matches on-chain jwtHash value -> JWT delivered
-            if (aclEntries[challenge].commitment.jwtHash == receivedJWTHash){
+            if (aclEntries[challenge].commitment.jwtHash == receivedJWTHash) {
                 aclEntries[challenge].status = string(AccessStatus.Delivered);
+
                 // send money to provider
-                emit ReleasePayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
-            }else{
+                emit ReleasePayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge,
+                    acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+            } else {
                 aclEntries[challenge].status = string(AccessStatus.Revoked);
-                emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge, acccessHandlers[challenge].receipt, aclEntries[challenge].status);
+                emit RefundPayment(aclEntries[challenge].consumer, aclEntries[challenge].provider, challenge,
+                    acccessHandlers[challenge].receipt, aclEntries[challenge].status);
             }
         }
     }
 
     // Utility function: provider/consumer use this function to check access request status
-    function verifyAccessStatus(bytes32 challenge, string status) public returns(bool){
-        if(aclEntries[challenge].status == status){
+    function verifyAccessStatus(bytes32 challenge, string status) public returns (bool) {
+        if (aclEntries[challenge].status == status) {
             return true;
         }
         return false;
