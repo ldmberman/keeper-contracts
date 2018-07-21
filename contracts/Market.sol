@@ -33,14 +33,14 @@ contract Market is BancorFormula, Ownable {
     mapping (address => Provider) public mProviders;    // mapping providerId to Provider struct
 
     struct Payment {
-       address sender; 	      // consumer or anyone else would like to make the payment (automatically set to be msg.sender)
-       address receiver;      // provider or anyone (set by the sender of funds)
-       PaymentState state;		// payment state
-       uint256 amount; 	      // amount of tokens to be transferred
-       uint256 date; 	        // timestamp of the payment event (in sec.)
-       uint256 expiration;    // consumer may request refund after expiration timestamp (in sec.)
+        address sender; 	      // consumer or anyone else would like to make the payment (automatically set to be msg.sender)
+        address receiver;      // provider or anyone (set by the sender of funds)
+        PaymentState state;		// payment state
+        uint256 amount; 	      // amount of tokens to be transferred
+        uint256 date; 	        // timestamp of the payment event (in sec.)
+        uint256 expiration;    // consumer may request refund after expiration timestamp (in sec.)
     }
-    enum PaymentState {Paid, Released, Refunded}
+    enum PaymentState {Locked, Released, Refunded}
     mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
 
     // marketplace global variables
@@ -70,9 +70,9 @@ contract Market is BancorFormula, Ownable {
         _;
     }
 
-    modifier isPaid(bytes32 _paymentId) {
-      require(mPayments[_paymentId].state == string(PaymentState.Paid));
-      _;
+    modifier isLocked(bytes32 _paymentId) {
+        require(mPayments[_paymentId].state == PaymentState.Locked);
+        _;
     }
 
     // TCR
@@ -160,33 +160,33 @@ contract Market is BancorFormula, Ownable {
 
     // the sender makes payment
     function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public validAddress(msg.sender) returns (bool){
-      // consumer make payment to Market contract
-      require(mToken.transferFrom(msg.sender, address(this), mAssets[assetId].price));
-      mPayments[_paymentId] = Payment(msg.sender, _receiver, string(PaymentState.Paid), _amount, now, _expire);
-      emit PaymentReceived(_paymentId, _receiver, _amount, _expire);
-      return true;
+        // consumer make payment to Market contract
+        require(mToken.transferFrom(msg.sender, address(this), _amount));
+        mPayments[_paymentId] = Payment(msg.sender, _receiver, PaymentState.Locked, _amount, now, _expire);
+        emit PaymentReceived(_paymentId, _receiver, _amount, _expire);
+        return true;
     }
 
     // the consumer release payment to receiver
-    function releasePayment(bytes32 _paymentId) public onlySenderAccount isPaid(_paymentId) returns (bool){
-      // update state to avoid re-entry attack
-      mPayments[_paymentId].state == string(PaymentState.Released);
-      require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount));
-      emit PaymentReleased(_paymentId, mPayments[_paymentId].receiver);
-      return true;
+    function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool){
+        // update state to avoid re-entry attack
+        mPayments[_paymentId].state == PaymentState.Released;
+        require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount));
+        emit PaymentReleased(_paymentId, mPayments[_paymentId].receiver);
+        return true;
     }
 
     // refund payment
-    function refundPayment(bytes32 _paymentId) public isPaid(_paymentId) returns (bool){
-      mPayments[_paymentId].state == string(PaymentState.Refunded);
-      require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount));
-      emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);
-      return true;
+    function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool){
+        mPayments[_paymentId].state == PaymentState.Refunded;
+        require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount));
+        emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);
+        return true;
     }
 
     // utitlity function - verify the payment
-    function verifyPayment(bytes32 _paymentId, string _status) public view returns(bool){
-        if(mPayments[_paymentId].state == _status){
+    function verifyPayment(bytes32 _paymentId) public view returns(bool){
+        if(mPayments[_paymentId].state == PaymentState.Locked || mPayments[_paymentId].state == PaymentState.Released){
             return true;
         }
         return false;
@@ -278,7 +278,7 @@ contract Market is BancorFormula, Ownable {
         return tokensToMint;
     }
 
-    function sellDrops(bytes32 _assetId, uint256 _drops) public returns validAddress(mProviders[msg.sender].provider) (uint256 _ocn) {
+    function sellDrops(bytes32 _assetId, uint256 _drops) public  validAddress(mProviders[msg.sender].provider) returns (uint256 _ocn) {
         uint256 ocnAmount = calculateSaleReturn(mAssets[_assetId].ndrops, mAssets[_assetId].nOcean, reserveRatio, _drops);
         mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.sub(_drops);
         mAssets[_assetId].nOcean = mAssets[_assetId].nOcean.sub(ocnAmount);

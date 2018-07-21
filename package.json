@@ -59,6 +59,6 @@
     "truffle-hdwallet-provider": "^0.0.5"
   },
   "engines": {
-    "node": ">=6.11.5"
+    "node": ">=8.11.1"
   }
 }
