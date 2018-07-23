@@ -93,7 +93,7 @@ contract Auth {
     public returns (bool) {
         // pasing `id` from outside for debugging purpose; otherwise, generate Id inside automatically
         if(id == 0x0){
-            id = keccak256(resourceId, msg.sender, provider, pubKey);
+            bytes32 intId = keccak256(resourceId, msg.sender, provider, pubKey);
         }
         // initialize SLA, Commitment, and claim
         SLA memory sla = SLA(new string(0), new string(0));
@@ -109,8 +109,13 @@ contract Auth {
             commitment,
             AccessStatus.Requested // set access status to requested
         );
-        aclEntries[id] = acl;
-        emit RequestAccessConsent(id, msg.sender, provider, resourceId, timeout, pubKey);
+        if (id == 0x0){
+            aclEntries[intId] = acl;
+            emit RequestAccessConsent(intId, msg.sender, provider, resourceId, timeout, pubKey);
+        } else {
+            aclEntries[id] = acl;
+            emit RequestAccessConsent(id, msg.sender, provider, resourceId, timeout, pubKey);
+        }
         return true;
     }
 
