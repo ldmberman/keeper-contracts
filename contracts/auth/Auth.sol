@@ -67,7 +67,7 @@ contract Auth {
     }
 
     // events
-    event RequestAccessConsent(bytes32 _id, address _consumer, address _provider, bytes32 _resource, uint _timeout);
+    event RequestAccessConsent(bytes32 _id, address _consumer, address _provider, bytes32 _resource, uint _timeout, string _pubKey);
 
     event CommitConsent(bytes32 _id, uint256 _expire, string _discovery, string _permissions, string slaLink);
 
@@ -91,6 +91,10 @@ contract Auth {
     //1. Access Request Phase
     function initiateAccessRequest(bytes32 id, bytes32 resourceId, address provider, string pubKey, uint256 timeout)
     public returns (bool) {
+        // pasing `id` from outside for debugging purpose; otherwise, generate Id inside automatically
+        if(id == 0x0){
+            id = keccak256(resourceId, msg.sender, provider, pubKey);
+        }
         // initialize SLA, Commitment, and claim
         SLA memory sla = SLA(new string(0), new string(0));
         Commitment memory commitment = Commitment(new string(0));
@@ -106,7 +110,7 @@ contract Auth {
             AccessStatus.Requested // set access status to requested
         );
         aclEntries[id] = acl;
-        emit RequestAccessConsent(id, msg.sender, provider, resourceId, timeout);
+        emit RequestAccessConsent(id, msg.sender, provider, resourceId, timeout, pubKey);
         return true;
     }
 
