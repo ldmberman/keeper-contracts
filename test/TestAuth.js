@@ -6,6 +6,10 @@ const Market = artifacts.require('Market.sol')
 const ACL = artifacts.require('Auth.sol')
 
 const ursa = require('ursa')
+const ethers = require('ethers')
+const Web3 = require('web3')
+
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
 
 contract('ACL', (accounts) => {
     describe('Test On-chain Authorization', () => {
@@ -46,37 +50,52 @@ contract('ACL', (accounts) => {
             console.log('consumer creates an request with id : ', resourceId)
 
             // 3. provider commit the request
-            const JWThash = await market.generateStr2Id('eyJhbGciOiJIUzI1', { from: accounts[0] })
-            await acl.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', JWThash)
+            await acl.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType')
             console.log('provider has committed the order')
 
             // 4. consumer make payment
             const bal1 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal1.valueOf()} before payment`)
-            await market.sendPayment(accessId, accounts[0], 100,  9999999999, { from: accounts[1] })
+            await market.sendPayment(accessId, accounts[0], 100, 9999999999, { from: accounts[1] })
             const bal2 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal2.valueOf()} after payment`)
             console.log('consumer has paid the order')
 
             // 5. provider delivery the encrypted JWT token
             const OnChainPubKey = await acl.getTempPubKey(accessId, { from: accounts[0] })
-            //console.log('provider Retrieve the temp public key:', OnChainPubKey)
+            // console.log('provider Retrieve the temp public key:', OnChainPubKey)
             assert.strictEqual(publicKey, OnChainPubKey, 'two public keys should match.')
 
             const getPubKeyPem = ursa.coerceKey(OnChainPubKey)
             const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'base64')
             await acl.deliverAccessToken(accessId, encJWT, { from: accounts[0] })
-            console.log('provider has delivered the encrypted JWT')
+            console.log('provider has delivered the encrypted JWT to on-chain')
 
             // 4. consumer download the encrypted token and decrypt
             const onChainencToken = await acl.getEncJWT(accessId, { from: accounts[1] })
             const decryptJWT = privatePem.decrypt(onChainencToken, 'base64', 'utf8')
-            console.log('consumer decrypts JWT token :', decryptJWT.toString())
+            console.log('consumer decrypts JWT token off-chain :', decryptJWT.toString())
             assert.strictEqual(decryptJWT.toString(), 'eyJhbGciOiJIUzI1', 'two public keys should match.')
 
-            // 6. provider verify the JWT is delivered to consumer
-            const proofJWTHash = await market.generateStr2Id(decryptJWT.toString(), { from: accounts[0] })
-            await acl.verifyAccessTokenDelivery(accessId, proofJWTHash, { from: accounts[0] })
+            // 5. consumer sign the encypted JWT token using private key
+            // const signature = web3.eth.sign(accounts[1], '0x' + Buffer.from(onChainencToken).toString('hex'))
+            const prefix = '0x'
+            const hexString = Buffer.from(onChainencToken).toString('hex')
+            const signature = web3.eth.sign(accounts[1], `${prefix}${hexString}`)
+            console.log('consumer signature: ', signature)
+
+            const sig = ethers.utils.splitSignature(signature)
+
+            const fixedMsg = `\x19Ethereum Signed Message:\n${onChainencToken.length}${onChainencToken}`
+            const fixedMsgSha = web3.sha3(fixedMsg)
+            console.log('signed message from consumer to be validated: ', fixedMsg)
+
+            const res = await acl.isSigned(accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
+            console.log('validate the signature comes from consumer? isSigned: ', res)
+
+            // 6. provider send the signed encypted JWT to ACL contract for verification (verify delivery of token)
+            // it shall release the payment to provider automatically
+            await acl.verifyAccessTokenDelivery(accessId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
             console.log('provider verify the delivery and request payment')
 
             // check balance

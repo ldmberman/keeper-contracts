@@ -15,7 +15,6 @@ contract Auth {
 
     // final agreement
     struct Commitment {
-        bytes32 jwtHash; // committed by the provider (it could be ssh keys/ jwt token/ OTP)
         string encJWT;  // encrypted JWT using consumer's temp public key
     }
 
@@ -94,7 +93,7 @@ contract Auth {
     public returns (bool) {
         // initialize SLA, Commitment, and claim
         SLA memory sla = SLA(new string(0), new string(0));
-        Commitment memory commitment = Commitment(bytes32(0), new string(0));
+        Commitment memory commitment = Commitment(new string(0));
         Consent memory consent = Consent(resourceId, new string(0), sla, false, 0, 0, new string(0), timeout);
         // initialize acl handler
         ACL memory acl = ACL(
@@ -111,7 +110,7 @@ contract Auth {
         return true;
     }
 
-    function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType, bytes32 jwtHash)
+    function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType)
     public onlyProvider(id) isAccessRequested(id) returns (bool) {
         if (available && now < expire) {
             aclEntries[id].consent.available = available;
@@ -119,7 +118,6 @@ contract Auth {
             aclEntries[id].consent.timestamp = now;
             aclEntries[id].consent.discovery = discovery;
             aclEntries[id].consent.permissions = permissions;
-            aclEntries[id].commitment.jwtHash = jwtHash;
             aclEntries[id].status = AccessStatus.Committed;
             SLA memory sla = SLA(
                 slaLink,
@@ -166,28 +164,35 @@ contract Auth {
         return aclEntries[id].commitment.encJWT;
     }
 
-    // provider verify the access token is delivered to consumer and request for payment
-    function verifyAccessTokenDelivery(bytes32 id, bytes32 proofJWTHash) public onlyProvider(id) isAccessComitted(id) {
 
+    // provider uses this function to verify the signature comes from the consumer
+    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public view returns (bool){
+        return (ecrecover(msgHash, v, r, s) == _addr);
+    }
+
+    // provider verify the access token is delivered to consumer and request for payment
+    function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
+    onlyProvider(id) isAccessComitted(id) returns (bool){
         // expire
         if (aclEntries[id].consent.expire < now) {
             // this means that consumer didn't make the request
             // revoke the access then raise event for refund
             aclEntries[id].status = AccessStatus.Revoked;
             emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
+            return false;
         } else {
             // provider confirms that consumer made a request by providing "proof of access"
-            // This means that provider should get a signed jwt hash from the consumer and compares what was
-            // committed by the provider with the signed one.
-            if (aclEntries[id].commitment.jwtHash == proofJWTHash) {
+            if (isSigned(_addr, msgHash, v, r, s)) {
                 aclEntries[id].status = AccessStatus.Delivered;
                 // send money to provider
                 require(market.releasePayment(id));
                 // emit an event
                 emit ReleasePayment(aclEntries[id].consumer, aclEntries[id].provider, id);
+                return true;
             } else {
                 aclEntries[id].status = AccessStatus.Revoked;
                 emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
+                return false;
             }
         }
     }
