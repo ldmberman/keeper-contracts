@@ -70,12 +70,18 @@ function isWhitelisted(bytes32 _listingHash);
 // Register provider and assets （upload by changing uploadBits）
 function register(bytes32 assetId, uint256 price) public returns (bool success);
 
-// Authorization contract call this function so that consumer can make payment
-function makePayment(address sender, bytes32 assetId) public returns (bool);
+// consumer can make payment
+function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public validAddress(msg.sender) returns (bool);
 
-// Authorization contract call this function to release fund to provider
-function requestPayment(address receiver, bytes32 assetId) public returns (bool);
-    
+// release fund to provider
+function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool);
+
+// refund payment
+function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool);
+
+// verify the payment
+function verifyPayment(bytes32 _paymentId) public view returns(bool);
+
 // Generate Unique Id for asset using input string parameter
 function generateStr2Id(string contents) public pure returns (bytes32);
 
@@ -87,26 +93,28 @@ function generateBytes2Id(bytes contents) public pure returns (bytes32);
 ### On-Chain Authorization
 
 ```solidity
-// consumer create an order
-function createOrder(bytes32 resourceId, bytes32 orderId, address provider) public returns (bool success);
+// consumer request access to resource
+function initiateAccessRequest(bytes32 id, bytes32 resourceId, address provider, string pubKey, uint256 timeout) public returns (bool) {;
 
-// proivder needs to confirm the order
-function providerConfirm(bytes32 orderId) public returns (bool success);
+// provider commit the access request
+function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType)
+public onlyProvider(id) isAccessRequested(id) returns (bool);
 
-// consumer pay the order and transfer funds to marketplace contract
-function payOrder(bytes32 orderId) public returns (bool success);
+// provider deliver the access token
+function deliverAccessToken(bytes32 id, string encryptedJWT) public onlyProvider(id) isAccessComitted(id) returns (bool);
 
-// consumer publish temp public key
-function addTempPubKey(bytes32 orderId, string tempPubKey) public returns (bool success);
+// provider get the temp public key
+function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessComitted(id) returns (string);
 
-// provider add encrypted access token on-chain
-function addToken(bytes32 orderId, string token) public returns (bool success);
+// consumer get the encrypted JWT
+function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessComitted(id) returns (string);
 
-// consumer confirms the delivery of resource
-function confirmDelivery(bytes32 orderId) public returns (bool);
+// provider verify the signature coming from consumer
+function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public view returns (bool);
 
-// generate order Id (bytes32 hash value)
-function generateOrderId(string contents) public pure returns (bytes32);
+// provider verify the delivery of JWT access token
+function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
+onlyProvider(id) isAccessComitted(id) returns (bool);
 ```
 
 ### Query functions
@@ -118,7 +126,7 @@ function queryTempKey(bytes32 orderId) public view returns (string);
 // consumer query the encrypted access token of order
 function queryToken(bytes32 orderId) public view returns (string);
 
-// Return true if assetId is unique; otherwise, return false 
+// Return true if assetId is unique; otherwise, return false
 function checkUniqueId(bytes32 assetId) public view returns (bool);
 
 // Return true if assetId is valid for registered asset
@@ -139,12 +147,9 @@ function tokenBalance() public view returns (uint256);
 ```solidity
 // Asset Events
 event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
-
-// Order Events
-event OrderCreated(bytes32 indexed _resourceId, bytes32 indexed _orderId, address indexed _consumer);
-event OrderConfirmed(bytes32 indexed _orderId, address indexed _provider);
-event OrderPaid(bytes32 indexed _orderId, address indexed _provider);
-event OrderDelivered(bytes32 indexed _orderId, address indexed _consumer);
+event PaymentReceived(bytes32 indexed _paymentId, address indexed _receiver, uint256 _amount, uint256 _expire);
+event PaymentReleased(bytes32 indexed _paymentId, address indexed _receiver);
+event PaymentRefunded(bytes32 indexed _paymentId, address indexed _sender);
 event TempKeyCreated(bytes32 indexed _orderId, string _tempPublicKey, address indexed _consumer);
 event TokenCreated(bytes32 indexed _orderId, address indexed _provider);
 
@@ -152,6 +157,13 @@ event TokenCreated(bytes32 indexed _orderId, address indexed _provider);
 event TokenWithdraw(address indexed _requester, uint256 amount);
 event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
 event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
+
+// Authorization
+event RequestAccessConsent(bytes32 _id, address _consumer, address _provider, bytes32 _resource, uint _timeout, string _pubKey);
+event CommitConsent(bytes32 _id, uint256 _expire, string _discovery, string _permissions, string slaLink);
+event RefundPayment(address _consumer, address _provider, bytes32 _id);
+event PublishEncryptedToken(bytes32 _id, string encJWT);
+event ReleasePayment(address _consumer, address _provider, bytes32 _id);
 ```
 
 ## File Structure
