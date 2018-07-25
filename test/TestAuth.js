@@ -50,7 +50,7 @@ contract('ACL', (accounts) => {
             console.log('consumer creates an request with id : ', resourceId)
 
             // 3. provider commit the request
-            await acl.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType')
+            await acl.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', { from: accounts[0] })
             console.log('provider has committed the order')
 
             // 4. consumer make payment

@@ -87,7 +87,6 @@ contract Auth {
         market = Market(_marketAddress);
     }
 
-
     //1. Access Request Phase
     function initiateAccessRequest(bytes32 id, bytes32 resourceId, address provider, string pubKey, uint256 timeout)
     public returns (bool) {
@@ -211,8 +210,19 @@ contract Auth {
         return keccak256(resourceId, msg.sender, provider, pubKey);
     }
 
-    function verifyAccessStatus(bytes32 id, AccessStatus status) public view returns (bool) {
-        if (aclEntries[id].status == status) {
+    // verify status of access request
+    // 0 - Requested; 1 - Committed; 2 - Delivered; 3 - Revoked
+    function verifyCommitted(bytes32 id, uint256 status) public view returns (bool) {
+        if (status == 0 && aclEntries[id].status == AccessStatus.Requested) {
+            return true;
+        }
+        if (status == 1 && aclEntries[id].status == AccessStatus.Committed) {
+            return true;
+        }
+        if (status == 2 && aclEntries[id].status == AccessStatus.Delivered) {
+            return true;
+        }
+        if (status == 3 && aclEntries[id].status == AccessStatus.Revoked) {
             return true;
         }
         return false;
