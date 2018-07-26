@@ -88,12 +88,10 @@ contract Auth {
     }
 
     //1. Access Request Phase
-    function initiateAccessRequest(bytes32 id, bytes32 resourceId, address provider, string pubKey, uint256 timeout)
+    function initiateAccessRequest(bytes32 resourceId, address provider, string pubKey, uint256 timeout)
     public returns (bool) {
         // pasing `id` from outside for debugging purpose; otherwise, generate Id inside automatically
-        if(id == 0x0){
-            bytes32 intId = keccak256(resourceId, msg.sender, provider, pubKey);
-        }
+        bytes32 id = keccak256(resourceId, msg.sender, provider, pubKey);
         // initialize SLA, Commitment, and claim
         SLA memory sla = SLA(new string(0), new string(0));
         Commitment memory commitment = Commitment(new string(0));
@@ -108,13 +106,9 @@ contract Auth {
             commitment,
             AccessStatus.Requested // set access status to requested
         );
-        if (id == 0x0){
-            aclEntries[intId] = acl;
-            emit RequestAccessConsent(intId, msg.sender, provider, resourceId, timeout, pubKey);
-        } else {
-            aclEntries[id] = acl;
-            emit RequestAccessConsent(id, msg.sender, provider, resourceId, timeout, pubKey);
-        }
+
+        aclEntries[id] = acl;
+        emit RequestAccessConsent(id, msg.sender, provider, resourceId, timeout, pubKey);
         return true;
     }
 
@@ -138,6 +132,7 @@ contract Auth {
 
         // otherwise, send refund
         aclEntries[id].status = AccessStatus.Revoked;
+        require(market.refundPayment(id));
         emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
         return false;
     }
@@ -149,6 +144,7 @@ contract Auth {
         // timeout
         require(now > aclEntries[id].consent.timeout);
         aclEntries[id].status = AccessStatus.Revoked;
+        require(market.refundPayment(id));
         emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
     }
 
@@ -186,6 +182,7 @@ contract Auth {
             // this means that consumer didn't make the request
             // revoke the access then raise event for refund
             aclEntries[id].status = AccessStatus.Revoked;
+            require(market.refundPayment(id));
             emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
             return false;
         } else {
@@ -199,15 +196,11 @@ contract Auth {
                 return true;
             } else {
                 aclEntries[id].status = AccessStatus.Revoked;
+                require(market.refundPayment(id));
                 emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
                 return false;
             }
         }
-    }
-
-    // Utility function: provider/consumer use this function to check access request status
-    function generateRequestId(bytes32 resourceId, address provider, string pubKey) public view returns (bytes32) {
-        return keccak256(resourceId, msg.sender, provider, pubKey);
     }
 
     // verify status of access request

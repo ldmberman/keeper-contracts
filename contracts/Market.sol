@@ -66,7 +66,7 @@ contract Market is BancorFormula, Ownable {
 
     // modifier
     modifier validAddress(address sender) {
-        require(sender != 0x0);
+        require(sender != address(0));
         _;
     }
 
@@ -95,14 +95,14 @@ contract Market is BancorFormula, Ownable {
 
     // query Id is unique or not - return true if unique; otherwise return false
     function checkUniqueId(bytes32 assetId) public view returns (bool){
-        if(mAssets[assetId].owner != 0x0) return false; // duplicate Id
+        if(mAssets[assetId].owner != address(0)) return false; // duplicate Id
         // unique Id
         return true;
     }
 
     // query Id is valid assetId for registered assets - return true if registered
     function checkValidId(bytes32 assetId) public view returns (bool){
-        if(mAssets[assetId].owner != 0x0) return true; // valid Id
+        if(mAssets[assetId].owner != address(0)) return true; // valid Id
         // invalid Id
         return false;
     }
@@ -144,9 +144,9 @@ contract Market is BancorFormula, Ownable {
     // 1. register provider and assets （upload by changing uploadBits）
     function register(bytes32 assetId, uint256 price) public validAddress(msg.sender) returns (bool success) {
         // check for unique assetId
-        require(mAssets[assetId].owner == 0x0);
+        require(mAssets[assetId].owner == address(0));
         // register provider if not exists
-        if (mProviders[msg.sender].provider == 0x0 ){
+        if (mProviders[msg.sender].provider == address(0) ){
             mProviders[msg.sender] = Provider(msg.sender, 0, 0);
         }
 

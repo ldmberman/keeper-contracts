@@ -11,7 +11,7 @@ const Web3 = require('web3')
 
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
 
-contract('ACL', (accounts) => {
+contract('Auth', (accounts) => {
     describe('Test On-chain Authorization', () => {
         // support upto 50 assets and providers; each asset has one single provider at this time
         it('Should walk through Authorization Process', async () => {
@@ -43,11 +43,17 @@ contract('ACL', (accounts) => {
             const publicKey = publicPem.toPublicPem('utf8')
             console.log('public key is: = ', publicKey)
 
-            // generate access request unique Id
-            const accessId = await acl.generateRequestId(resourceId, accounts[0], publicKey, { from: accounts[1] })
-            // create the access request
-            await acl.initiateAccessRequest(accessId, resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
-            console.log('consumer creates an request with id : ', resourceId)
+            // listen to the event fired from initiateAccessRequest so that to get access Request Id
+            const requestAccessEvent = acl.RequestAccessConsent()
+            let accessId = 0x0
+            requestAccessEvent.watch((error, result) => {
+                if (!error) {
+                    accessId = result.args._id
+                }
+            })
+
+            await acl.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
+            console.log('consumer creates an access request with id : ', accessId)
 
             // 3. provider commit the request
             await acl.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', { from: accounts[0] })
@@ -104,6 +110,9 @@ contract('ACL', (accounts) => {
 
             const mbal = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${mbal.valueOf()} now`)
+
+            // stop listening to event
+            requestAccessEvent.stopWatching()
         })
     })
 })
