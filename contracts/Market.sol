@@ -39,6 +39,7 @@ contract Market is BancorFormula, Ownable {
         uint256 amount; 	      // amount of tokens to be transferred
         uint256 date; 	        // timestamp of the payment event (in sec.)
         uint256 expiration;    // consumer may request refund after expiration timestamp (in sec.)
+        address contractAddress; // the contract that can release and refund the payment
     }
     enum PaymentState {Locked, Released, Refunded}
     mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
@@ -72,6 +73,11 @@ contract Market is BancorFormula, Ownable {
 
     modifier isLocked(bytes32 _paymentId) {
         require(mPayments[_paymentId].state == PaymentState.Locked);
+        _;
+    }
+
+    modifier isContract(bytes32 _paymentId) {
+        require(mPayments[_paymentId].contractAddress == msg.sender);
         _;
     }
 
@@ -159,16 +165,16 @@ contract Market is BancorFormula, Ownable {
     }
 
     // the sender makes payment
-    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public validAddress(msg.sender) returns (bool){
+    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire, address _contract) public validAddress(msg.sender) returns (bool){
         // consumer make payment to Market contract
         require(mToken.transferFrom(msg.sender, address(this), _amount));
-        mPayments[_paymentId] = Payment(msg.sender, _receiver, PaymentState.Locked, _amount, now, _expire);
+        mPayments[_paymentId] = Payment(msg.sender, _receiver, PaymentState.Locked, _amount, now, _expire, _contract);
         emit PaymentReceived(_paymentId, _receiver, _amount, _expire);
         return true;
     }
 
     // the consumer release payment to receiver
-    function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool){
+    function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool){
         // update state to avoid re-entry attack
         mPayments[_paymentId].state == PaymentState.Released;
         require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount));
@@ -177,7 +183,7 @@ contract Market is BancorFormula, Ownable {
     }
 
     // refund payment
-    function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool){
+    function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool){
         mPayments[_paymentId].state == PaymentState.Refunded;
         require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount));
         emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);

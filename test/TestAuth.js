@@ -11,6 +11,14 @@ const Web3 = require('web3')
 
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
 
+function wait(ms) {
+    const start = new Date().getTime()
+    let end = start
+    while (end < start + ms) {
+        end = new Date().getTime()
+    }
+}
+
 contract('Auth', (accounts) => {
     describe('Test On-chain Authorization', () => {
         // support upto 50 assets and providers; each asset has one single provider at this time
@@ -52,6 +60,10 @@ contract('Auth', (accounts) => {
                 }
             })
 
+            // optional: delay 100 seconds so that requestAccessEvent can listen to the event fired by initiateAccessRequest
+            // it is designed for js integration testing; it is not needed in real practice.
+            wait(100)
+
             await acl.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
             console.log('consumer creates an access request with id : ', accessId)
 
@@ -62,7 +74,7 @@ contract('Auth', (accounts) => {
             // 4. consumer make payment
             const bal1 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal1.valueOf()} before payment`)
-            await market.sendPayment(accessId, accounts[0], 100, 9999999999, { from: accounts[1] })
+            await market.sendPayment(accessId, accounts[0], 100, 9999999999, acl.address, { from: accounts[1] })
             const bal2 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal2.valueOf()} after payment`)
             console.log('consumer has paid the order')
