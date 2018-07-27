@@ -3,8 +3,10 @@
 
 """The setup script."""
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
+from glob import glob
+
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
@@ -30,6 +32,9 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     description=" 🐳 Integration of TCRs, CPM and Ocean Tokens in Solidity",
+    data_files=[
+        ('contracts', glob('build/contracts/*.json')),
+    ],
     install_requires=requirements,
     license="Apache Software License 2.0",
     long_description=readme,
@@ -40,7 +45,7 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/oceanprotocol/keeper-contracts',
-    version='0.0.1',
+    version='0.0.1.2',
     zip_safe=False,
 )
 
