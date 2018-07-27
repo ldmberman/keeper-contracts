@@ -36,6 +36,7 @@
   "dependencies": {
     "bignumber.js": "^5.0.0",
     "ethereumjs-abi": "^0.6.5",
+    "ethers": "^3.0.25",
     "ethjs": "^0.4.0",
     "ethjs-abi": "^0.2.1",
     "ethjs-provider-http": "^0.1.6",
@@ -59,6 +60,6 @@
     "truffle-hdwallet-provider": "^0.0.5"
   },
   "engines": {
-    "node": ">=6.11.5"
+    "node": ">=8.11.1"
   }
 }
