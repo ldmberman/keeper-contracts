@@ -32,6 +32,18 @@ contract Market is BancorFormula, Ownable {
     }
     mapping (address => Provider) public mProviders;    // mapping providerId to Provider struct
 
+    struct Payment {
+        address sender; 	      // consumer or anyone else would like to make the payment (automatically set to be msg.sender)
+        address receiver;      // provider or anyone (set by the sender of funds)
+        PaymentState state;		// payment state
+        uint256 amount; 	      // amount of tokens to be transferred
+        uint256 date; 	        // timestamp of the payment event (in sec.)
+        uint256 expiration;    // consumer may request refund after expiration timestamp (in sec.)
+        address contractAddress; // the contract that can release and refund the payment
+    }
+    enum PaymentState {Locked, Released, Refunded}
+    mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
+
     // marketplace global variables
     OceanToken  public  mToken;
     uint256     public  mAllowance;             // total available Ocean tokens for transfer (exclude locked tokens)
@@ -43,31 +55,31 @@ contract Market is BancorFormula, Ownable {
     uint32  public reserveRatio = 500000;      // max 1000000, reserveRatio = 20%
     uint256 public tokensToMint = 0;
 
-
-    ////////////////// plankton mvp 2.0 ///////////////////
-    //order
-    struct Order {
-        bytes32 assetId;
-        address provider;
-        address consumer;
-        bool    delivered;
-        bool    paid;
-        string  url;
-        string  token;
-    }
-    mapping (uint256 => Order ) public mOrders;   // mapping orderId to associated Order struct
-    string empty;
-    //////////////////////////////////////////////////////
-
     // Events
     event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
-    event AssetPublished(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
-    event AssetPurchased(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
+    event PaymentReceived(bytes32 indexed _paymentId, address indexed _receiver, uint256 _amount, uint256 _expire);
+    event PaymentReleased(bytes32 indexed _paymentId, address indexed _receiver);
+    event PaymentRefunded(bytes32 indexed _paymentId, address indexed _sender);
 
     event TokenWithdraw(address indexed _requester, uint256 amount);
     event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
     event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
 
+    // modifier
+    modifier validAddress(address sender) {
+        require(sender != address(0));
+        _;
+    }
+
+    modifier isLocked(bytes32 _paymentId) {
+        require(mPayments[_paymentId].state == PaymentState.Locked);
+        _;
+    }
+
+    modifier isContract(bytes32 _paymentId) {
+        require(mPayments[_paymentId].contractAddress == msg.sender);
+        _;
+    }
 
     // TCR
     Registry  public  tcr;
@@ -89,35 +101,20 @@ contract Market is BancorFormula, Ownable {
 
     // query Id is unique or not - return true if unique; otherwise return false
     function checkUniqueId(bytes32 assetId) public view returns (bool){
-        if(mAssets[assetId].owner != 0x0) return false; // duplicate Id
+        if(mAssets[assetId].owner != address(0)) return false; // duplicate Id
         // unique Id
         return true;
     }
 
     // query Id is valid assetId for registered assets - return true if registered
     function checkValidId(bytes32 assetId) public view returns (bool){
-        if(mAssets[assetId].owner != 0x0) return true; // valid Id
+        if(mAssets[assetId].owner != address(0)) return true; // valid Id
         // invalid Id
         return false;
     }
 
-
-    // query encrypted url by Consumer
-    function getEncUrl(uint256 orderId) public view returns (string) {
-        require(msg.sender == mOrders[orderId].consumer);
-        return mOrders[orderId].url;
-    }
-
-    // query encrypted token by Consumer
-    function getEncToken(uint256 orderId) public view returns (string) {
-        require(msg.sender == mOrders[orderId].consumer);
-        return mOrders[orderId].token;
-    }
-
-
     // Return the number of drops associated to the message.sender to an Asset
-    function dropsBalance(bytes32 assetId) public view returns (uint256){
-        require(msg.sender != 0x0);
+    function dropsBalance(bytes32 assetId) public view validAddress(msg.sender) returns (uint256){
         return mAssets[assetId].drops[msg.sender];
     }
 
@@ -127,8 +124,7 @@ contract Market is BancorFormula, Ownable {
     }
 
     // Retrieve the msg.sender Provider token balance
-    function tokenBalance() public view returns (uint256) {
-        require(mProviders[msg.sender].provider != 0x0);
+    function tokenBalance() public view validAddress(mProviders[msg.sender].provider) returns (uint256) {
         return mProviders[msg.sender].numOCN;
     }
     ///////////////////////////////////////////////////////////////////
@@ -152,12 +148,11 @@ contract Market is BancorFormula, Ownable {
     ///////////////////////////////////////////////////////////////////
 
     // 1. register provider and assets （upload by changing uploadBits）
-    function register(bytes32 assetId, uint256 price) public returns (bool success) {
-        require(msg.sender != 0x0);
+    function register(bytes32 assetId, uint256 price) public validAddress(msg.sender) returns (bool success) {
         // check for unique assetId
-        require(mAssets[assetId].owner == 0x0);
+        require(mAssets[assetId].owner == address(0));
         // register provider if not exists
-        if (mProviders[msg.sender].provider == 0x0 ){
+        if (mProviders[msg.sender].provider == address(0) ){
             mProviders[msg.sender] = Provider(msg.sender, 0, 0);
         }
 
@@ -169,69 +164,42 @@ contract Market is BancorFormula, Ownable {
         return true;
     }
 
-
-    // publish consumption information about an Asset
-    function publish(bytes32 assetId, uint256 orderId, string _url, string _token) public returns (bool success) {
-        require(mAssets[assetId].owner != 0x0);
-        // only owner of data asset can publish the accessing token for consumers
-        require(msg.sender == mAssets[assetId].owner);
-        // order must be paid first
-        require(mOrders[orderId].paid == true);
-
-        mOrders[orderId].url = _url;
-        mOrders[orderId].token = _token;
-        emit AssetPublished(assetId, orderId, msg.sender);
+    // the sender makes payment
+    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire, address _contract) public validAddress(msg.sender) returns (bool){
+        // consumer make payment to Market contract
+        require(mToken.transferFrom(msg.sender, address(this), _amount));
+        mPayments[_paymentId] = Payment(msg.sender, _receiver, PaymentState.Locked, _amount, now, _expire, _contract);
+        emit PaymentReceived(_paymentId, _receiver, _amount, _expire);
         return true;
     }
 
-    // purchase an asset and get the consumption information - called by consumer
-    function purchase(bytes32 assetId, uint256 orderId) public returns (bool) {
-        // data asset exists
-        require(mAssets[assetId].owner != 0x0);
-
-        mOrders[orderId] = Order(assetId, 0x0, msg.sender, false, false, empty, empty);
-        // transfer fund
-        require(mOrders[orderId].paid == false);
-        mOrders[orderId].paid = true;
-        require(mToken.transferFrom(msg.sender, address(this), mAssets[assetId].price));
-
-        emit AssetPurchased(assetId, orderId, msg.sender);
-
+    // the consumer release payment to receiver
+    function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool){
+        // update state to avoid re-entry attack
+        mPayments[_paymentId].state == PaymentState.Released;
+        require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount));
+        emit PaymentReleased(_paymentId, mPayments[_paymentId].receiver);
         return true;
     }
 
-    // provider set himself as the provider
-    function setOrderProvider(uint256 orderId) public returns (bool) {
-        require(msg.sender != 0x0);
-        // order must be paid first
-        require(mOrders[orderId].paid == true);
-        // set himself as the provider
-        mOrders[orderId].provider = msg.sender;
+    // refund payment
+    function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool){
+        mPayments[_paymentId].state == PaymentState.Refunded;
+        require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount));
+        emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);
         return true;
     }
 
-    // consumer confirms the confirmDelivery
-    function confirmDelivery(uint256 orderId) public returns (bool) {
-        require(msg.sender == mOrders[orderId].consumer);
-        mOrders[orderId].delivered = true;
-        return true;
-    }
-
-    // provider request payment for serving the download request
-    function requestPayment(uint256 orderId) public returns (bool) {
-        // provider must served the download request
-        require(mOrders[orderId].delivered == true);
-        // the requester of payment must be the provider of this order
-        require(mOrders[orderId].provider == msg.sender);
-        // initiate the transfer
-        var assetId = mOrders[orderId].assetId;
-        require(mToken.transfer(msg.sender, mAssets[assetId].price));
-        return true;
+    // utitlity function - verify the payment
+    function verifyPayment(bytes32 _paymentId) public view returns(bool){
+        if(mPayments[_paymentId].state == PaymentState.Locked || mPayments[_paymentId].state == PaymentState.Released){
+            return true;
+        }
+        return false;
     }
 
         // 2. request initial fund transfer
-    function requestTokens(uint256 amount) public returns (uint256) {
-        require(msg.sender != 0x0);
+    function requestTokens(uint256 amount) public validAddress(msg.sender) returns (uint256) {
         // find amount of tokens need or can be transferred
         uint256 nToken = 0;
         if (mAllowance >= amount){
@@ -316,9 +284,7 @@ contract Market is BancorFormula, Ownable {
         return tokensToMint;
     }
 
-    function sellDrops(bytes32 _assetId, uint256 _drops) public returns (uint256 _ocn) {
-        require(mProviders[msg.sender].provider != 0x0);
-
+    function sellDrops(bytes32 _assetId, uint256 _drops) public  validAddress(mProviders[msg.sender].provider) returns (uint256 _ocn) {
         uint256 ocnAmount = calculateSaleReturn(mAssets[_assetId].ndrops, mAssets[_assetId].nOcean, reserveRatio, _drops);
         mAssets[_assetId].ndrops = mAssets[_assetId].ndrops.sub(_drops);
         mAssets[_assetId].nOcean = mAssets[_assetId].nOcean.sub(ocnAmount);

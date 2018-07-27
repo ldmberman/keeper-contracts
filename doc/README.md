@@ -12,6 +12,7 @@ date: 06/01/2018
 ## Further Documentation
 
 * [TCR Owner's Manual](owners_manual.md)
+* [On-chain Authorization Manual](authorization.md)
 
 ## Objective
 
@@ -69,20 +70,17 @@ function isWhitelisted(bytes32 _listingHash);
 // Register provider and assets （upload by changing uploadBits）
 function register(bytes32 assetId, uint256 price) public returns (bool success);
 
-// publish consumption information about an Asset
-function publish(bytes32 assetId, uint256 orderId, string _url, string _token) public returns (bool success);
+// consumer can make payment
+function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public validAddress(msg.sender) returns (bool);
 
-// purchase an asset and get the consumption information
-function purchase(bytes32 assetId, uint256 orderId) public returns (bool);
+// release fund to provider
+function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool);
 
-// Set the provider of order for download request
-function setOrderProvider(uint256 orderId) public returns (bool);
+// refund payment
+function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool);
 
-// Consumer confirms the delivery of data asset
-function confirmDelivery(uint256 orderId) public returns (bool);
-
-// Provider requests the payment for serving the download request
-function requestPayment(uint256 orderId) public returns (bool);
+// verify the payment
+function verifyPayment(bytes32 _paymentId) public view returns(bool);
 
 // Generate Unique Id for asset using input string parameter
 function generateStr2Id(string contents) public pure returns (bytes32);
@@ -91,20 +89,48 @@ function generateStr2Id(string contents) public pure returns (bytes32);
 function generateBytes2Id(bytes contents) public pure returns (bytes32);
 ```
 
+
+### On-Chain Authorization
+
+```solidity
+// consumer request access to resource
+function initiateAccessRequest(bytes32 id, bytes32 resourceId, address provider, string pubKey, uint256 timeout) public returns (bool) {;
+
+// provider commit the access request
+function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType)
+public onlyProvider(id) isAccessRequested(id) returns (bool);
+
+// provider deliver the access token
+function deliverAccessToken(bytes32 id, string encryptedJWT) public onlyProvider(id) isAccessComitted(id) returns (bool);
+
+// provider get the temp public key
+function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessComitted(id) returns (string);
+
+// consumer get the encrypted JWT
+function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessComitted(id) returns (string);
+
+// provider verify the signature coming from consumer
+function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public view returns (bool);
+
+// provider verify the delivery of JWT access token
+function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
+onlyProvider(id) isAccessComitted(id) returns (bool);
+```
+
 ### Query functions
 
 ```solidity
-// Return true if assetId is unique; otherwise, return false 
+// provider query the temp public key of order
+function queryTempKey(bytes32 orderId) public view returns (string);
+
+// consumer query the encrypted access token of order
+function queryToken(bytes32 orderId) public view returns (string);
+
+// Return true if assetId is unique; otherwise, return false
 function checkUniqueId(bytes32 assetId) public view returns (bool);
 
 // Return true if assetId is valid for registered asset
 function checkValidId(bytes32 assetId) public view returns (bool);
-
-// Return the encrypted url by Consumer
-function getEncUrl(uint256 orderId) public view returns (string);
-
-// Return the encrypted Token by Consumer
-function getEncToken(uint256 orderId) public view returns (string);
 
 // Return the number of drops associated to the message.sender to an Asset
 function dropsBalance(bytes32 assetId) public view returns (uint256);
@@ -121,13 +147,23 @@ function tokenBalance() public view returns (uint256);
 ```solidity
 // Asset Events
 event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
-event AssetPublished(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
-event AssetPurchased(bytes32 indexed _assetId, uint256 indexed _orderId, address indexed _owner);
+event PaymentReceived(bytes32 indexed _paymentId, address indexed _receiver, uint256 _amount, uint256 _expire);
+event PaymentReleased(bytes32 indexed _paymentId, address indexed _receiver);
+event PaymentRefunded(bytes32 indexed _paymentId, address indexed _sender);
+event TempKeyCreated(bytes32 indexed _orderId, string _tempPublicKey, address indexed _consumer);
+event TokenCreated(bytes32 indexed _orderId, address indexed _provider);
 
 // Token Events
 event TokenWithdraw(address indexed _requester, uint256 amount);
 event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
 event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
+
+// Authorization
+event RequestAccessConsent(bytes32 _id, address _consumer, address _provider, bytes32 _resource, uint _timeout, string _pubKey);
+event CommitConsent(bytes32 _id, uint256 _expire, string _discovery, string _permissions, string slaLink);
+event RefundPayment(address _consumer, address _provider, bytes32 _id);
+event PublishEncryptedToken(bytes32 _id, string encJWT);
+event ReleasePayment(address _consumer, address _provider, bytes32 _id);
 ```
 
 ## File Structure

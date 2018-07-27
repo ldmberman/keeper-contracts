@@ -14,7 +14,7 @@ const deployMarket = (deployer) => {
     deployer.deploy(
         Market,
         tokenAddress,
-        tcrAddress,
+        tcrAddress
     )
 }
 module.exports = deployMarket
