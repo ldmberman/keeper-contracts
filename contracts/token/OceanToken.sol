@@ -38,43 +38,11 @@ contract OceanToken is StandardToken {
     * @return success setting is successful.
     */
     function setReceiver(address _to) public returns(bool success){
-        //require(_receiver == 0x0);
+        require(_receiver == address(0));
         _receiver = _to;
         // Creator address is assigned initial available tokens
         balances[_receiver] = INITIAL_SUPPLY;
         emit Transfer(0x0, _receiver, INITIAL_SUPPLY);
-        return true;
-    }
-
-    /**
-    * @dev emitTokens Ocean tokens according to schedule forumla
-    * @return success the mining of Ocean tokens is successful.
-    */
-    function emitTokens() public returns (bool success) {
-    // check if all tokens have been emitted
-        if (totalSupply == TOTAL_SUPPLY){
-            return true;
-        }
-
-        // half-life is 10 years
-        //uint256 tH = (now - initTime).div( 10 * 365 * 24 * 60 * 60 * 1 seconds );
-
-        // half-life is 30 second: release 50% after 30 seconds
-        uint256 tH = (now - initTime).div(30 * 1 seconds); // solium-disable-line security/no-block-members
-        uint256 base = 2 ** tH;
-
-        // nowReward is the amount of reward tokens at current timestamp
-        uint256 nowReward = REWARD_SUPPLY.sub(REWARD_SUPPLY.div(base));
-
-        // newTokens is the amount of newly-emitted tokens
-        uint256 newTokens = nowReward.sub(numReward);
-        numReward = nowReward;
-
-        // update total supply
-        totalSupply = totalSupply.add(newTokens);
-        require(_receiver != 0x0);
-        balances[_receiver] = balances[_receiver].add(newTokens);
-        emit Transfer(address(0), _receiver, newTokens);
         return true;
     }
 
