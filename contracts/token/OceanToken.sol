@@ -29,7 +29,8 @@ contract OceanToken is StandardToken {
     */
     function OceanToken() public {
         totalSupply = INITIAL_SUPPLY;
-        initTime = now; // solium-disable-line security/no-block-members
+        /* solium-disable-next-line security/no-block-members */
+        initTime = block.timestamp;
     }
 
     /**
@@ -37,8 +38,8 @@ contract OceanToken is StandardToken {
     * @param _to The address to send tokens
     * @return success setting is successful.
     */
-    function setReceiver(address _to) public returns(bool success){
-        require(_receiver == address(0));
+    function setReceiver(address _to) public returns (bool success){
+        require(_receiver == address(0), 'Receiver address is not 0x0.');
         _receiver = _to;
         // Creator address is assigned initial available tokens
         balances[_receiver] = INITIAL_SUPPLY;
@@ -52,7 +53,7 @@ contract OceanToken is StandardToken {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
+        require(_to != address(0), 'To address is 0x0.');
         return super.transfer(_to, _value);
     }
 
@@ -63,7 +64,7 @@ contract OceanToken is StandardToken {
     * @param _value uint256 the amount of tokens to be transferred
     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
+        require(_to != address(0), 'To address is 0x0.');
         return super.transferFrom(_from, _to, _value);
     }
 
@@ -75,8 +76,10 @@ contract OceanToken is StandardToken {
     function approve(address _spender, uint256 _value) public returns (bool) {
         return super.approve(_spender, _value);
     }
-    function allowance(address _owner, address _spender) public constant returns (uint256) { // solium-disable-line no-constant
-        return super.allowance(_owner,_spender);
+
+    /* solium-disable-next-line no-constant */
+    function allowance(address _owner, address _spender) public constant returns (uint256) {
+        return super.allowance(_owner, _spender);
     }
 
 }
