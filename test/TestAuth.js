@@ -85,13 +85,14 @@ contract('Auth', (accounts) => {
             assert.strictEqual(publicKey, OnChainPubKey, 'two public keys should match.')
 
             const getPubKeyPem = ursa.coerceKey(OnChainPubKey)
-            const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'base64')
-            await acl.deliverAccessToken(accessId, encJWT, { from: accounts[0] })
+            const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'hex')
+            console.log('encJWT: ', `0x${encJWT}`)
+            await acl.deliverAccessToken(accessId, `0x${encJWT}`, { from: accounts[0] })
             console.log('provider has delivered the encrypted JWT to on-chain')
 
             // 4. consumer download the encrypted token and decrypt
             const onChainencToken = await acl.getEncJWT(accessId, { from: accounts[1] })
-            const decryptJWT = privatePem.decrypt(onChainencToken, 'base64', 'utf8')
+            const decryptJWT = privatePem.decrypt(onChainencToken.slice(2), 'hex', 'utf8') // remove '0x' prefix
             console.log('consumer decrypts JWT token off-chain :', decryptJWT.toString())
             assert.strictEqual(decryptJWT.toString(), 'eyJhbGciOiJIUzI1', 'two public keys should match.')
 

@@ -15,7 +15,7 @@ contract Auth {
 
     // final agreement
     struct Commitment {
-        string encJWT;  // encrypted JWT using consumer's temp public key
+        bytes encJWT;  // encrypted JWT using consumer's temp public key
     }
 
     // consent (initial agreement) provides details about the service availability given by the provider.
@@ -73,7 +73,7 @@ contract Auth {
 
     event RefundPayment(address _consumer, address _provider, bytes32 _id);
 
-    event PublishEncryptedToken(bytes32 _id, string encJWT);
+    event PublishEncryptedToken(bytes32 _id, bytes encJWT);
 
     event ReleasePayment(address _consumer, address _provider, bytes32 _id);
 
@@ -94,7 +94,7 @@ contract Auth {
         bytes32 id = keccak256(resourceId, msg.sender, provider, pubKey);
         // initialize SLA, Commitment, and claim
         SLA memory sla = SLA(new string(0), new string(0));
-        Commitment memory commitment = Commitment(new string(0));
+        Commitment memory commitment = Commitment(new bytes(0));
         Consent memory consent = Consent(resourceId, new string(0), sla, false, 0, 0, new string(0), timeout);
         // initialize acl handler
         ACL memory acl = ACL(
@@ -155,7 +155,7 @@ contract Auth {
     //3. Delivery phase
     // provider encypts the JWT using temp public key from cunsumer and publish it to on-chain
     // the encrypted JWT is stored on-chain for alpha version release, which will be moved to off-chain in future versions.
-    function deliverAccessToken(bytes32 id, string encryptedJWT) public onlyProvider(id) isAccessComitted(id) returns (bool) {
+    function deliverAccessToken(bytes32 id, bytes encryptedJWT) public onlyProvider(id) isAccessComitted(id) returns (bool) {
 
         aclEntries[id].commitment.encJWT = encryptedJWT;
         emit PublishEncryptedToken(id, encryptedJWT);
@@ -168,7 +168,7 @@ contract Auth {
     }
 
     // Consumer get the encrypted JWT from on-chain
-    function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessComitted(id) returns (string) {
+    function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessComitted(id) returns (bytes) {
         return aclEntries[id].commitment.encJWT;
     }
 
