@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity 0.4.24;
 
 import '../Market.sol';
 
@@ -47,22 +47,22 @@ contract Auth {
 
     // modifiers and access control
     modifier isAccessRequested(bytes32 id) {
-        require(aclEntries[id].status == AccessStatus.Requested);
+        require(aclEntries[id].status == AccessStatus.Requested, 'Status not requested.');
         _;
     }
 
     modifier isAccessComitted(bytes32 id) {
-        require(aclEntries[id].status == AccessStatus.Committed);
+        require(aclEntries[id].status == AccessStatus.Committed, 'Status not Committed.');
         _;
     }
 
     modifier onlyProvider(bytes32 id) {
-        require(aclEntries[id].provider == msg.sender);
+        require(aclEntries[id].provider == msg.sender, 'Sender is not Provider.');
         _;
     }
 
     modifier onlyConsumer(bytes32 id) {
-        require(aclEntries[id].consumer == msg.sender);
+        require(aclEntries[id].consumer == msg.sender, 'Sender is not consumer.');
         _;
     }
 
@@ -82,7 +82,7 @@ contract Auth {
     ///////////////////////////////////////////////////////////////////
     // 1. constructor
     function Auth(address _marketAddress) public {
-        require(_marketAddress != address(0));
+        require(_marketAddress != address(0), 'Market address cannot be 0x0');
         // instance of Market
         market = Market(_marketAddress);
     }
@@ -112,12 +112,15 @@ contract Auth {
         return true;
     }
 
+    /* solium-disable-next-line */
     function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType)
     public onlyProvider(id) isAccessRequested(id) returns (bool) {
-        if (available && now < expire) {
+        /* solium-disable-next-line */
+        if (available && block.timestamp < expire) {
             aclEntries[id].consent.available = available;
             aclEntries[id].consent.expire = expire;
-            aclEntries[id].consent.timestamp = now;
+            /* solium-disable-next-line */
+            aclEntries[id].consent.timestamp = block.timestamp;
             aclEntries[id].consent.discovery = discovery;
             aclEntries[id].consent.permissions = permissions;
             aclEntries[id].status = AccessStatus.Committed;
@@ -132,7 +135,7 @@ contract Auth {
 
         // otherwise, send refund
         aclEntries[id].status = AccessStatus.Revoked;
-        require(market.refundPayment(id));
+        require(market.refundPayment(id), 'Refund payment failed.');
         emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
         return false;
     }
@@ -142,9 +145,10 @@ contract Auth {
     public
     isAccessRequested(id) {
         // timeout
-        require(now > aclEntries[id].consent.timeout);
+        /* solium-disable-next-line */
+        require(block.timestamp > aclEntries[id].consent.timeout, 'Timeout not exceeded.');
         aclEntries[id].status = AccessStatus.Revoked;
-        require(market.refundPayment(id));
+        require(market.refundPayment(id), 'Refund payment failed.');
         emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
     }
 
@@ -178,11 +182,12 @@ contract Auth {
     function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
     onlyProvider(id) isAccessComitted(id) returns (bool){
         // expire
-        if (aclEntries[id].consent.expire < now) {
+        /* solium-disable-next-line */
+        if (aclEntries[id].consent.expire < block.timestamp) {
             // this means that consumer didn't make the request
             // revoke the access then raise event for refund
             aclEntries[id].status = AccessStatus.Revoked;
-            require(market.refundPayment(id));
+            require(market.refundPayment(id), 'Refund payment failed.');
             emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
             return false;
         } else {
@@ -190,13 +195,13 @@ contract Auth {
             if (isSigned(_addr, msgHash, v, r, s)) {
                 aclEntries[id].status = AccessStatus.Delivered;
                 // send money to provider
-                require(market.releasePayment(id));
+                require(market.releasePayment(id), 'Release payment failed.');
                 // emit an event
                 emit ReleasePayment(aclEntries[id].consumer, aclEntries[id].provider, id);
                 return true;
             } else {
                 aclEntries[id].status = AccessStatus.Revoked;
-                require(market.refundPayment(id));
+                require(market.refundPayment(id), 'Refund payment failed.');
                 emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
                 return false;
             }
