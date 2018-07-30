@@ -62,7 +62,7 @@ contract('Auth', (accounts) => {
 
             // optional: delay 100 seconds so that requestAccessEvent can listen to the event fired by initiateAccessRequest
             // it is designed for js integration testing; it is not needed in real practice.
-            wait(100)
+            wait(1000)
 
             await acl.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
             console.log('consumer creates an access request with id : ', accessId)
