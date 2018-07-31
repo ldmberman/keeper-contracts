@@ -5,7 +5,7 @@ import '../OceanMarket.sol';
 contract OceanAuth {
 
     // marketplace global variables
-    OceanMarket public market;
+    OceanMarket private market;
 
     // Sevice level agreement published on immutable storage
     struct AccessAgreement {
