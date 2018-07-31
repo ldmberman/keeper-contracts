@@ -2,8 +2,8 @@
 /* eslint-disable no-console, max-len */
 
 const Token = artifacts.require('OceanToken.sol')
-const Market = artifacts.require('Market.sol')
-const ACL = artifacts.require('Auth.sol')
+const Market = artifacts.require('OceanMarket.sol')
+const Auth = artifacts.require('OceanAuth.sol')
 
 const ursa = require('ursa')
 const ethers = require('ethers')
@@ -19,23 +19,24 @@ function wait(ms) {
     }
 }
 
-contract('Auth', (accounts) => {
+contract('OceanAuth', (accounts) => {
     describe('Test On-chain Authorization', () => {
         // support upto 50 assets and providers; each asset has one single provider at this time
         it('Should walk through Authorization Process', async () => {
             // const marketPlace = await Market.deployed();
             const token = await Token.deployed()
             const market = await Market.deployed()
-            const acl = await ACL.deployed()
+            const acl = await Auth.deployed()
 
             const str = 'resource'
-            const resourceId = await market.generateStr2Id(str, { from: accounts[0] })
+            const resourceId = await market.generateId(str, { from: accounts[0] })
             const resourcePrice = 100
             // 1. provider register dataset
             await market.register(resourceId, resourcePrice, { from: accounts[0] })
             console.log('publisher registers asset with id = ', resourceId)
 
             // consumer accounts[1] request initial funds to play
+            console.log(accounts[1])
             await market.requestTokens(2000, { from: accounts[1] })
             const bal = await token.balanceOf.call(accounts[1])
             console.log(`consumer has balance := ${bal.valueOf()} now`)
@@ -62,7 +63,7 @@ contract('Auth', (accounts) => {
 
             // optional: delay 100 seconds so that requestAccessEvent can listen to the event fired by initiateAccessRequest
             // it is designed for js integration testing; it is not needed in real practice.
-            wait(100)
+            wait(1000)
 
             await acl.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
             console.log('consumer creates an access request with id : ', accessId)
@@ -85,13 +86,14 @@ contract('Auth', (accounts) => {
             assert.strictEqual(publicKey, OnChainPubKey, 'two public keys should match.')
 
             const getPubKeyPem = ursa.coerceKey(OnChainPubKey)
-            const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'base64')
-            await acl.deliverAccessToken(accessId, encJWT, { from: accounts[0] })
+            const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'hex')
+            console.log('encJWT: ', `0x${encJWT}`)
+            await acl.deliverAccessToken(accessId, `0x${encJWT}`, { from: accounts[0] })
             console.log('provider has delivered the encrypted JWT to on-chain')
 
             // 4. consumer download the encrypted token and decrypt
             const onChainencToken = await acl.getEncJWT(accessId, { from: accounts[1] })
-            const decryptJWT = privatePem.decrypt(onChainencToken, 'base64', 'utf8')
+            const decryptJWT = privatePem.decrypt(onChainencToken.slice(2), 'hex', 'utf8') // remove '0x' prefix
             console.log('consumer decrypts JWT token off-chain :', decryptJWT.toString())
             assert.strictEqual(decryptJWT.toString(), 'eyJhbGciOiJIUzI1', 'two public keys should match.')
 

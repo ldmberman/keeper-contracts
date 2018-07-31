@@ -2,7 +2,7 @@
 
 <h1 align="center">keeper-contracts</h1>
 
-> 💧 Integration of TCRs, CPM and Ocean Tokens in Solidity
+> 💧 Integration of Markplace and Ocean Tokens in Solidity
 > [oceanprotocol.com](https://oceanprotocol.com)
 
 [![Build Status](https://travis-ci.com/oceanprotocol/keeper-contracts.svg?token=soMi2nNfCZq19zS1Rx4i&branch=master)](https://travis-ci.com/oceanprotocol/keeper-contracts)
@@ -10,9 +10,8 @@
 
 Ocean Keeper implementation where we put the following modules together:
 
-* **TCRs**: users create challenges and resolve them through voting to maintain registries;
 * **Ocean Tokens**: the intrinsic tokens circulated inside Ocean network, which is used in the voting of TCRs;
-* **Curated Proofs Market**: the core marketplace where people can transact with each other and curate assets through staking with Ocean tokens.
+* **Marketplace**: the core marketplace where people can transact with each other with Ocean tokens.
 
 ## Table of Contents
 
@@ -61,7 +60,7 @@ module.exports = {
 
 ### Local development
 
-As a pre-requisite, you need Node.js >= v6.11.5.
+As a pre-requisite, you need Node.js >= v8.11.1.
 
 Clone the project and install all dependencies:
 
@@ -97,16 +96,12 @@ truffle migrate
 truffle migrate --reset
 ```
 
-Note:
-* we enable the solc optimizer to reduce the gas cost of deployment. It can now be deployed with less gas limit such as `gas = 5000000`
-* no need to update the `from : 0x3424ft...` in `truffle.js` and it will use the first account in testRPC or ganache-cli by default.
-
 ## Testing
 
 Run tests with `truffle test`, e.g.:
 
 ```bash
-truffle test test/registry.js
+truffle test test/TestAuth.js
 ```
 
 ### Code Linting
@@ -117,7 +112,7 @@ Code style is enforced through the CI test process, builds will fail if there're
 
 ## Documentation
 
-* [**Main Documentation: TCR and CPM and Ocean Tokens**](doc/)
+* [**Main Documentation: Market and Ocean Tokens**](doc/)
 * [Architecture (pdf)](doc/files/Smart-Contract-UML-class-diagram.pdf)
 * [Packaging of libraries](docs/packaging.md)
 
@@ -131,12 +126,9 @@ Ocean Protocol uses [C4 Standard process](https://github.com/unprotocols/rfc/blo
 
 ## Prior Art
 
-This project builds on top of the work done in multiple open source projects:
+This project builds on top of the work done in open source projects:
 
-- [ConsenSys/PLCRVoting](https://github.com/ConsenSys/PLCRVoting)
-- [skmgoldin/tcr](https://github.com/skmgoldin/tcr)
 - [OpenZeppelin/openzeppelin-solidity](https://github.com/OpenZeppelin/openzeppelin-solidity)
-- [relevant-community/contracts](https://github.com/relevant-community/contracts/tree/bondingCurves/contracts)
 
 
 ## License
