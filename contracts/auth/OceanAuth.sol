@@ -9,20 +9,20 @@ contract OceanAuth {
 
     // Sevice level agreement published on immutable storage
     struct AccessAgreement {
-        string accessAgreementRef; // reference link or i.e IPFS hash
+        string accessAgreementRef;  // reference link or i.e IPFS hash
         string accessAgreementType; // type such as PDF/DOC/JSON/XML file.
     }
 
     // consent (initial agreement) provides details about the service availability given by the provider.
     struct Consent {
-        bytes32 resource; // resource id
-        string permissions; // comma sparated permissions in one string
+        bytes32 resource;                   // resource id
+        string permissions;                 // comma sparated permissions in one string
         AccessAgreement accessAgreement;
-        bool available; // availability of the resource
-        uint256 timestamp; // in seconds
-        uint256 expire;  // in seconds
-        string discovery; // this is for authorization server configuration in the provider side
-        uint256 timeout; // if the consumer didn't receive verified claim from the provider within timeout
+        bool available;                     // availability of the resource
+        uint256 timestamp;                  // in seconds
+        uint256 expire;                     // in seconds
+        string discovery;                   // this is for authorization server configuration in the provider side
+        uint256 timeout;                    // if the consumer didn't receive verified claim from the provider within timeout
         // the consumer can cancel the request and refund the payment from market contract
     }
 
@@ -46,7 +46,7 @@ contract OceanAuth {
         _;
     }
 
-    modifier isAccessComitted(bytes32 id) {
+    modifier isAccessCommitted(bytes32 id) {
         require(accessControlRequests[id].status == AccessStatus.Committed, 'Status not Committed.');
         _;
     }
@@ -146,7 +146,7 @@ contract OceanAuth {
     //3. Delivery phase
     // provider encypts the JWT using temp public key from cunsumer and publish it to on-chain
     // the encrypted JWT is stored on-chain for alpha version release, which will be moved to off-chain in future versions.
-    function deliverAccessToken(bytes32 id, bytes encryptedAccessToken) public onlyProvider(id) isAccessComitted(id) returns (bool) {
+    function deliverAccessToken(bytes32 id, bytes encryptedAccessToken) public onlyProvider(id) isAccessCommitted(id) returns (bool) {
 
         accessControlRequests[id].encryptedAccessToken = encryptedAccessToken;
         emit PublishEncryptedToken(id, encryptedAccessToken);
@@ -154,23 +154,23 @@ contract OceanAuth {
     }
 
     // provider get the temp public key
-    function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessComitted(id) returns (string) {
+    function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessCommitted(id) returns (string) {
         return accessControlRequests[id].pubkey;
     }
 
     // Consumer get the encrypted JWT from on-chain
-    function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessComitted(id) returns (bytes) {
+    function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessCommitted(id) returns (bytes) {
         return accessControlRequests[id].encryptedAccessToken;
     }
 
     // provider uses this function to verify the signature comes from the consumer
-    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool){
+    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool) {
         return (ecrecover(msgHash, v, r, s) == _addr);
     }
 
     // provider verify the access token is delivered to consumer and request for payment
     function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
-    onlyProvider(id) isAccessComitted(id) returns (bool){
+    onlyProvider(id) isAccessCommitted(id) returns (bool) {
         // expire
         /* solium-disable-next-line */
         if (accessControlRequests[id].consent.expire < block.timestamp) {
