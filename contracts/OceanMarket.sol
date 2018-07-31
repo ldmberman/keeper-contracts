@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import './token/OceanToken.sol';
+import './tcr/OceanRegistry.sol';
 import './zeppelin/Ownable.sol';
 import './zeppelin/SafeMath.sol';
 
@@ -30,8 +31,14 @@ contract OceanMarket is Ownable {
     enum PaymentState {Locked, Released, Refunded}
     mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
 
+    // limit period for reques of tokens
+    mapping (address => uint256) tokenRequest; // mapping from address to last time of request
+
     // marketplace global variables
     OceanToken  public  mToken;
+
+    // tcr global variable
+    OceanRegistry  public  tcr;
 
     // Events
     event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
@@ -55,14 +62,26 @@ contract OceanMarket is Ownable {
         _;
     }
 
+    // Return true or false if an Asset is active given the assetId
+    function checkAsset(bytes32 assetId) public view returns (bool) {
+        return mAssets[assetId].active;
+    }
+
+    // return price of the asset
+    function getAssetPrice(bytes32 assetId) public view returns (uint256) {
+        return mAssets[assetId].price;
+    }
+
     ///////////////////////////////////////////////////////////////////
     //  Constructor function
     ///////////////////////////////////////////////////////////////////
     // 1. constructor
-    constructor(address _tokenAddress) public {
+    constructor(address _tokenAddress, address _tcrAddress) public {
         require(_tokenAddress != address(0x0), 'Token address is 0x0.');
         // instantiate deployed Ocean token contract
         mToken = OceanToken(_tokenAddress);
+        // instance of TCR
+        tcr = OceanRegistry(_tcrAddress);
         // set the token receiver to be marketplace
         mToken.setReceiver(address(this));
     }
@@ -120,9 +139,33 @@ contract OceanMarket is Ownable {
         return false;
     }
 
-    // 2. request initial fund transfer
+    // 2. request initial fund transfer - limit upto 10 tokens within one hour time window
     function requestTokens(uint256 amount) public validAddress(msg.sender) returns (bool) {
+        // the same address can only request one time
+        //if( block.timestamp < tokenRequest[msg.sender] + 1 hours) {
+        //    return false;
+        //}
+        // amount should not exceed 100 tokens
+        //if ( amount > 10000 ){
+        //    amount = 10000;
+        //}
         require(mToken.transfer(msg.sender, amount), 'Token transfer failed.');
+        tokenRequest[msg.sender] = block.timestamp;
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////
+    // TCR Functions
+    ///////////////////////////////////////////////////////////////////
+
+    function checkListingStatus(bytes32 listing) public view returns(bool){
+        return tcr.isWhitelisted(listing);
+    }
+
+    function changeListingStatus(bytes32 listing, bytes32 assetId) public returns(bool){
+        if ( !tcr.isWhitelisted(listing) ){
+            mAssets[assetId].active = false;
+        }
         return true;
     }
 
