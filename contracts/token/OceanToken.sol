@@ -27,7 +27,7 @@ contract OceanToken is StandardToken {
     * @dev OceanToken Constructor
     * Runs only on initial contract creation.
     */
-    function OceanToken() public {
+    constructor() public {
         totalSupply = INITIAL_SUPPLY;
         /* solium-disable-next-line security/no-block-members */
         initTime = block.timestamp;

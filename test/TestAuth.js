@@ -2,8 +2,8 @@
 /* eslint-disable no-console, max-len */
 
 const Token = artifacts.require('OceanToken.sol')
-const Market = artifacts.require('Market.sol')
-const ACL = artifacts.require('Auth.sol')
+const Market = artifacts.require('OceanMarket.sol')
+const Auth = artifacts.require('OceanAuth.sol')
 
 const ursa = require('ursa')
 const ethers = require('ethers')
@@ -19,14 +19,14 @@ function wait(ms) {
     }
 }
 
-contract('Auth', (accounts) => {
+contract('OceanAuth', (accounts) => {
     describe('Test On-chain Authorization', () => {
         // support upto 50 assets and providers; each asset has one single provider at this time
         it('Should walk through Authorization Process', async () => {
             // const marketPlace = await Market.deployed();
             const token = await Token.deployed()
             const market = await Market.deployed()
-            const acl = await ACL.deployed()
+            const acl = await Auth.deployed()
 
             const str = 'resource'
             const resourceId = await market.generateStr2Id(str, { from: accounts[0] })
@@ -36,6 +36,7 @@ contract('Auth', (accounts) => {
             console.log('publisher registers asset with id = ', resourceId)
 
             // consumer accounts[1] request initial funds to play
+            console.log(accounts[1])
             await market.requestTokens(2000, { from: accounts[1] })
             const bal = await token.balanceOf.call(accounts[1])
             console.log(`consumer has balance := ${bal.valueOf()} now`)

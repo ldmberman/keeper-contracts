@@ -1,7 +1,7 @@
 /* global artifacts */
 
 const Token = artifacts.require('OceanToken.sol')
-const Market = artifacts.require('Market.sol')
+const Market = artifacts.require('OceanMarket.sol')
 
 
 const deployMarket = (deployer) => {

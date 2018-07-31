@@ -4,7 +4,7 @@ import './token/OceanToken.sol';
 import './zeppelin/Ownable.sol';
 import './zeppelin/SafeMath.sol';
 
-contract Market is Ownable {
+contract OceanMarket is Ownable {
 
     using SafeMath for uint256;
     using SafeMath for uint;
@@ -59,7 +59,7 @@ contract Market is Ownable {
     //  Constructor function
     ///////////////////////////////////////////////////////////////////
     // 1. constructor
-    function Market(address _tokenAddress) public {
+    constructor(address _tokenAddress) public {
         require(_tokenAddress != address(0x0), 'Token address is 0x0.');
         // instantiate deployed Ocean token contract
         mToken = OceanToken(_tokenAddress);
@@ -133,13 +133,13 @@ contract Market is Ownable {
     // calculate hash of input parameter - string
     function generateStr2Id(string contents) public pure returns (bytes32) {
         // Generate the hash of input bytes
-        return bytes32(keccak256(contents));
+        return bytes32(keccak256(abi.encodePacked(contents)));
     }
 
     // calculate hash of input parameter - bytes
     function generateBytes2Id(bytes contents) public pure returns (bytes32) {
         // Generate the hash of input bytes
-        return bytes32(keccak256(contents));
+        return bytes32(keccak256(abi.encodePacked(contents)));
     }
 
 }

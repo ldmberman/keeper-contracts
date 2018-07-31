@@ -1,28 +1,23 @@
 pragma solidity 0.4.24;
 
-import '../Market.sol';
+import '../OceanMarket.sol';
 
-contract Auth {
+contract OceanAuth {
 
     // marketplace global variables
-    Market  public  market;
+    OceanMarket  public  market;
 
     // Sevice level agreement published on immutable storage
-    struct SLA {
+    struct AccessAgreement {
         string slaRef; // reference link or i.e IPFS hash
         string slaType; // type such as PDF/DOC/JSON/XML file.
-    }
-
-    // final agreement
-    struct Commitment {
-        bytes encJWT;  // encrypted JWT using consumer's temp public key
     }
 
     // consent (initial agreement) provides details about the service availability given by the provider.
     struct Consent {
         bytes32 resource; // resource id
         string permissions; // comma sparated permissions in one string
-        SLA serviceLevelAgreement;
+        AccessAgreement serviceLevelAgreement;
         bool available; // availability of the resource
         uint256 timestamp; // in seconds
         uint256 expire;  // in seconds
@@ -31,17 +26,17 @@ contract Auth {
         // the consumer can cancel the request and refund the payment from market contract
     }
 
-    struct ACL {
+    struct AccessControlRequest {
         address consumer;
         address provider;
         bytes32 resource;
         Consent consent;
         string pubkey; // temp public key for access token encryption
-        Commitment commitment;
+        bytes encryptedAccessToken;
         AccessStatus status; // Requested, Committed, Delivered, Revoked
     }
 
-    mapping(bytes32 => ACL) private aclEntries;
+    mapping(bytes32 => AccessControlRequest) private aclEntries;
 
     enum AccessStatus {Requested, Committed, Delivered, Revoked}
 
@@ -73,7 +68,7 @@ contract Auth {
 
     event RefundPayment(address _consumer, address _provider, bytes32 _id);
 
-    event PublishEncryptedToken(bytes32 _id, bytes encJWT);
+    event PublishEncryptedToken(bytes32 _id, bytes encryptedAccessToken);
 
     event ReleasePayment(address _consumer, address _provider, bytes32 _id);
 
@@ -81,29 +76,28 @@ contract Auth {
     //  Constructor function
     ///////////////////////////////////////////////////////////////////
     // 1. constructor
-    function Auth(address _marketAddress) public {
+    constructor(address _marketAddress) public {
         require(_marketAddress != address(0), 'Market address cannot be 0x0');
         // instance of Market
-        market = Market(_marketAddress);
+        market = OceanMarket(_marketAddress);
     }
 
     //1. Access Request Phase
     function initiateAccessRequest(bytes32 resourceId, address provider, string pubKey, uint256 timeout)
     public returns (bool) {
         // pasing `id` from outside for debugging purpose; otherwise, generate Id inside automatically
-        bytes32 id = keccak256(resourceId, msg.sender, provider, pubKey);
-        // initialize SLA, Commitment, and claim
-        SLA memory sla = SLA(new string(0), new string(0));
-        Commitment memory commitment = Commitment(new bytes(0));
+        bytes32 id = keccak256(abi.encodePacked(resourceId, msg.sender, provider, pubKey));
+        // initialize AccessAgreement, and claim
+        AccessAgreement memory sla = AccessAgreement(new string(0), new string(0));
         Consent memory consent = Consent(resourceId, new string(0), sla, false, 0, 0, new string(0), timeout);
         // initialize acl handler
-        ACL memory acl = ACL(
+        AccessControlRequest memory acl = AccessControlRequest(
             msg.sender,
             provider,
             resourceId,
             consent,
             pubKey, // temp public key
-            commitment,
+            new bytes(0),
             AccessStatus.Requested // set access status to requested
         );
 
@@ -124,7 +118,7 @@ contract Auth {
             aclEntries[id].consent.discovery = discovery;
             aclEntries[id].consent.permissions = permissions;
             aclEntries[id].status = AccessStatus.Committed;
-            SLA memory sla = SLA(
+            AccessAgreement memory sla = AccessAgreement(
                 slaLink,
                 slaType
             );
@@ -157,7 +151,7 @@ contract Auth {
     // the encrypted JWT is stored on-chain for alpha version release, which will be moved to off-chain in future versions.
     function deliverAccessToken(bytes32 id, bytes encryptedJWT) public onlyProvider(id) isAccessComitted(id) returns (bool) {
 
-        aclEntries[id].commitment.encJWT = encryptedJWT;
+        aclEntries[id].encryptedAccessToken = encryptedJWT;
         emit PublishEncryptedToken(id, encryptedJWT);
         return true;
     }
@@ -169,12 +163,12 @@ contract Auth {
 
     // Consumer get the encrypted JWT from on-chain
     function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessComitted(id) returns (bytes) {
-        return aclEntries[id].commitment.encJWT;
+        return aclEntries[id].encryptedAccessToken;
     }
 
 
     // provider uses this function to verify the signature comes from the consumer
-    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public view returns (bool){
+    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool){
         return (ecrecover(msgHash, v, r, s) == _addr);
     }
 
