@@ -18,6 +18,7 @@ Ocean Keeper implementation where we put the following modules together:
   - [Get Started](#get-started)
      - [Docker](#docker)
      - [Local development](#local-development)
+  - [Libraries](#libraries)
   - [Testing](#testing)
      - [Code Linting](#code-linting)
   - [Documentation](#documentation)
@@ -95,6 +96,16 @@ truffle migrate
 # for redeployment run this instead
 truffle migrate --reset
 ```
+
+## Libraries
+
+To facilitate the integration of the Ocean Keeper Smart Contracts, Python and Javascript libraries are ready to be integrated. Those libraries include the Smart Contract ABI's.
+Using these libraries helps to avoid compiling the Smart Contracts and copying the ABI's manually to your project. In that way the integration is cleaner and easier.
+The libraries provided currently are:
+
+* Javascript NPM package - As part of the [@oceanprotocol NPM organization](https://www.npmjs.com/settings/oceanprotocol/packages), the [NPM Keeper Contracts package](https://www.npmjs.com/package/@oceanprotocol/keeper-contracts) provides the ABI's to be imported from your Javascript code.
+* Python Pypi package - The [Pypi Keeper Contracts package](https://pypi.org/project/keeper-contracts/) provides the same ABI's to be used from Python
+
 
 ## Testing
 
