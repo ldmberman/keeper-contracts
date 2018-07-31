@@ -86,7 +86,7 @@ contract OceanMarket is Ownable {
 
     // the sender makes payment
     /* solium-disable-next-line */
-    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire, address _contract) public validAddress(msg.sender) returns (bool){
+    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire, address _contract) public validAddress(msg.sender) returns (bool) {
         // consumer make payment to Market contract
         require(mToken.transferFrom(msg.sender, address(this), _amount), 'Token transferFrom failed.');
         /* solium-disable-next-line */
@@ -96,7 +96,7 @@ contract OceanMarket is Ownable {
     }
 
     // the consumer release payment to receiver
-    function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool){
+    function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool) {
         // update state to avoid re-entry attack
         mPayments[_paymentId].state == PaymentState.Released;
         require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount), 'Token transfer failed.');
@@ -105,7 +105,7 @@ contract OceanMarket is Ownable {
     }
 
     // refund payment
-    function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool){
+    function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool) {
         mPayments[_paymentId].state == PaymentState.Refunded;
         require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount), 'Token transfer failed.');
         emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);
@@ -113,7 +113,7 @@ contract OceanMarket is Ownable {
     }
 
     // utitlity function - verify the payment
-    function verifyPayment(bytes32 _paymentId) public view returns (bool){
+    function verifyPayment(bytes32 _paymentId) public view returns (bool) {
         if (mPayments[_paymentId].state == PaymentState.Locked || mPayments[_paymentId].state == PaymentState.Released) {
             return true;
         }
@@ -131,13 +131,13 @@ contract OceanMarket is Ownable {
     ///////////////////////////////////////////////////////////////////
 
     // calculate hash of input parameter - string
-    function generateStr2Id(string contents) public pure returns (bytes32) {
+    function generateId(string contents) public pure returns (bytes32) {
         // Generate the hash of input bytes
         return bytes32(keccak256(abi.encodePacked(contents)));
     }
 
     // calculate hash of input parameter - bytes
-    function generateBytes2Id(bytes contents) public pure returns (bytes32) {
+    function generateId(bytes contents) public pure returns (bytes32) {
         // Generate the hash of input bytes
         return bytes32(keccak256(abi.encodePacked(contents)));
     }
