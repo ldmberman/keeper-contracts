@@ -5,24 +5,24 @@ import '../OceanMarket.sol';
 contract OceanAuth {
 
     // marketplace global variables
-    OceanMarket  public  market;
+    OceanMarket private market;
 
     // Sevice level agreement published on immutable storage
     struct AccessAgreement {
-        string slaRef; // reference link or i.e IPFS hash
-        string slaType; // type such as PDF/DOC/JSON/XML file.
+        string accessAgreementRef;  // reference link or i.e IPFS hash
+        string accessAgreementType; // type such as PDF/DOC/JSON/XML file.
     }
 
     // consent (initial agreement) provides details about the service availability given by the provider.
     struct Consent {
-        bytes32 resource; // resource id
-        string permissions; // comma sparated permissions in one string
-        AccessAgreement serviceLevelAgreement;
-        bool available; // availability of the resource
-        uint256 timestamp; // in seconds
-        uint256 expire;  // in seconds
-        string discovery; // this is for authorization server configuration in the provider side
-        uint256 timeout; // if the consumer didn't receive verified claim from the provider within timeout
+        bytes32 resource;                   // resource id
+        string permissions;                 // comma sparated permissions in one string
+        AccessAgreement accessAgreement;
+        bool available;                     // availability of the resource
+        uint256 timestamp;                  // in seconds
+        uint256 expire;                     // in seconds
+        string discovery;                   // this is for authorization server configuration in the provider side
+        uint256 timeout;                    // if the consumer didn't receive verified claim from the provider within timeout
         // the consumer can cancel the request and refund the payment from market contract
     }
 
@@ -36,39 +36,39 @@ contract OceanAuth {
         AccessStatus status; // Requested, Committed, Delivered, Revoked
     }
 
-    mapping(bytes32 => AccessControlRequest) private aclEntries;
+    mapping(bytes32 => AccessControlRequest) private accessControlRequests;
 
     enum AccessStatus {Requested, Committed, Delivered, Revoked}
 
     // modifiers and access control
     modifier isAccessRequested(bytes32 id) {
-        require(aclEntries[id].status == AccessStatus.Requested, 'Status not requested.');
+        require(accessControlRequests[id].status == AccessStatus.Requested, 'Status not requested.');
         _;
     }
 
-    modifier isAccessComitted(bytes32 id) {
-        require(aclEntries[id].status == AccessStatus.Committed, 'Status not Committed.');
+    modifier isAccessCommitted(bytes32 id) {
+        require(accessControlRequests[id].status == AccessStatus.Committed, 'Status not Committed.');
         _;
     }
 
     modifier onlyProvider(bytes32 id) {
-        require(aclEntries[id].provider == msg.sender, 'Sender is not Provider.');
+        require(accessControlRequests[id].provider == msg.sender, 'Sender is not Provider.');
         _;
     }
 
     modifier onlyConsumer(bytes32 id) {
-        require(aclEntries[id].consumer == msg.sender, 'Sender is not consumer.');
+        require(accessControlRequests[id].consumer == msg.sender, 'Sender is not consumer.');
         _;
     }
 
     // events
     event RequestAccessConsent(bytes32 _id, address _consumer, address _provider, bytes32 _resource, uint _timeout, string _pubKey);
 
-    event CommitConsent(bytes32 _id, uint256 _expire, string _discovery, string _permissions, string slaLink);
+    event CommitConsent(bytes32 _id, uint256 _expire, string _discovery, string _permissions, string _accessAgreementRef);
 
     event RefundPayment(address _consumer, address _provider, bytes32 _id);
 
-    event PublishEncryptedToken(bytes32 _id, bytes encryptedAccessToken);
+    event PublishEncryptedToken(bytes32 _id, bytes _encryptedAccessToken);
 
     event ReleasePayment(address _consumer, address _provider, bytes32 _id);
 
@@ -82,16 +82,15 @@ contract OceanAuth {
         market = OceanMarket(_marketAddress);
     }
 
-    //1. Access Request Phase
-    function initiateAccessRequest(bytes32 resourceId, address provider, string pubKey, uint256 timeout)
-    public returns (bool) {
+    // 1. Access Request Phase
+    function initiateAccessRequest(bytes32 resourceId, address provider, string pubKey, uint256 timeout) public returns (bool) {
         // pasing `id` from outside for debugging purpose; otherwise, generate Id inside automatically
         bytes32 id = keccak256(abi.encodePacked(resourceId, msg.sender, provider, pubKey));
         // initialize AccessAgreement, and claim
-        AccessAgreement memory sla = AccessAgreement(new string(0), new string(0));
-        Consent memory consent = Consent(resourceId, new string(0), sla, false, 0, 0, new string(0), timeout);
+        AccessAgreement memory accessAgreement = AccessAgreement(new string(0), new string(0));
+        Consent memory consent = Consent(resourceId, new string(0), accessAgreement, false, 0, 0, new string(0), timeout);
         // initialize acl handler
-        AccessControlRequest memory acl = AccessControlRequest(
+        AccessControlRequest memory accessControlRequest = AccessControlRequest(
             msg.sender,
             provider,
             resourceId,
@@ -101,102 +100,99 @@ contract OceanAuth {
             AccessStatus.Requested // set access status to requested
         );
 
-        aclEntries[id] = acl;
+        accessControlRequests[id] = accessControlRequest;
         emit RequestAccessConsent(id, msg.sender, provider, resourceId, timeout, pubKey);
         return true;
     }
 
-    /* solium-disable-next-line */
-    function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType)
+    /* solium-disable-next-line max-len */
+    function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string accessAgreementRef, string accessAgreementType)
     public onlyProvider(id) isAccessRequested(id) returns (bool) {
         /* solium-disable-next-line */
         if (available && block.timestamp < expire) {
-            aclEntries[id].consent.available = available;
-            aclEntries[id].consent.expire = expire;
+            accessControlRequests[id].consent.available = available;
+            accessControlRequests[id].consent.expire = expire;
             /* solium-disable-next-line */
-            aclEntries[id].consent.timestamp = block.timestamp;
-            aclEntries[id].consent.discovery = discovery;
-            aclEntries[id].consent.permissions = permissions;
-            aclEntries[id].status = AccessStatus.Committed;
-            AccessAgreement memory sla = AccessAgreement(
-                slaLink,
-                slaType
+            accessControlRequests[id].consent.timestamp = block.timestamp;
+            accessControlRequests[id].consent.discovery = discovery;
+            accessControlRequests[id].consent.permissions = permissions;
+            accessControlRequests[id].status = AccessStatus.Committed;
+            AccessAgreement memory accessAgreement = AccessAgreement(
+                accessAgreementRef,
+                accessAgreementType
             );
-            aclEntries[id].consent.serviceLevelAgreement = sla;
-            emit CommitConsent(id, expire, discovery, permissions, slaLink);
+            accessControlRequests[id].consent.accessAgreement = accessAgreement;
+            emit CommitConsent(id, expire, discovery, permissions, accessAgreementRef);
             return true;
         }
 
         // otherwise, send refund
-        aclEntries[id].status = AccessStatus.Revoked;
+        accessControlRequests[id].status = AccessStatus.Revoked;
         require(market.refundPayment(id), 'Refund payment failed.');
-        emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
+        emit RefundPayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
         return false;
     }
 
     // you can cancel consent and do refund only after timeout.
-    function cancelConsent(bytes32 id)
-    public
-    isAccessRequested(id) {
+    function cancelConsent(bytes32 id) public isAccessRequested(id) {
         // timeout
         /* solium-disable-next-line */
-        require(block.timestamp > aclEntries[id].consent.timeout, 'Timeout not exceeded.');
-        aclEntries[id].status = AccessStatus.Revoked;
+        require(block.timestamp > accessControlRequests[id].consent.timeout, 'Timeout not exceeded.');
+        accessControlRequests[id].status = AccessStatus.Revoked;
         require(market.refundPayment(id), 'Refund payment failed.');
-        emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
+        emit RefundPayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
     }
 
     //3. Delivery phase
     // provider encypts the JWT using temp public key from cunsumer and publish it to on-chain
     // the encrypted JWT is stored on-chain for alpha version release, which will be moved to off-chain in future versions.
-    function deliverAccessToken(bytes32 id, bytes encryptedJWT) public onlyProvider(id) isAccessComitted(id) returns (bool) {
+    function deliverAccessToken(bytes32 id, bytes encryptedAccessToken) public onlyProvider(id) isAccessCommitted(id) returns (bool) {
 
-        aclEntries[id].encryptedAccessToken = encryptedJWT;
-        emit PublishEncryptedToken(id, encryptedJWT);
+        accessControlRequests[id].encryptedAccessToken = encryptedAccessToken;
+        emit PublishEncryptedToken(id, encryptedAccessToken);
         return true;
     }
 
     // provider get the temp public key
-    function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessComitted(id) returns (string) {
-        return aclEntries[id].pubkey;
+    function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessCommitted(id) returns (string) {
+        return accessControlRequests[id].pubkey;
     }
 
     // Consumer get the encrypted JWT from on-chain
-    function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessComitted(id) returns (bytes) {
-        return aclEntries[id].encryptedAccessToken;
+    function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessCommitted(id) returns (bytes) {
+        return accessControlRequests[id].encryptedAccessToken;
     }
 
-
     // provider uses this function to verify the signature comes from the consumer
-    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool){
+    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool) {
         return (ecrecover(msgHash, v, r, s) == _addr);
     }
 
     // provider verify the access token is delivered to consumer and request for payment
     function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
-    onlyProvider(id) isAccessComitted(id) returns (bool){
+    onlyProvider(id) isAccessCommitted(id) returns (bool) {
         // expire
         /* solium-disable-next-line */
-        if (aclEntries[id].consent.expire < block.timestamp) {
+        if (accessControlRequests[id].consent.expire < block.timestamp) {
             // this means that consumer didn't make the request
             // revoke the access then raise event for refund
-            aclEntries[id].status = AccessStatus.Revoked;
+            accessControlRequests[id].status = AccessStatus.Revoked;
             require(market.refundPayment(id), 'Refund payment failed.');
-            emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
+            emit RefundPayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
             return false;
         } else {
             // provider confirms that consumer made a request by providing "proof of access"
             if (isSigned(_addr, msgHash, v, r, s)) {
-                aclEntries[id].status = AccessStatus.Delivered;
+                accessControlRequests[id].status = AccessStatus.Delivered;
                 // send money to provider
                 require(market.releasePayment(id), 'Release payment failed.');
                 // emit an event
-                emit ReleasePayment(aclEntries[id].consumer, aclEntries[id].provider, id);
+                emit ReleasePayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
                 return true;
             } else {
-                aclEntries[id].status = AccessStatus.Revoked;
+                accessControlRequests[id].status = AccessStatus.Revoked;
                 require(market.refundPayment(id), 'Refund payment failed.');
-                emit RefundPayment(aclEntries[id].consumer, aclEntries[id].provider, id);
+                emit RefundPayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
                 return false;
             }
         }
@@ -205,16 +201,16 @@ contract OceanAuth {
     // verify status of access request
     // 0 - Requested; 1 - Committed; 2 - Delivered; 3 - Revoked
     function verifyCommitted(bytes32 id, uint256 status) public view returns (bool) {
-        if (status == 0 && aclEntries[id].status == AccessStatus.Requested) {
+        if (status == 0 && accessControlRequests[id].status == AccessStatus.Requested) {
             return true;
         }
-        if (status == 1 && aclEntries[id].status == AccessStatus.Committed) {
+        if (status == 1 && accessControlRequests[id].status == AccessStatus.Committed) {
             return true;
         }
-        if (status == 2 && aclEntries[id].status == AccessStatus.Delivered) {
+        if (status == 2 && accessControlRequests[id].status == AccessStatus.Delivered) {
             return true;
         }
-        if (status == 3 && aclEntries[id].status == AccessStatus.Revoked) {
+        if (status == 3 && accessControlRequests[id].status == AccessStatus.Revoked) {
             return true;
         }
         return false;

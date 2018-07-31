@@ -29,7 +29,7 @@ contract('OceanAuth', (accounts) => {
             const acl = await Auth.deployed()
 
             const str = 'resource'
-            const resourceId = await market.generateStr2Id(str, { from: accounts[0] })
+            const resourceId = await market.generateId(str, { from: accounts[0] })
             const resourcePrice = 100
             // 1. provider register dataset
             await market.register(resourceId, resourcePrice, { from: accounts[0] })
