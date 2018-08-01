@@ -1,7 +1,13 @@
 {
   "name": "@oceanprotocol/keeper-contracts",
-  "version": "0.1.0",
+  "version": "0.0.6",
   "description": "Integration of TCRs, CPM and Ocean Tokens in Solidity",
+  "bugs": {
+    "url": "https://github.com/oceanprotocol/keeper-contracts/issues"
+  },
+  "homepage": "https://github.com/oceanprotocol/keeper-contracts#readme",
+  "main": "truffle.js",
+
   "scripts": {
     "install": "truffle install",
     "compile": "truffle compile",
@@ -12,6 +18,19 @@
     "lint-fix": "eslint --fix ./**/*.js",
     "lint": "eslint ./**/*.js",
     "test": "npm run lint && truffle test"
+  },
+  "directories": {
+    "doc": "doc",
+    "test": "test"
+  },
+  "files": [
+    "build/contracts/*",
+    "doc/*",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oceanprotocol/keeper-contracts.git"
   },
   "author": "Ocean Protocol",
   "license": "Apache-2.0",

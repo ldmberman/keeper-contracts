@@ -111,6 +111,7 @@ truffle test test/registry.js
 
 * [**Main Documentation: TCR and CPM and Ocean Tokens**](doc/)
 * [Architecture (pdf)](doc/files/Smart-Contract-UML-class-diagram.pdf)
+* [Packaging of libraries](docs/packaging.md)
 
 ## Contributing
 
