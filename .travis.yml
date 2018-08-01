@@ -41,7 +41,6 @@ notifications:
 
 before_deploy:
   - npm version patch
-  - git commit -m "Travis Update"
 
 deploy:
   - provider: npm
