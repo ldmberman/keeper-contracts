@@ -13,6 +13,7 @@ cache:
     - node_modules
 
 env:
+  -
   - SOLIDITY_COVERAGE=true
   - SOLC_NIGHTLY=true
 
