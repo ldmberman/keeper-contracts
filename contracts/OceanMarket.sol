@@ -59,8 +59,8 @@ contract OceanMarket is Ownable {
         _;
     }
 
-    modifier isContract(bytes32 _paymentId) {
-        require(msg.sender == authAddress, 'Sender is not contract.');
+    modifier isAuthContract() {
+        require(msg.sender == authAddress, 'Sender is not authorization contract.');
         _;
     }
 
@@ -117,7 +117,7 @@ contract OceanMarket is Ownable {
     }
 
     // the consumer release payment to receiver
-    function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool) {
+    function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isAuthContract() returns (bool) {
         // update state to avoid re-entry attack
         mPayments[_paymentId].state = PaymentState.Released;
         require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount), 'Token transfer failed.');
@@ -126,7 +126,7 @@ contract OceanMarket is Ownable {
     }
 
     // refund payment
-    function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool) {
+    function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isAuthContract() returns (bool) {
         mPayments[_paymentId].state = PaymentState.Refunded;
         require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount), 'Token transfer failed.');
         emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);

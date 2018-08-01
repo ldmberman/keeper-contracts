@@ -53,7 +53,7 @@ contract('OceanAuth', (accounts) => {
             console.log('public key is: = ', publicKey)
 
             // listen to the event fired from initiateAccessRequest so that to get access Request Id
-            const requestAccessEvent = auth.RequestAccessConsent()
+            const requestAccessEvent = auth.AccessConsentRequested()
             let accessId = 0x0
             requestAccessEvent.watch((error, result) => {
                 if (!error) {
