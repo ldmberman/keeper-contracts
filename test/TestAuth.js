@@ -29,19 +29,19 @@ contract('OceanAuth', (accounts) => {
             const auth = await Auth.deployed()
 
             const str = 'resource'
-            const resourceId = await market.generateId(str, {from: accounts[0]})
+            const resourceId = await market.generateId(str, { from: accounts[0] })
             const resourcePrice = 100
             // 1. provider register dataset
-            await market.register(resourceId, resourcePrice, {from: accounts[0]})
+            await market.register(resourceId, resourcePrice, { from: accounts[0] })
             console.log('publisher registers asset with id = ', resourceId)
 
             // consumer accounts[1] request initial funds to play
             console.log(accounts[1])
-            await market.requestTokens(2000, {from: accounts[1]})
+            await market.requestTokens(2000, { from: accounts[1] })
             const bal = await token.balanceOf.call(accounts[1])
             console.log(`consumer has balance := ${bal.valueOf()} now`)
             // consumer approve market to withdraw amount of token from his account
-            await token.approve(market.address, 200, {from: accounts[1]})
+            await token.approve(market.address, 200, { from: accounts[1] })
 
             // 2. consumer initiate an access request
             const modulusBit = 512
@@ -65,34 +65,34 @@ contract('OceanAuth', (accounts) => {
             // it is designed for js integration testing; it is not needed in real practice.
             wait(1000)
 
-            await auth.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, {from: accounts[1]})
+            await auth.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
             console.log('consumer creates an access request with id : ', accessId)
 
             // 3. provider commit the request
-            await auth.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', {from: accounts[0]})
+            await auth.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', { from: accounts[0] })
             console.log('provider has committed the order')
 
             // 4. consumer make payment
             const bal1 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal1.valueOf()} before payment`)
-            await market.sendPayment(accessId, accounts[0], 100, 9999999999, auth.address, {from: accounts[1]})
+            await market.sendPayment(accessId, accounts[0], 100, 9999999999, auth.address, { from: accounts[1] })
             const bal2 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal2.valueOf()} after payment`)
             console.log('consumer has paid the order')
 
             // 5. provider delivery the encrypted JWT token
-            const OnChainPubKey = await auth.getTempPubKey(accessId, {from: accounts[0]})
+            const OnChainPubKey = await auth.getTempPubKey(accessId, { from: accounts[0] })
             // console.log('provider Retrieve the temp public key:', OnChainPubKey)
             assert.strictEqual(publicKey, OnChainPubKey, 'two public keys should match.')
 
             const getPubKeyPem = ursa.coerceKey(OnChainPubKey)
             const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'hex')
             console.log('encJWT: ', `0x${encJWT}`)
-            await auth.deliverAccessToken(accessId, `0x${encJWT}`, {from: accounts[0]})
+            await auth.deliverAccessToken(accessId, `0x${encJWT}`, { from: accounts[0] })
             console.log('provider has delivered the encrypted JWT to on-chain')
 
             // 4. consumer download the encrypted token and decrypt
-            const onChainencToken = await auth.getEncryptedAccessToken(accessId, {from: accounts[1]})
+            const onChainencToken = await auth.getEncryptedAccessToken(accessId, { from: accounts[1] })
             const decryptJWT = privatePem.decrypt(onChainencToken.slice(2), 'hex', 'utf8') // remove '0x' prefix
             console.log('consumer decrypts JWT token off-chain :', decryptJWT.toString())
             assert.strictEqual(decryptJWT.toString(), 'eyJhbGciOiJIUzI1', 'two public keys should match.')
@@ -110,12 +110,12 @@ contract('OceanAuth', (accounts) => {
             const fixedMsgSha = web3.sha3(fixedMsg)
             console.log('signed message from consumer to be validated: ', fixedMsg)
 
-            const res = await auth.isSigned(accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, {from: accounts[0]})
+            const res = await auth.isSigned(accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
             console.log('validate the signature comes from consumer? isSigned: ', res)
 
             // 6. provider send the signed encypted JWT to ACL contract for verification (verify delivery of token)
             // it shall release the payment to provider automatically
-            await auth.verifyAccessTokenDelivery(accessId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, {from: accounts[0]})
+            await auth.verifyAccessTokenDelivery(accessId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
             console.log('provider verify the delivery and request payment')
 
             // check balance
