@@ -35,6 +35,7 @@ before_script:
 
 script:
   - npm test
+  - npm release
 
 before_deploy:
   - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
