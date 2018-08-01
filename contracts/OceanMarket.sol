@@ -119,7 +119,7 @@ contract OceanMarket is Ownable {
     // the consumer release payment to receiver
     function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool) {
         // update state to avoid re-entry attack
-        mPayments[_paymentId].state == PaymentState.Released;
+        mPayments[_paymentId].state = PaymentState.Released;
         require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount), 'Token transfer failed.');
         emit PaymentReleased(_paymentId, mPayments[_paymentId].receiver);
         return true;
@@ -127,7 +127,7 @@ contract OceanMarket is Ownable {
 
     // refund payment
     function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool) {
-        mPayments[_paymentId].state == PaymentState.Refunded;
+        mPayments[_paymentId].state = PaymentState.Refunded;
         require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount), 'Token transfer failed.');
         emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);
         return true;
@@ -165,7 +165,7 @@ contract OceanMarket is Ownable {
     }
 
     function changeListingStatus(bytes32 listing, bytes32 assetId) public returns(bool){
-        if ( !tcr.isWhitelisted(listing) ){
+        if (!tcr.isWhitelisted(listing) ){
             mAssets[assetId].active = false;
         }
         return true;
