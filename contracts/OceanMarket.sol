@@ -134,8 +134,8 @@ contract OceanMarket is Ownable {
     }
 
     // utitlity function - verify the payment
-    function verifyPayment(bytes32 _paymentId) public view returns (bool) {
-        if (mPayments[_paymentId].state == PaymentState.Locked || mPayments[_paymentId].state == PaymentState.Released) {
+    function verifyPaymentPaid(bytes32 _paymentId) public view returns (bool) {
+        if (mPayments[_paymentId].state == PaymentState.Locked) {
             return true;
         }
         return false;
