@@ -136,7 +136,7 @@ contract OceanAuth {
     // you can cancel consent and do refund only after timeout.
     function cancelConsent(bytes32 id) public isAccessRequested(id) {
         // timeout
-        /* solium-disable-next-line */
+        /* solium-disable-next-line security/no-block-members */
         require(block.timestamp > accessControlRequests[id].consent.timeout, 'Timeout not exceeded.');
         accessControlRequests[id].status = AccessStatus.Revoked;
         require(market.refundPayment(id), 'Refund payment failed.');

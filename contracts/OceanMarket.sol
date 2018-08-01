@@ -32,7 +32,7 @@ contract OceanMarket is Ownable {
     mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
 
     // limit period for reques of tokens
-    mapping (address => uint256) tokenRequest; // mapping from address to last time of request
+    mapping(address => uint256) tokenRequest; // mapping from address to last time of request
 
     // marketplace global variables
     OceanToken  public  mToken;
@@ -150,6 +150,7 @@ contract OceanMarket is Ownable {
         //    amount = 10000;
         //}
         require(mToken.transfer(msg.sender, amount), 'Token transfer failed.');
+        /* solium-disable-next-line security/no-block-members */
         tokenRequest[msg.sender] = block.timestamp;
         return true;
     }
@@ -158,12 +159,12 @@ contract OceanMarket is Ownable {
     // TCR Functions
     ///////////////////////////////////////////////////////////////////
 
-    function checkListingStatus(bytes32 listing) public view returns(bool){
+    function checkListingStatus(bytes32 listing) public view returns (bool){
         return tcr.isWhitelisted(listing);
     }
 
-    function changeListingStatus(bytes32 listing, bytes32 assetId) public returns(bool){
-        if ( !tcr.isWhitelisted(listing) ){
+    function changeListingStatus(bytes32 listing, bytes32 assetId) public returns (bool){
+        if (!tcr.isWhitelisted(listing)) {
             mAssets[assetId].active = false;
         }
         return true;
