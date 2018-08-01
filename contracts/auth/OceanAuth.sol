@@ -143,7 +143,7 @@ contract OceanAuth {
         require(block.timestamp > accessControlRequests[id].consent.timeout, 'Timeout not exceeded.');
         accessControlRequests[id].status = AccessStatus.Revoked;
         // refund only if consumer had made payment
-        if(market.verifyPaymentPaid(id)){
+        if(market.verifyPaymentReceived(id)){
             require(market.refundPayment(id), 'Refund payment failed.');
             emit PaymentRefunded(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
         }
