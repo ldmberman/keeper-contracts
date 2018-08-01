@@ -75,7 +75,7 @@ contract('OceanAuth', (accounts) => {
             // 4. consumer make payment
             const bal1 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal1.valueOf()} before payment`)
-            await market.sendPayment(accessId, accounts[0], 100, 9999999999, auth.address, { from: accounts[1] })
+            await market.sendPayment(accessId, accounts[0], 100, 9999999999, { from: accounts[1] })
             const bal2 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal2.valueOf()} after payment`)
             console.log('consumer has paid the order')

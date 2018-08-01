@@ -26,13 +26,15 @@ contract OceanMarket is Ownable {
         uint256 amount;             // amount of tokens to be transferred
         uint256 date;               // timestamp of the payment event (in sec.)
         uint256 expiration;         // consumer may request refund after expiration timestamp (in sec.)
-        address contractAddress;    // the contract that can release and refund the payment
     }
     enum PaymentState {Locked, Released, Refunded}
     mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
 
     // limit period for reques of tokens
-    mapping(address => uint256) tokenRequest; // mapping from address to last time of request
+    mapping (address => uint256) tokenRequest; // mapping from address to last time of request
+
+    // limit access to refund payment
+    address private authAddress;
 
     // marketplace global variables
     OceanToken  public  mToken;
@@ -58,7 +60,7 @@ contract OceanMarket is Ownable {
     }
 
     modifier isContract(bytes32 _paymentId) {
-        require(mPayments[_paymentId].contractAddress == msg.sender, 'Sender is not contract.');
+        require(msg.sender == authAddress, 'Sender is not contract.');
         _;
     }
 
@@ -105,11 +107,11 @@ contract OceanMarket is Ownable {
 
     // the sender makes payment
     /* solium-disable-next-line */
-    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire, address _contract) public validAddress(msg.sender) returns (bool) {
+    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public validAddress(msg.sender) returns (bool) {
         // consumer make payment to Market contract
         require(mToken.transferFrom(msg.sender, address(this), _amount), 'Token transferFrom failed.');
         /* solium-disable-next-line */
-        mPayments[_paymentId] = Payment(msg.sender, _receiver, PaymentState.Locked, _amount, block.timestamp, _expire, _contract);
+        mPayments[_paymentId] = Payment(msg.sender, _receiver, PaymentState.Locked, _amount, block.timestamp, _expire);
         emit PaymentReceived(_paymentId, _receiver, _amount, _expire);
         return true;
     }
@@ -117,7 +119,7 @@ contract OceanMarket is Ownable {
     // the consumer release payment to receiver
     function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool) {
         // update state to avoid re-entry attack
-        mPayments[_paymentId].state = PaymentState.Released;
+        mPayments[_paymentId].state == PaymentState.Released;
         require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount), 'Token transfer failed.');
         emit PaymentReleased(_paymentId, mPayments[_paymentId].receiver);
         return true;
@@ -125,7 +127,7 @@ contract OceanMarket is Ownable {
 
     // refund payment
     function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isContract(_paymentId) returns (bool) {
-        mPayments[_paymentId].state = PaymentState.Refunded;
+        mPayments[_paymentId].state == PaymentState.Refunded;
         require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount), 'Token transfer failed.');
         emit PaymentRefunded(_paymentId, mPayments[_paymentId].sender);
         return true;
@@ -150,7 +152,6 @@ contract OceanMarket is Ownable {
         //    amount = 10000;
         //}
         require(mToken.transfer(msg.sender, amount), 'Token transfer failed.');
-        /* solium-disable-next-line security/no-block-members */
         tokenRequest[msg.sender] = block.timestamp;
         return true;
     }
@@ -159,12 +160,12 @@ contract OceanMarket is Ownable {
     // TCR Functions
     ///////////////////////////////////////////////////////////////////
 
-    function checkListingStatus(bytes32 listing) public view returns (bool){
+    function checkListingStatus(bytes32 listing) public view returns(bool){
         return tcr.isWhitelisted(listing);
     }
 
-    function changeListingStatus(bytes32 listing, bytes32 assetId) public returns (bool){
-        if (!tcr.isWhitelisted(listing)) {
+    function changeListingStatus(bytes32 listing, bytes32 assetId) public returns(bool){
+        if ( !tcr.isWhitelisted(listing) ){
             mAssets[assetId].active = false;
         }
         return true;
@@ -173,6 +174,14 @@ contract OceanMarket is Ownable {
     ///////////////////////////////////////////////////////////////////
     // Utility Functions
     ///////////////////////////////////////////////////////////////////
+    // update access list - can onlyl be called by derivatives of Market contract
+    function addAuthAddress() public validAddress(msg.sender) returns (bool) {
+        // authAddress can only be set at deployment of Auth contract - only once
+        require(authAddress == address(0));
+        authAddress = msg.sender;
+        return true;
+    }
+
 
     // calculate hash of input parameter - string
     function generateId(string contents) public pure returns (bytes32) {
