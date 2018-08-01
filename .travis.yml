@@ -40,7 +40,7 @@ notifications:
   email: false
 
 before_deploy:
-  - npm version minor
+  - npm version patch
 
 deploy:
   - provider: npm
