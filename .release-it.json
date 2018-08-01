@@ -7,6 +7,6 @@
     "tagName": "keeper-contracts-v%s"
   },
   "github": {
-    "release": true
+    "release": false
   }
 }
