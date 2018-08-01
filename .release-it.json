@@ -1,0 +1,12 @@
+{
+  "pkgFiles": [
+    "package.json"
+  ],
+  "requireUpstream": false,
+  "src": {
+    "tagName": "keeper-contracts-v%s"
+  },
+  "github": {
+    "release": true
+  }
+}
