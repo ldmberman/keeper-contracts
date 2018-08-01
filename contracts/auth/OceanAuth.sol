@@ -15,12 +15,12 @@ contract OceanAuth {
 
     // consent (initial agreement) provides details about the service availability given by the provider.
     struct Consent {
-        bytes32 resource;                   // resource id
+        bytes32 resourceId;                 // resource id
         string permissions;                 // comma sparated permissions in one string
         AccessAgreement accessAgreement;
-        bool available;                     // availability of the resource
-        uint256 timestamp;                  // in seconds
-        uint256 expire;                     // in seconds
+        bool isAvailable;                   // availability of the resource
+        uint256 startDate;                  // in seconds
+        uint256 expirationDate;             // in seconds
         string discovery;                   // this is for authorization server configuration in the provider side
         uint256 timeout;                    // if the consumer didn't receive verified claim from the provider within timeout
         // the consumer can cancel the request and refund the payment from market contract
@@ -31,7 +31,7 @@ contract OceanAuth {
         address provider;
         bytes32 resource;
         Consent consent;
-        string pubkey; // temp public key for access token encryption
+        string tempPubKey; // temp public key for access token encryption
         bytes encryptedAccessToken;
         AccessStatus status; // Requested, Committed, Delivered, Revoked
     }
@@ -64,7 +64,7 @@ contract OceanAuth {
     // events
     event RequestAccessConsent(bytes32 _id, address _consumer, address _provider, bytes32 _resource, uint _timeout, string _pubKey);
 
-    event CommitConsent(bytes32 _id, uint256 _expire, string _discovery, string _permissions, string _accessAgreementRef);
+    event CommitConsent(bytes32 _id, uint256 _expirationdate, string _discovery, string _permissions, string _accessAgreementRef);
 
     event RefundPayment(address _consumer, address _provider, bytes32 _id);
 
@@ -106,14 +106,14 @@ contract OceanAuth {
     }
 
     /* solium-disable-next-line max-len */
-    function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string accessAgreementRef, string accessAgreementType)
+    function commitAccessRequest(bytes32 id, bool isAvailable, uint256 expirationDate, string discovery, string permissions, string accessAgreementRef, string accessAgreementType)
     public onlyProvider(id) isAccessRequested(id) returns (bool) {
         /* solium-disable-next-line */
-        if (available && block.timestamp < expire) {
-            accessControlRequests[id].consent.available = available;
-            accessControlRequests[id].consent.expire = expire;
+        if (isAvailable && block.timestamp < expirationDate) {
+            accessControlRequests[id].consent.isAvailable = isAvailable;
+            accessControlRequests[id].consent.expirationDate = expirationDate;
             /* solium-disable-next-line */
-            accessControlRequests[id].consent.timestamp = block.timestamp;
+            accessControlRequests[id].consent.startDate = block.timestamp;
             accessControlRequests[id].consent.discovery = discovery;
             accessControlRequests[id].consent.permissions = permissions;
             accessControlRequests[id].status = AccessStatus.Committed;
@@ -122,7 +122,7 @@ contract OceanAuth {
                 accessAgreementType
             );
             accessControlRequests[id].consent.accessAgreement = accessAgreement;
-            emit CommitConsent(id, expire, discovery, permissions, accessAgreementRef);
+            emit CommitConsent(id, expirationDate, discovery, permissions, accessAgreementRef);
             return true;
         }
 
@@ -155,11 +155,11 @@ contract OceanAuth {
 
     // provider get the temp public key
     function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessCommitted(id) returns (string) {
-        return accessControlRequests[id].pubkey;
+        return accessControlRequests[id].tempPubKey;
     }
 
     // Consumer get the encrypted JWT from on-chain
-    function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessCommitted(id) returns (bytes) {
+    function getEncryptedAccessToken(bytes32 id) public view onlyConsumer(id) isAccessCommitted(id) returns (bytes) {
         return accessControlRequests[id].encryptedAccessToken;
     }
 
@@ -173,7 +173,7 @@ contract OceanAuth {
     onlyProvider(id) isAccessCommitted(id) returns (bool) {
         // expire
         /* solium-disable-next-line */
-        if (accessControlRequests[id].consent.expire < block.timestamp) {
+        if (accessControlRequests[id].consent.expirationDate < block.timestamp) {
             // this means that consumer didn't make the request
             // revoke the access then raise event for refund
             accessControlRequests[id].status = AccessStatus.Revoked;
