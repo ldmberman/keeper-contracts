@@ -1,0 +1,12 @@
+{
+  "pkgFiles": [
+    "package.json"
+  ],
+  "requireUpstream": false,
+  "github": {
+    "release": true
+  },
+  "npm": {
+    "release": false
+  }
+}
