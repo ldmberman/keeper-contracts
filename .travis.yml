@@ -40,3 +40,18 @@ script:
 notifications:
   email: false
 
+deploy:
+  - provider: pypi
+    distributions: sdist bdist_wheel
+    user: leucothia
+    password:
+      secure: XDDyB2Re/4s1x5AsRe3IQeIK9odl0sPhrFqpiD/lWYmzEuty31goFlApZKH/4mCy7qy3edzVGnG46Jlyq4PousvlnaqBQG3wm6ybJqLWGZDrFBTb+7tzvzEa0YvCfQX4dZrRtY84NJvVAvqZoTKGIQSRDyCGkFpiyJpCKUiVIlI/aF1RZslXuivcqgL0YkZwOFyCxQCkfdn4NA3DzGW5GMPoOyIIjEYKNy+7QiBO8L7a/X3nWKHPnrgpd8/bk+mKCH6A5bD9+F7vqFXGZoZ2WxgVp71Ea7xZRTF31TJbvE/atXk/C7xj9NfRwj+5Vz7bpmz+2e2hqQ2D+nRP8qCeQjxoHOnPy/eyaKxm6R/b2Sdm5tWim5A7t+u8I9iwDoYze0d4h9shOIHsSGBiiLutX27moEAIVqduNj9LVlFull23VVBBDyYlRsBQsU1U4nJiscei0ZBash/2yuPUzYqjwQZgnGaoOgiI5joTeHN4huP8XcenRuI5EOfkysCUqtPcmUaT2aT+zRPHwGGQ1blw7CiykNr+niuMRgwZhfKBipvlEnLv79M3VcE7NBj/YxQseIViw4kBV7KKCdvWL+ghV2E9bcEzNsRD4nSk9awAEFecBmSCIiZDIaKTg3FldoYktshwGlj34aQso39110VddjtqRH3X0GyazpMvKvOMZqc=
+    on:
+      tags: true
+      branch: master
+      repo: oceanprotocol/keeper-contracts
+  - provider: releases
+    api_key: ${GITHUB_OAUTH_TOKEN}
+    skip_cleanup: true
+    on:
+      tags: true
