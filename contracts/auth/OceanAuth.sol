@@ -15,12 +15,12 @@ contract OceanAuth {
 
     // consent (initial agreement) provides details about the service availability given by the provider.
     struct Consent {
-        bytes32 resource;                   // resource id
+        bytes32 resourceId;                   // resource id
         string permissions;                 // comma sparated permissions in one string
         AccessAgreement accessAgreement;
-        bool available;                     // availability of the resource
-        uint256 timestamp;                  // in seconds
-        uint256 expire;                     // in seconds
+        bool isAvailable;                     // availability of the resource
+        uint256 startDate;                  // in seconds
+        uint256 expirationDate;                     // in seconds
         string discovery;                   // this is for authorization server configuration in the provider side
         uint256 timeout;                    // if the consumer didn't receive verified claim from the provider within timeout
         // the consumer can cancel the request and refund the payment from market contract
@@ -29,9 +29,9 @@ contract OceanAuth {
     struct AccessControlRequest {
         address consumer;
         address provider;
-        bytes32 resource;
+        bytes32 resourceId;
         Consent consent;
-        string pubkey; // temp public key for access token encryption
+        string tempPubKey; // temp public key for access token encryption
         bytes encryptedAccessToken;
         AccessStatus status; // Requested, Committed, Delivered, Revoked
     }
@@ -62,15 +62,17 @@ contract OceanAuth {
     }
 
     // events
-    event RequestAccessConsent(bytes32 _id, address _consumer, address _provider, bytes32 _resource, uint _timeout, string _pubKey);
+    event AccessConsentRequested(bytes32 _id, address _consumer, address _provider, bytes32 _resourceId, uint _timeout, string _pubKey);
 
-    event CommitConsent(bytes32 _id, uint256 _expire, string _discovery, string _permissions, string _accessAgreementRef);
+    event AccessRequestCommitted(bytes32 _id, uint256 _expirationDate, string _discovery, string _permissions, string _accessAgreementRef);
 
-    event RefundPayment(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestRejected(address _consumer, address _provider, bytes32 _id);
 
-    event PublishEncryptedToken(bytes32 _id, bytes _encryptedAccessToken);
+    event PaymentRefunded(address _consumer, address _provider, bytes32 _id);
 
-    event ReleasePayment(address _consumer, address _provider, bytes32 _id);
+    event EncryptedTokenPublished(bytes32 _id, bytes _encryptedAccessToken);
+
+    event PaymentReleased(address _consumer, address _provider, bytes32 _id);
 
     ///////////////////////////////////////////////////////////////////
     //  Constructor function
@@ -80,6 +82,8 @@ contract OceanAuth {
         require(_marketAddress != address(0), 'Market address cannot be 0x0');
         // instance of Market
         market = OceanMarket(_marketAddress);
+        // add auth contract to access list in market contract - function in market contract
+        market.addAuthAddress();
     }
 
     // 1. Access Request Phase
@@ -101,19 +105,19 @@ contract OceanAuth {
         );
 
         accessControlRequests[id] = accessControlRequest;
-        emit RequestAccessConsent(id, msg.sender, provider, resourceId, timeout, pubKey);
+        emit AccessConsentRequested(id, msg.sender, provider, resourceId, timeout, pubKey);
         return true;
     }
 
     /* solium-disable-next-line max-len */
-    function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string accessAgreementRef, string accessAgreementType)
+    function commitAccessRequest(bytes32 id, bool isAvailable, uint256 expirationDate, string discovery, string permissions, string accessAgreementRef, string accessAgreementType)
     public onlyProvider(id) isAccessRequested(id) returns (bool) {
         /* solium-disable-next-line */
-        if (available && block.timestamp < expire) {
-            accessControlRequests[id].consent.available = available;
-            accessControlRequests[id].consent.expire = expire;
+        if (isAvailable && block.timestamp < expirationDate) {
+            accessControlRequests[id].consent.isAvailable = isAvailable;
+            accessControlRequests[id].consent.expirationDate = expirationDate;
             /* solium-disable-next-line */
-            accessControlRequests[id].consent.timestamp = block.timestamp;
+            accessControlRequests[id].consent.startDate = block.timestamp;
             accessControlRequests[id].consent.discovery = discovery;
             accessControlRequests[id].consent.permissions = permissions;
             accessControlRequests[id].status = AccessStatus.Committed;
@@ -122,44 +126,45 @@ contract OceanAuth {
                 accessAgreementType
             );
             accessControlRequests[id].consent.accessAgreement = accessAgreement;
-            emit CommitConsent(id, expire, discovery, permissions, accessAgreementRef);
+            emit AccessRequestCommitted(id, expirationDate, discovery, permissions, accessAgreementRef);
             return true;
         }
 
-        // otherwise, send refund
+        // otherwise
         accessControlRequests[id].status = AccessStatus.Revoked;
-        require(market.refundPayment(id), 'Refund payment failed.');
-        emit RefundPayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+        emit AccessRequestRejected(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
         return false;
     }
 
-    // you can cancel consent and do refund only after timeout.
-    function cancelConsent(bytes32 id) public isAccessRequested(id) {
+    // you can cancel consent and do refund only after consumer makes the payment and timeout.
+    function cancelAccessRequest(bytes32 id) public isAccessCommitted(id) onlyConsumer(id) {
         // timeout
         /* solium-disable-next-line */
         require(block.timestamp > accessControlRequests[id].consent.timeout, 'Timeout not exceeded.');
         accessControlRequests[id].status = AccessStatus.Revoked;
-        require(market.refundPayment(id), 'Refund payment failed.');
-        emit RefundPayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+        // refund only if consumer had made payment
+        if(market.verifyPaymentReceived(id)){
+            require(market.refundPayment(id), 'Refund payment failed.');
+            emit PaymentRefunded(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+        }
     }
 
     //3. Delivery phase
     // provider encypts the JWT using temp public key from cunsumer and publish it to on-chain
     // the encrypted JWT is stored on-chain for alpha version release, which will be moved to off-chain in future versions.
     function deliverAccessToken(bytes32 id, bytes encryptedAccessToken) public onlyProvider(id) isAccessCommitted(id) returns (bool) {
-
         accessControlRequests[id].encryptedAccessToken = encryptedAccessToken;
-        emit PublishEncryptedToken(id, encryptedAccessToken);
+        emit EncryptedTokenPublished(id, encryptedAccessToken);
         return true;
     }
 
     // provider get the temp public key
     function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessCommitted(id) returns (string) {
-        return accessControlRequests[id].pubkey;
+        return accessControlRequests[id].tempPubKey;
     }
 
     // Consumer get the encrypted JWT from on-chain
-    function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessCommitted(id) returns (bytes) {
+    function getEncryptedAccessToken(bytes32 id) public view onlyConsumer(id) isAccessCommitted(id) returns (bytes) {
         return accessControlRequests[id].encryptedAccessToken;
     }
 
@@ -171,14 +176,14 @@ contract OceanAuth {
     // provider verify the access token is delivered to consumer and request for payment
     function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
     onlyProvider(id) isAccessCommitted(id) returns (bool) {
-        // expire
+        // expirationDate
         /* solium-disable-next-line */
-        if (accessControlRequests[id].consent.expire < block.timestamp) {
+        if (accessControlRequests[id].consent.expirationDate < block.timestamp) {
             // this means that consumer didn't make the request
             // revoke the access then raise event for refund
             accessControlRequests[id].status = AccessStatus.Revoked;
             require(market.refundPayment(id), 'Refund payment failed.');
-            emit RefundPayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+            emit PaymentRefunded(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
             return false;
         } else {
             // provider confirms that consumer made a request by providing "proof of access"
@@ -187,12 +192,12 @@ contract OceanAuth {
                 // send money to provider
                 require(market.releasePayment(id), 'Release payment failed.');
                 // emit an event
-                emit ReleasePayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+                emit PaymentReleased(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
                 return true;
             } else {
                 accessControlRequests[id].status = AccessStatus.Revoked;
                 require(market.refundPayment(id), 'Refund payment failed.');
-                emit RefundPayment(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+                emit PaymentRefunded(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
                 return false;
             }
         }

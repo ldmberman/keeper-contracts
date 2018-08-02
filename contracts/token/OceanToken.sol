@@ -1,8 +1,7 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 import '../zeppelin/StandardToken.sol';
 import '../zeppelin/Ownable.sol';
-//import 'zeppelin/math/SafeMath.sol';
 
 contract OceanToken is StandardToken {
 
@@ -12,12 +11,8 @@ contract OceanToken is StandardToken {
     string public constant symbol = 'OCN';                              // Set the token symbol for display
 
     // SUPPLY
-    uint8 public constant decimals = 2;                           // Set the number of decimals for display
-    uint256 public constant TOTAL_SUPPLY = 80000;                 // OceanToken total supply
-    uint256 public INITIAL_SUPPLY = TOTAL_SUPPLY.mul(55).div(100);    // 55% tokens is available initially
-    uint256 public REWARD_SUPPLY = TOTAL_SUPPLY.sub(INITIAL_SUPPLY);  // 45% of totalSupply is used for block rewards
-    uint256 public numReward = 0;                                     // number of reward tokens
-    uint256 public initTime;                                          // initial timestamp of contract creation
+    uint8 public constant decimals = 0;                               // Set the number of decimals for display
+    uint256 public constant TOTAL_SUPPLY = 1400000000;                 // OceanToken total supply
 
     // EMIT TOKENS
     address public _receiver = 0x0;                                   // address to receive TOKENS
@@ -28,9 +23,7 @@ contract OceanToken is StandardToken {
     * Runs only on initial contract creation.
     */
     constructor() public {
-        totalSupply = INITIAL_SUPPLY;
-        /* solium-disable-next-line security/no-block-members */
-        initTime = block.timestamp;
+        totalSupply = TOTAL_SUPPLY;
     }
 
     /**
@@ -42,8 +35,8 @@ contract OceanToken is StandardToken {
         require(_receiver == address(0), 'Receiver address is not 0x0.');
         _receiver = _to;
         // Creator address is assigned initial available tokens
-        balances[_receiver] = INITIAL_SUPPLY;
-        emit Transfer(0x0, _receiver, INITIAL_SUPPLY);
+        balances[_receiver] = TOTAL_SUPPLY;
+        emit Transfer(0x0, _receiver, TOTAL_SUPPLY);
         return true;
     }
 
