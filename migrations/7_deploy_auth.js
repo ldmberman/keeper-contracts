@@ -1,13 +1,14 @@
 /* global artifacts */
-const Market = artifacts.require('OceanMarket.sol')
-const AccessControl = artifacts.require('OceanAuth.sol')
+const OceanMarket = artifacts.require('OceanMarket.sol')
+const OceanAuth = artifacts.require('OceanAuth.sol')
 
-const deployACL = (deployer) => {
-    const MarketAddress = Market.address
+const deployOceanAuth = (deployer) => {
+    const MarketAddress = OceanMarket.address
 
     deployer.deploy(
-        AccessControl,
+        OceanAuth,
         MarketAddress
     )
 }
-module.exports = deployACL
+
+module.exports = deployOceanAuth
