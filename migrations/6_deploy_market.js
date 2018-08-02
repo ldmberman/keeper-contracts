@@ -1,17 +1,17 @@
 /* global artifacts */
+const OceanRegistry = artifacts.require('OceanRegistry.sol')
+const OceanToken = artifacts.require('OceanToken.sol')
+const OceanMarket = artifacts.require('OceanMarket.sol')
 
-const Registry = artifacts.require('OceanRegistry.sol')
-const Token = artifacts.require('OceanToken.sol')
-const Market = artifacts.require('OceanMarket.sol')
-
-const deployMarket = (deployer) => {
-    const tokenAddress = Token.address
-    const tcrAddress = Registry.address
+const deployOceanMarket = (deployer) => {
+    const tokenAddress = OceanToken.address
+    const tcrAddress = OceanRegistry.address
 
     deployer.deploy(
-        Market,
+        OceanMarket,
         tokenAddress,
         tcrAddress
     )
 }
-module.exports = deployMarket
+
+module.exports = deployOceanMarket
