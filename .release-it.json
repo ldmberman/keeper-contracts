@@ -4,6 +4,7 @@
   ],
   "requireUpstream": false,
   "src": {
+    "push": false,
     "tagName": "keeper-contracts-v%s"
   },
   "github": {
