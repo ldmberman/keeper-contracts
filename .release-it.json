@@ -8,7 +8,7 @@
     "tagName": "keeper-contracts-v%s"
   },
   "github": {
-    "release": true,
+    "release": false,
     "tokenRef": "GITHUB_OAUTH_TOKEN"
   },
   "npm": {
