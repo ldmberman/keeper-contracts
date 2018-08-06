@@ -32,7 +32,7 @@ contract OceanMarket is Ownable {
 
     // limit period for reques of tokens
     mapping (address => uint256) tokenRequest; // mapping from address to last time of request
-    uint maxAmount = 100;                      // max amount of tokens user can request
+    uint maxAmount = 10000;                      // max amount of tokens user can request
     uint minPeriod = 0;                        // min amount of time to wait before request token again
 
     // limit access to refund payment
