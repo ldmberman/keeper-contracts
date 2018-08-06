@@ -55,13 +55,11 @@ contract OceanRegistry {
     mapping(bytes32 => Listing) public listings;
 
     // Global Variables
-    //EIP20Interface public token;
     OceanToken public token;
     PLCRVoting public voting;
-    //Parameterizer public parameterizer;
 
     // ------------
-    // CONSTRUCTOR:  // _paramsAddr      Address of a Parameterizer contract
+    // CONSTRUCTOR:  
     // ------------
 
     /**
@@ -72,7 +70,6 @@ contract OceanRegistry {
     constructor(
         address _tokenAddr,
         address _plcrAddr
-        //address _paramsAddr
     ) public {
         token = OceanToken(_tokenAddr);
         voting = PLCRVoting(_plcrAddr);

@@ -1,5 +1,7 @@
 # TCR Owner's Manual
 
+### Author: Mike Goldin
+
 Prospect Park Edition
 
 ## Intro
