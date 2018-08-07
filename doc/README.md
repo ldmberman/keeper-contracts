@@ -6,13 +6,12 @@ type: development
 status: initial draft
 editor: Fang Gong <fang@oceanprotocol.com>
 collaborator: Aitor Argomaniz <aitor@oceanprotocol.com>
-date: 06/01/2018
+date: 08/06/2018
 ```
 
 ## Further Documentation
 
 * [TCR Owner's Manual](owners_manual.md)
-* [On-chain Authorization Manual](authorization.md)
 
 ## Objective
 
@@ -27,7 +26,7 @@ In this project, we put following modules together:
 
 The project exposes the following public interfaces:
 
-### Curation Market
+### Token Curated Registry (OceanRegistry.sol)
 
 ```solidity
 //Allows a user to start an application. Takes tokens from user and sets apply stage end time.
@@ -64,53 +63,52 @@ function isWhitelisted(bytes32 _listingHash);
    function determineReward(uint _challengeID);
 ```
 
-### Marketplace
+### Marketplace (OceanMarket.sol)
 
 ```solidity
-// Register provider and assets （upload by changing uploadBits）
+// Register data assets
 function register(bytes32 assetId, uint256 price) public returns (bool success);
 
 // consumer can make payment
-function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public validAddress(msg.sender) returns (bool);
+function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public returns (bool);
 
-// release fund to provider
+// release fund to provider - must be called by OceanAuth contract
 function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool);
 
-// refund payment
+// refund payment - must be called by OceanAuth contract
 function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) returns (bool);
 
-// verify the payment
-function verifyPayment(bytes32 _paymentId) public view returns(bool);
+// verify the payment is received
+function verifyPaymentReceived(bytes32 _paymentId) public view returns (bool);
 
 // Generate Unique Id for asset using input string parameter
 function generateStr2Id(string contents) public pure returns (bytes32);
 
 // Generate Unique Id for asset using input bytes parameter
 function generateBytes2Id(bytes contents) public pure returns (bytes32);
+
+// Market checks the TCR voting results
+function checkListingStatus(bytes32 listing) public view returns(bool);
+
+// Market changes the status of TCR according to voting result
+function changeListingStatus(bytes32 listing, bytes32 assetId) public returns(bool);
 ```
 
 
-### On-Chain Authorization
+### On-Chain Authorization (OceanAuth.sol)
 
 ```solidity
 // consumer request access to resource
-function initiateAccessRequest(bytes32 id, bytes32 resourceId, address provider, string pubKey, uint256 timeout) public returns (bool) {;
+function initiateAccessRequest(bytes32 resourceId, address provider, string pubKey, uint256 timeout) public returns (bool);
 
 // provider commit the access request
-function commitAccessRequest(bytes32 id, bool available, uint256 expire, string discovery, string permissions, string slaLink, string slaType)
-public onlyProvider(id) isAccessRequested(id) returns (bool);
+function commitAccessRequest(bytes32 id, bool isAvailable, uint256 expirationDate, string discovery, string permissions, string accessAgreementRef, string accessAgreementType) public onlyProvider(id) isAccessRequested(id) returns (bool);
+
+// consumer can cancel the access request
+function cancelAccessRequest(bytes32 id) public isAccessCommitted(id) onlyConsumer(id);
 
 // provider deliver the access token
-function deliverAccessToken(bytes32 id, string encryptedJWT) public onlyProvider(id) isAccessComitted(id) returns (bool);
-
-// provider get the temp public key
-function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessComitted(id) returns (string);
-
-// consumer get the encrypted JWT
-function getEncJWT(bytes32 id) public view onlyConsumer(id) isAccessComitted(id) returns (string);
-
-// provider verify the signature coming from consumer
-function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public view returns (bool);
+function deliverAccessToken(bytes32 id, bytes encryptedAccessToken) public onlyProvider(id) isAccessCommitted(id) returns (bool);
 
 // provider verify the delivery of JWT access token
 function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
@@ -120,50 +118,41 @@ onlyProvider(id) isAccessComitted(id) returns (bool);
 ### Query functions
 
 ```solidity
-// provider query the temp public key of order
-function queryTempKey(bytes32 orderId) public view returns (string);
+// provider query the temp public key
+function getTempPubKey(bytes32 id) public view onlyProvider(id) isAccessCommitted(id) returns (string);
 
-// consumer query the encrypted access token of order
-function queryToken(bytes32 orderId) public view returns (string);
+// consumer query the encrypted access token
+function getEncryptedAccessToken(bytes32 id) public view onlyConsumer(id) isAccessCommitted(id) returns (bytes);
 
-// Return true if assetId is unique; otherwise, return false
-function checkUniqueId(bytes32 assetId) public view returns (bool);
+// provider uses this function to verify the signature comes from the consumer
+function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool);
 
-// Return true if assetId is valid for registered asset
-function checkValidId(bytes32 assetId) public view returns (bool);
-
-// Return the number of drops associated to the message.sender to an Asset
-function dropsBalance(bytes32 assetId) public view returns (uint256);
+// verify the status of access request
+function verifyCommitted(bytes32 id, uint256 status) public view returns (bool);
 
 // Return true or false if an Asset is active given the assetId
 function checkAsset(bytes32 assetId) public view returns (bool);
 
-// Retrieve the msg.sender Provider token balance
-function tokenBalance() public view returns (uint256);
+// Retrieve the price of asset
+function getAssetPrice(bytes32 assetId) public view returns (uint256);
 ```
 
 ###  Events
 
 ```solidity
-// Asset Events
+// OceanMarket Events
 event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
 event PaymentReceived(bytes32 indexed _paymentId, address indexed _receiver, uint256 _amount, uint256 _expire);
 event PaymentReleased(bytes32 indexed _paymentId, address indexed _receiver);
 event PaymentRefunded(bytes32 indexed _paymentId, address indexed _sender);
-event TempKeyCreated(bytes32 indexed _orderId, string _tempPublicKey, address indexed _consumer);
-event TokenCreated(bytes32 indexed _orderId, address indexed _provider);
 
-// Token Events
-event TokenWithdraw(address indexed _requester, uint256 amount);
-event TokenBuyDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
-event TokenSellDrops(address indexed _requester, bytes32 indexed _assetId, uint256 _ocn, uint256 _drops);
-
-// Authorization
-event RequestAccessConsent(bytes32 _id, address _consumer, address _provider, bytes32 _resource, uint _timeout, string _pubKey);
-event CommitConsent(bytes32 _id, uint256 _expire, string _discovery, string _permissions, string slaLink);
-event RefundPayment(address _consumer, address _provider, bytes32 _id);
-event PublishEncryptedToken(bytes32 _id, string encJWT);
-event ReleasePayment(address _consumer, address _provider, bytes32 _id);
+// OceanAuth Events
+event AccessConsentRequested(bytes32 _id, address _consumer, address _provider, bytes32 _resourceId, uint _timeout, string _pubKey);
+event AccessRequestCommitted(bytes32 _id, uint256 _expirationDate, string _discovery, string _permissions, string _accessAgreementRef);
+event AccessRequestRejected(address _consumer, address _provider, bytes32 _id);
+event AccessRequestRevoked(address _consumer, address _provider, bytes32 _id);
+event EncryptedTokenPublished(bytes32 _id, bytes _encryptedAccessToken);
+event AccessRequestDelivered(address _consumer, address _provider, bytes32 _id);
 ```
 
 ## File Structure
@@ -172,25 +161,13 @@ There are several folders and each includes solidity source files for each modul
 
 <img src="img/files.jpg" width="250" />
 
-* **bondingCurve**: it caculates the bonding curve values when users purchase drops or sell drops in the marketplace;
+* **auth**: OceanAuth contract for authorization;
 * **plcrvoting**: Partial Lock Commit Reveal Voting System;
 * **tcr**: the TCRs related files;
 * **token**: Ocean tokens based on ERC20 standard;
 * **zeppelin**: the library files from OpenZeppelin;
-* **market.sol**: curated proofs market (*on-going work*)
-
-## Architecture of Modules
-
-The dependency between different modules are illustrated as below:
-
-<img src="img/structure.jpg" width="800" />
-
-* Marketplace (Market.sol) sends listing hash to TCRs (Registry.sol) so that to create challenges.
-* Users can use Ocean Tokens (OceanToken.sol) to vote for or against (PLCRVoting.sol).
-* Voting is configured with the parameters (Parameterizer.sol).
-* Marketplace uses bonding curve (BancorFormula.sol) to determine the price of drops.
-* BancorFormula calculates the power function (Power.sol).
-* TCRs (Registry.sol) send the voting result back to Marketplace (Market.sol).
+* **Oceanmarket.sol**: curated proofs market (*on-going work*);
+* **Migrations.sol**: default contract for migration.
 
 ## Architecture of Solidity Market Contract
 

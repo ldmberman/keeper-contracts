@@ -32,6 +32,8 @@ contract OceanMarket is Ownable {
 
     // limit period for reques of tokens
     mapping (address => uint256) tokenRequest; // mapping from address to last time of request
+    uint maxAmount = 10000;                      // max amount of tokens user can get for each request
+    uint minPeriod = 0;                        // min amount of time to wait before request token again
 
     // limit access to refund payment
     address private authAddress;
@@ -144,16 +146,25 @@ contract OceanMarket is Ownable {
     // 2. request initial fund transfer - limit upto 10 tokens within one hour time window
     function requestTokens(uint256 amount) public validAddress(msg.sender) returns (bool) {
         // the same address can only request one time
-        //if( block.timestamp < tokenRequest[msg.sender] + 1 hours) {
-        //    return false;
-        //}
-        // amount should not exceed 100 tokens
-        //if ( amount > 10000 ){
-        //    amount = 10000;
-        //}
-        require(mToken.transfer(msg.sender, amount), 'Token transfer failed.');
+        if( block.timestamp < tokenRequest[msg.sender] + minPeriod) {
+            return false;
+        }
+        // amount should not exceed maxAmount
+        if ( amount > maxAmount ){
+            require(mToken.transfer(msg.sender, maxAmount), 'Token transfer failed.');
+        } else {
+            require(mToken.transfer(msg.sender, amount), 'Token transfer failed.');
+        }
         tokenRequest[msg.sender] = block.timestamp;
         return true;
+    }
+
+    // owner set the minPeriod and maxAmount
+    function limitTokenRequest(uint _amount, uint _period) public onlyOwner() {
+        // set min period of time before next request (in seconds)
+        minPeriod = _period;
+        // set max amount for each request
+        maxAmount = _amount;
     }
 
     ///////////////////////////////////////////////////////////////////
