@@ -8,4 +8,3 @@ dist
 keeper_contracts.egg-info
 venv
 ganache-cli.log
-package-lock.json
