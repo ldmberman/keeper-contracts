@@ -2,7 +2,7 @@
 
 <h1 align="center">keeper-contracts</h1>
 
-> 💧 Integration of Markplace and Ocean Tokens in Solidity
+> 💧 Integration of TCRs, CPM and Ocean Tokens in Solidity
 > [oceanprotocol.com](https://oceanprotocol.com)
 
 [![Build Status](https://travis-ci.com/oceanprotocol/keeper-contracts.svg?token=soMi2nNfCZq19zS1Rx4i&branch=master)](https://travis-ci.com/oceanprotocol/keeper-contracts)
@@ -10,6 +10,7 @@
 
 Ocean Keeper implementation where we put the following modules together:
 
+* **TCRs**: users create challenges and resolve them through voting to maintain registries;
 * **Ocean Tokens**: the intrinsic tokens circulated inside Ocean network, which is used in the voting of TCRs;
 * **Marketplace**: the core marketplace where people can transact with each other with Ocean tokens.
 
@@ -123,7 +124,7 @@ Code style is enforced through the CI test process, builds will fail if there're
 
 ## Documentation
 
-* [**Main Documentation: Market and Ocean Tokens**](doc/)
+* [**Main Documentation: TCR, Market and Ocean Tokens**](doc/)
 * [Architecture (pdf)](doc/files/Smart-Contract-UML-class-diagram.pdf)
 * [Packaging of libraries](docs/packaging.md)
 
@@ -139,6 +140,8 @@ Ocean Protocol uses [C4 Standard process](https://github.com/unprotocols/rfc/blo
 
 This project builds on top of the work done in open source projects:
 
+- [ConsenSys/PLCRVoting](https://github.com/ConsenSys/PLCRVoting)
+- [skmgoldin/tcr](https://github.com/skmgoldin/tcr)
 - [OpenZeppelin/openzeppelin-solidity](https://github.com/OpenZeppelin/openzeppelin-solidity)
 
 

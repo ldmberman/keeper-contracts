@@ -68,11 +68,11 @@ contract OceanAuth {
 
     event AccessRequestRejected(address _consumer, address _provider, bytes32 _id);
 
-    event PaymentRefunded(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestRevoked(address _consumer, address _provider, bytes32 _id);
 
     event EncryptedTokenPublished(bytes32 _id, bytes _encryptedAccessToken);
 
-    event PaymentReleased(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestDelivered(address _consumer, address _provider, bytes32 _id);
 
     ///////////////////////////////////////////////////////////////////
     //  Constructor function
@@ -145,7 +145,7 @@ contract OceanAuth {
         // refund only if consumer had made payment
         if(market.verifyPaymentReceived(id)){
             require(market.refundPayment(id), 'Refund payment failed.');
-            emit PaymentRefunded(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+            emit AccessRequestRevoked(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
         }
     }
 
@@ -176,30 +176,20 @@ contract OceanAuth {
     // provider verify the access token is delivered to consumer and request for payment
     function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
     onlyProvider(id) isAccessCommitted(id) returns (bool) {
-        // expirationDate
-        /* solium-disable-next-line */
-        if (accessControlRequests[id].consent.expirationDate < block.timestamp) {
-            // this means that consumer didn't make the request
-            // revoke the access then raise event for refund
+        // verify signature from consumer
+        if (isSigned(_addr, msgHash, v, r, s)) {
+            // send money to provider
+            require(market.releasePayment(id), 'Release payment failed.');
+            // change status of Request
+            accessControlRequests[id].status = AccessStatus.Delivered;
+            // emit an event
+            emit AccessRequestDelivered(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+            return true;
+        } else {
             accessControlRequests[id].status = AccessStatus.Revoked;
             require(market.refundPayment(id), 'Refund payment failed.');
-            emit PaymentRefunded(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
+            emit AccessRequestRevoked(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
             return false;
-        } else {
-            // provider confirms that consumer made a request by providing "proof of access"
-            if (isSigned(_addr, msgHash, v, r, s)) {
-                accessControlRequests[id].status = AccessStatus.Delivered;
-                // send money to provider
-                require(market.releasePayment(id), 'Release payment failed.');
-                // emit an event
-                emit PaymentReleased(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
-                return true;
-            } else {
-                accessControlRequests[id].status = AccessStatus.Revoked;
-                require(market.refundPayment(id), 'Refund payment failed.');
-                emit PaymentRefunded(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
-                return false;
-            }
         }
     }
 
