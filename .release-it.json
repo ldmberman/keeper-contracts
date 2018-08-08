@@ -12,6 +12,6 @@
     "tokenRef": "GITHUB_OAUTH_TOKEN"
   },
   "npm": {
-    "private": true
+    "publish": false
   }
 }
