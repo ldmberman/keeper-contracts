@@ -98,6 +98,19 @@ truffle migrate
 truffle migrate --reset
 ```
 
+### Testnet deployment
+
+Follow the steps for local deployment. Make sure that the address `0x372481Ab4BaB2e06b6737760C756bB238E9024a4` is having enough (~1) Ether. 
+
+If you managed to deploy the contracts locally do:
+
+```bash
+export INFURA_TOKEN=<your infura token>
+truffle migrate --network kovan
+```
+
+The transaction should show up on: `https://kovan.etherscan.io/address/0x372481ab4bab2e06b6737760c756bb238e9024a4
+
 ## Libraries
 
 To facilitate the integration of the Ocean Keeper Smart Contracts, Python and Javascript libraries are ready to be integrated. Those libraries include the Smart Contract ABI's.
