@@ -2,7 +2,7 @@ const fs = require('fs')
 
 module.exports = {
     saveDefinition(network, artifact) {
-        const targetDir = 'definitions'
+        const targetDir = 'artifacts'
 
         if (!fs.existsSync(targetDir)) {
             fs.mkdirSync(targetDir)
