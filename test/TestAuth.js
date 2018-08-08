@@ -2,8 +2,8 @@
 /* eslint-disable no-console, max-len */
 
 const Token = artifacts.require('OceanToken.sol')
-const Market = artifacts.require('Market.sol')
-const ACL = artifacts.require('Auth.sol')
+const Market = artifacts.require('OceanMarket.sol')
+const Auth = artifacts.require('OceanAuth.sol')
 
 const ursa = require('ursa')
 const ethers = require('ethers')
@@ -19,23 +19,24 @@ function wait(ms) {
     }
 }
 
-contract('Auth', (accounts) => {
+contract('OceanAuth', (accounts) => {
     describe('Test On-chain Authorization', () => {
         // support upto 50 assets and providers; each asset has one single provider at this time
         it('Should walk through Authorization Process', async () => {
             // const marketPlace = await Market.deployed();
             const token = await Token.deployed()
             const market = await Market.deployed()
-            const acl = await ACL.deployed()
+            const auth = await Auth.deployed()
 
             const str = 'resource'
-            const resourceId = await market.generateStr2Id(str, { from: accounts[0] })
+            const resourceId = await market.generateId(str, { from: accounts[0] })
             const resourcePrice = 100
             // 1. provider register dataset
             await market.register(resourceId, resourcePrice, { from: accounts[0] })
             console.log('publisher registers asset with id = ', resourceId)
 
             // consumer accounts[1] request initial funds to play
+            console.log(accounts[1])
             await market.requestTokens(2000, { from: accounts[1] })
             const bal = await token.balanceOf.call(accounts[1])
             console.log(`consumer has balance := ${bal.valueOf()} now`)
@@ -52,7 +53,7 @@ contract('Auth', (accounts) => {
             console.log('public key is: = ', publicKey)
 
             // listen to the event fired from initiateAccessRequest so that to get access Request Id
-            const requestAccessEvent = acl.RequestAccessConsent()
+            const requestAccessEvent = auth.AccessConsentRequested()
             let accessId = 0x0
             requestAccessEvent.watch((error, result) => {
                 if (!error) {
@@ -62,36 +63,37 @@ contract('Auth', (accounts) => {
 
             // optional: delay 100 seconds so that requestAccessEvent can listen to the event fired by initiateAccessRequest
             // it is designed for js integration testing; it is not needed in real practice.
-            wait(100)
+            wait(1000)
 
-            await acl.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
+            await auth.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
             console.log('consumer creates an access request with id : ', accessId)
 
             // 3. provider commit the request
-            await acl.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', { from: accounts[0] })
+            await auth.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', { from: accounts[0] })
             console.log('provider has committed the order')
 
             // 4. consumer make payment
             const bal1 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal1.valueOf()} before payment`)
-            await market.sendPayment(accessId, accounts[0], 100, 9999999999, acl.address, { from: accounts[1] })
+            await market.sendPayment(accessId, accounts[0], 100, 9999999999, { from: accounts[1] })
             const bal2 = await token.balanceOf.call(market.address)
             console.log(`market has balance := ${bal2.valueOf()} after payment`)
             console.log('consumer has paid the order')
 
             // 5. provider delivery the encrypted JWT token
-            const OnChainPubKey = await acl.getTempPubKey(accessId, { from: accounts[0] })
+            const OnChainPubKey = await auth.getTempPubKey(accessId, { from: accounts[0] })
             // console.log('provider Retrieve the temp public key:', OnChainPubKey)
             assert.strictEqual(publicKey, OnChainPubKey, 'two public keys should match.')
 
             const getPubKeyPem = ursa.coerceKey(OnChainPubKey)
-            const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'base64')
-            await acl.deliverAccessToken(accessId, encJWT, { from: accounts[0] })
+            const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'hex')
+            console.log('encJWT: ', `0x${encJWT}`)
+            await auth.deliverAccessToken(accessId, `0x${encJWT}`, { from: accounts[0] })
             console.log('provider has delivered the encrypted JWT to on-chain')
 
             // 4. consumer download the encrypted token and decrypt
-            const onChainencToken = await acl.getEncJWT(accessId, { from: accounts[1] })
-            const decryptJWT = privatePem.decrypt(onChainencToken, 'base64', 'utf8')
+            const onChainencToken = await auth.getEncryptedAccessToken(accessId, { from: accounts[1] })
+            const decryptJWT = privatePem.decrypt(onChainencToken.slice(2), 'hex', 'utf8') // remove '0x' prefix
             console.log('consumer decrypts JWT token off-chain :', decryptJWT.toString())
             assert.strictEqual(decryptJWT.toString(), 'eyJhbGciOiJIUzI1', 'two public keys should match.')
 
@@ -108,12 +110,12 @@ contract('Auth', (accounts) => {
             const fixedMsgSha = web3.sha3(fixedMsg)
             console.log('signed message from consumer to be validated: ', fixedMsg)
 
-            const res = await acl.isSigned(accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
+            const res = await auth.isSigned(accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
             console.log('validate the signature comes from consumer? isSigned: ', res)
 
             // 6. provider send the signed encypted JWT to ACL contract for verification (verify delivery of token)
             // it shall release the payment to provider automatically
-            await acl.verifyAccessTokenDelivery(accessId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
+            await auth.verifyAccessTokenDelivery(accessId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
             console.log('provider verify the delivery and request payment')
 
             // check balance

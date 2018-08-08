@@ -1,6 +1,6 @@
 module.exports = {
     networks: {
-    // config for solidity-coverage
+        // config for solidity-coverage
         development: {
             host: 'localhost',
             port: 8545,

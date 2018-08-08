@@ -2,13 +2,9 @@
 
 pragma solidity ^0.4.11;
 
-//import './Parameterizer.sol';
 import '../plcrvoting/PLCRVoting.sol';
-//import 'zeppelin/math/SafeMath.sol';
 
-//import '../token/OceanToken.sol';
-
-contract Registry {
+contract OceanRegistry {
 
     // ------
     // EVENTS
@@ -59,13 +55,11 @@ contract Registry {
     mapping(bytes32 => Listing) public listings;
 
     // Global Variables
-    //EIP20Interface public token;
     OceanToken public token;
     PLCRVoting public voting;
-    //Parameterizer public parameterizer;
 
     // ------------
-    // CONSTRUCTOR:  // _paramsAddr      Address of a Parameterizer contract
+    // CONSTRUCTOR:  
     // ------------
 
     /**
@@ -73,14 +67,12 @@ contract Registry {
     @param _tokenAddr       Address of the TCR's intrinsic ERC20 token
     @param _plcrAddr        Address of a PLCR voting contract for the provided token
     */
-    function Registry(
+    constructor(
         address _tokenAddr,
         address _plcrAddr
-        //address _paramsAddr
     ) public {
         token = OceanToken(_tokenAddr);
         voting = PLCRVoting(_plcrAddr);
-        //parameterizer = Parameterizer(_paramsAddr);
     }
 
     // --------------------
@@ -104,13 +96,13 @@ contract Registry {
         listing.owner = msg.sender;
 
         // Sets apply stage end time
-        listing.applicationExpiry = block.timestamp.add(60);//parameterizer.get('applyStageLen'));
+        listing.applicationExpiry = block.timestamp.add(1 hours);//parameterizer.get('applyStageLen'));
         listing.unstakedDeposit = _amount;
 
         // Transfers tokens from user to Registry contract
         require(token.transferFrom(listing.owner, this, _amount));
 
-        _Application(_listingHash, _amount, listing.applicationExpiry, _data, msg.sender);
+        emit _Application(_listingHash, _amount, listing.applicationExpiry, _data, msg.sender);
     }
 
     /**
@@ -126,7 +118,7 @@ contract Registry {
         listing.unstakedDeposit += _amount;
         require(token.transferFrom(msg.sender, this, _amount));
 
-        _Deposit(_listingHash, _amount, listing.unstakedDeposit, msg.sender);
+        emit _Deposit(_listingHash, _amount, listing.unstakedDeposit, msg.sender);
     }
 
     /**
@@ -144,7 +136,7 @@ contract Registry {
         listing.unstakedDeposit -= _amount;
         require(token.transfer(msg.sender, _amount));
 
-        _Withdrawal(_listingHash, _amount, listing.unstakedDeposit, msg.sender);
+        emit _Withdrawal(_listingHash, _amount, listing.unstakedDeposit, msg.sender);
     }
 
     /**
@@ -163,7 +155,7 @@ contract Registry {
 
         // Remove listingHash & return tokens
         resetListing(_listingHash);
-        _ListingWithdrawn(_listingHash);
+        emit _ListingWithdrawn(_listingHash);
     }
 
     // -----------------------
@@ -179,32 +171,32 @@ contract Registry {
     */
     function challenge(bytes32 _listingHash, string _data) external returns (uint challengeID) {
         Listing storage listing = listings[_listingHash];
-        uint deposit = 10; //parameterizer.get('minDeposit');
+        uint minDeposit = 10; //parameterizer.get('minDeposit');
 
         // Listing must be in apply stage or already on the whitelist
         require(appWasMade(_listingHash) || listing.whitelisted);
         // Prevent multiple challenges
         require(listing.challengeID == 0 || challenges[listing.challengeID].resolved);
 
-        if (listing.unstakedDeposit < deposit) {
+        if (listing.unstakedDeposit < minDeposit) {
             // Not enough tokens, listingHash auto-delisted
             resetListing(_listingHash);
-            _TouchAndRemoved(_listingHash);
+            emit _TouchAndRemoved(_listingHash);
             return 0;
         }
 
         // Starts poll
         uint pollID = voting.startPoll(
             50,  //parameterizer.get('voteQuorum'),
-            10, //parameterizer.get('commitStageLen'),
-            10  //parameterizer.get('revealStageLen')
+            1 hours, //parameterizer.get('commitStageLen'),
+            1 hours  //parameterizer.get('revealStageLen')
         );
 
         challenges[pollID] = Challenge({
             challenger: msg.sender,
             //parameterizer.get('dispensationPct') = 50
-            rewardPool: ((100 - 50) * deposit) / 100,
-            stake: deposit,
+            rewardPool: ((100 - 50) * minDeposit) / 100,
+            stake: minDeposit,
             resolved: false,
             totalTokens: 0
         });
@@ -213,14 +205,19 @@ contract Registry {
         listing.challengeID = pollID;
 
         // Locks tokens for listingHash during challenge
-        listing.unstakedDeposit -= deposit;
+        listing.unstakedDeposit -= minDeposit;
 
         // Takes tokens from challenger
-        require(token.transferFrom(msg.sender, this, deposit));
+        require(token.transferFrom(msg.sender, this, minDeposit));
 
-        var (commitEndDate, revealEndDate,) = voting.pollMap(pollID);
+        uint commitEndDate;
+        uint revealEndDate;
+        uint voteQuorum;	    /// number of votes required for a proposal to pass
+        uint votesFor;		    /// tally of votes supporting proposal
+        uint votesAgainst;      /// tally of votes countering proposal
+        (commitEndDate, revealEndDate, voteQuorum, votesFor, votesAgainst) = voting.pollMap(pollID);
 
-        _Challenge(_listingHash, pollID, _data, commitEndDate, revealEndDate, msg.sender);
+        emit _Challenge(_listingHash, pollID, _data, commitEndDate, revealEndDate, msg.sender);
         return pollID;
     }
 
@@ -267,7 +264,7 @@ contract Registry {
 
         require(token.transfer(msg.sender, reward));
 
-        _RewardClaimed(_challengeID, reward, msg.sender);
+        emit _RewardClaimed(_challengeID, reward, msg.sender);
     }
 
     // --------
@@ -400,7 +397,7 @@ contract Registry {
             // Unlock stake so that it can be retrieved by the applicant
             listings[_listingHash].unstakedDeposit += reward;
 
-            _ChallengeFailed(_listingHash, challengeID, challenges[challengeID].rewardPool, challenges[challengeID].totalTokens);
+            emit _ChallengeFailed(_listingHash, challengeID, challenges[challengeID].rewardPool, challenges[challengeID].totalTokens);
         }
         // Case: challenge succeeded or nobody voted
         else {
@@ -408,7 +405,7 @@ contract Registry {
             // Transfer the reward to the challenger
             require(token.transfer(challenges[challengeID].challenger, reward));
 
-            _ChallengeSucceeded(_listingHash, challengeID, challenges[challengeID].rewardPool, challenges[challengeID].totalTokens);
+            emit _ChallengeSucceeded(_listingHash, challengeID, challenges[challengeID].rewardPool, challenges[challengeID].totalTokens);
         }
     }
 
@@ -420,7 +417,7 @@ contract Registry {
     */
     function whitelistApplication(bytes32 _listingHash) private {
         if (!listings[_listingHash].whitelisted) {
-            _ApplicationWhitelisted(_listingHash);
+            emit _ApplicationWhitelisted(_listingHash);
         }
         listings[_listingHash].whitelisted = true;
     }
@@ -434,9 +431,9 @@ contract Registry {
 
         // Emit events before deleting listing to check whether is whitelisted
         if (listing.whitelisted) {
-            _ListingRemoved(_listingHash);
+            emit _ListingRemoved(_listingHash);
         } else {
-            _ApplicationRemoved(_listingHash);
+            emit _ApplicationRemoved(_listingHash);
         }
 
         // Deleting listing to prevent reentry

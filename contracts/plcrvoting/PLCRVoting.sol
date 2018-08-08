@@ -2,10 +2,9 @@
 
 pragma solidity ^0.4.8;
 
-//import 'tokens/eip20/EIP20Interface.sol';
 import '../token/OceanToken.sol';
-import 'dll/DLL.sol';
-import 'attrstore/AttributeStore.sol';
+import './DLL.sol';
+import './AttributeStore.sol';
 import '../zeppelin/SafeMath.sol';
 
 /**
@@ -67,7 +66,7 @@ contract PLCRVoting {
     @dev Initializes voteQuorum, commitDuration, revealDuration, and pollNonce in addition to token contract and trusted mapping
     @param _tokenAddr The address where the ERC20 token contract is deployed
     */
-    function PLCRVoting(address _tokenAddr) public {
+    constructor(address _tokenAddr) public {
         //token = EIP20Interface(_tokenAddr);
         token = OceanToken(_tokenAddr);
         pollNonce = INITIAL_POLL_NONCE;
@@ -86,7 +85,7 @@ contract PLCRVoting {
         require(token.balanceOf(msg.sender) >= _numTokens);
         voteTokenBalance[msg.sender] += _numTokens;
         require(token.transferFrom(msg.sender, this, _numTokens));
-        _VotingRightsGranted(_numTokens, msg.sender);
+        emit _VotingRightsGranted(_numTokens, msg.sender);
     }
 
     /**
@@ -98,7 +97,7 @@ contract PLCRVoting {
         require(availableTokens >= _numTokens);
         voteTokenBalance[msg.sender] -= _numTokens;
         require(token.transfer(msg.sender, _numTokens));
-        _VotingRightsWithdrawn(_numTokens, msg.sender);
+        emit _VotingRightsWithdrawn(_numTokens, msg.sender);
     }
 
     /**
@@ -110,7 +109,7 @@ contract PLCRVoting {
         require(dllMap[msg.sender].contains(_pollID));
 
         dllMap[msg.sender].remove(_pollID);
-        _TokensRescued(_pollID, msg.sender);
+        emit _TokensRescued(_pollID, msg.sender);
     }
 
     // =================
@@ -146,7 +145,7 @@ contract PLCRVoting {
         store.setAttribute(UUID, 'commitHash', uint(_secretHash));
 
         pollMap[_pollID].didCommit[msg.sender] = true;
-        _VoteCommitted(_pollID, _numTokens, msg.sender);
+        emit _VoteCommitted(_pollID, _numTokens, msg.sender);
     }
 
     /**
@@ -186,7 +185,7 @@ contract PLCRVoting {
         require(!pollMap[_pollID].didReveal[msg.sender]);
 
         // compare resultant hash from inputs to original commitHash
-        require(keccak256(_voteOption, _salt) == getCommitHash(msg.sender, _pollID));
+        require(keccak256(abi.encodePacked(_voteOption, _salt)) == getCommitHash(msg.sender, _pollID));
 
         uint numTokens = getNumTokens(msg.sender, _pollID);
 
@@ -199,7 +198,7 @@ contract PLCRVoting {
         dllMap[msg.sender].remove(_pollID); // remove the node referring to this vote upon reveal
         pollMap[_pollID].didReveal[msg.sender] = true;
 
-        _VoteRevealed(_pollID, numTokens, pollMap[_pollID].votesFor, pollMap[_pollID].votesAgainst, _voteOption, msg.sender);
+        emit _VoteRevealed(_pollID, numTokens, pollMap[_pollID].votesFor, pollMap[_pollID].votesAgainst, _voteOption, msg.sender);
     }
 
     /**
@@ -212,7 +211,7 @@ contract PLCRVoting {
         require(pollMap[_pollID].didReveal[_voter]);
 
         uint winningChoice = isPassed(_pollID) ? 1 : 0;
-        bytes32 winnerHash = keccak256(winningChoice, _salt);
+        bytes32 winnerHash = keccak256(abi.encodePacked(winningChoice, _salt));
         bytes32 commitHash = getCommitHash(_voter, _pollID);
 
         require(winnerHash == commitHash);
@@ -244,7 +243,7 @@ contract PLCRVoting {
             votesAgainst: 0
         });
 
-        _PollCreated(_voteQuorum, commitEndDate, revealEndDate, pollNonce, msg.sender);
+        emit _PollCreated(_voteQuorum, commitEndDate, revealEndDate, pollNonce, msg.sender);
         return pollNonce;
     }
 
@@ -443,11 +442,11 @@ contract PLCRVoting {
         return block.timestamp;
     }
 
-    function queryCommitEndDate(uint _pollID) public returns (uint){
+    function queryCommitEndDate(uint _pollID) public view returns (uint){
         return pollMap[_pollID].commitEndDate;
     }
 
-    function queryRevealEndDate(uint _pollID) public returns (uint){
+    function queryRevealEndDate(uint _pollID) public view returns (uint){
         return pollMap[_pollID].revealEndDate;
     }
 
@@ -457,6 +456,6 @@ contract PLCRVoting {
     @return UUID Hash which is deterministic from _user and _pollID
     */
     function attrUUID(address _user, uint _pollID) public pure returns (bytes32 UUID) {
-        return keccak256(_user, _pollID);
+        return keccak256(abi.encodePacked(_user, _pollID));
     }
 }

@@ -1,18 +1,17 @@
 /* global artifacts */
 
-const Registry = artifacts.require('Registry.sol')
-const Token = artifacts.require('OceanToken.sol')
-// const Parameterizer = artifacts.require('Parameterizer.sol');
-const DLL = artifacts.require('dll/DLL.sol')
-const AttributeStore = artifacts.require('attrstore/AttributeStore.sol')
+const OceanRegistry = artifacts.require('OceanRegistry.sol')
+const OceanToken = artifacts.require('OceanToken.sol')
+const DLL = artifacts.require('DLL.sol')
+const AttributeStore = artifacts.require('AttributeStore.sol')
 const PLCRVoting = artifacts.require('PLCRVoting.sol')
 
-const deployRegistry = (deployer) => {
-    deployer.link(DLL, Registry)
-    deployer.link(AttributeStore, Registry)
+const deployOceanRegistry = (deployer) => {
+    deployer.link(DLL, OceanRegistry)
+    deployer.link(AttributeStore, OceanRegistry)
 
-    const tokenAddress = Token.address
-    deployer.deploy(Registry, tokenAddress, PLCRVoting.address) // , Parameterizer.address)
+    const tokenAddress = OceanToken.address
+    deployer.deploy(OceanRegistry, tokenAddress, PLCRVoting.address) // , Parameterizer.address)
 }
 
-module.exports = deployRegistry
+module.exports = deployOceanRegistry
