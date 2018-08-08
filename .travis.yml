@@ -43,7 +43,7 @@ notifications:
 deploy:
   - provider: npm
     email: "devops@oceanprotocol.com"
-    api_key: "ac4a7623-fa5f-431b-9326-489e278dc016"
+    api_key: ${NPM_TOKEN}
     skip_cleanup: true
     on:
       tags: true
