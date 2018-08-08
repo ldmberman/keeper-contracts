@@ -14,7 +14,7 @@ module.exports = {
                 abi: artifact.abi,
                 bytecode: artifact.bytecode,
                 address: artifact.address
-            })
+            }, null, 2)
         )
     }
 }
