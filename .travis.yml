@@ -34,8 +34,9 @@ before_script:
   - ganache-cli > ganache-cli.log &
 
 script:
-  - git commit -m 'Travis Build'
   - npm test
+  - git add package-lock.json
+  - git commit -m 'Travis Build'
   - npm run release
 
 notifications:
