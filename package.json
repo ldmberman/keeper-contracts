@@ -8,7 +8,6 @@
   "homepage": "https://github.com/oceanprotocol/keeper-contracts#readme",
   "main": "truffle.js",
   "scripts": {
-    "install": "truffle install",
     "compile": "truffle compile",
     "coverage": "solidity-coverage",
     "release": "release-it patch -n",
