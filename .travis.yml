@@ -24,6 +24,7 @@ matrix:
     - env: SOLC_NIGHTLY=true
 
 install:
+  - npm install -g npm
   - npm install
   - npm install -g ganache-cli
   - npm install -g release-it

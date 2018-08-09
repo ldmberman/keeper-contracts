@@ -10,7 +10,6 @@
   "scripts": {
     "install": "truffle install",
     "compile": "truffle compile",
-    "publish": "truffle publish",
     "coverage": "solidity-coverage",
     "release": "release-it patch -n",
     "deploy-rinkeby": "truffle migrate --network rinkeby",
