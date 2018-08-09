@@ -34,6 +34,7 @@ before_script:
   - ganache-cli > ganache-cli.log &
 
 script:
+  - git commit -m 'Travis Build'
   - npm test
   - npm run release
 
