@@ -36,6 +36,7 @@ before_script:
 script:
   - npm test
   - git add package-lock.json
+  - git add artifacts/*
   - git commit -m 'Travis Build'
   - npm run release
 
