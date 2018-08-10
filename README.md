@@ -19,10 +19,13 @@ Ocean Keeper implementation where we put the following modules together:
   - [Get Started](#get-started)
      - [Docker](#docker)
      - [Local development](#local-development)
+     - [Testnet deployment](#testnet-deployment)
   - [Libraries](#libraries)
   - [Testing](#testing)
      - [Code Linting](#code-linting)
   - [Documentation](#documentation)
+     - [Use Case 1: Register data asset](#use-case-1-register-data-asset)
+     - [Use Case 2: Authorize access with OceanAuth contract](#use-case-2-authorize-access-with-oceanauth-contract)
   - [Contributing](#contributing)
   - [Prior Art](#prior-art)
   - [License](#license)
@@ -109,13 +112,15 @@ export INFURA_TOKEN=<your infura token>
 truffle migrate --network kovan
 ```
 
-The transaction should show up on: `https://kovan.etherscan.io/address/0x372481ab4bab2e06b6737760c756bb238e9024a4
+The transaction should show up on: `https://kovan.etherscan.io/address/0x372481ab4bab2e06b6737760c756bb238e9024a4`
 
 The contract addresses deployed on Kovan testnet:
 
-* OceanMarket: 	0xe3139437fc2e9f2a72800f024a0733d2f374309b
-* OceanAuth: 		0x47173a8106303a1ca6f24fba19a0df8d209e7f79
-* OceanToken: 	0xfe036b08ba32b4bc8d370e7e7e86df818faf5eda
+| Contract | Address |
+|---|---|
+| OceanMarket | `0xe3139437fc2e9f2a72800f024a0733d2f374309b` |
+| OceanAuth   | `0x47173a8106303a1ca6f24fba19a0df8d209e7f79` |
+| OceanToken  | `0xfe036b08ba32b4bc8d370e7e7e86df818faf5eda` |
 
 ## Libraries
 
@@ -147,7 +152,7 @@ Code style is enforced through the CI test process, builds will fail if there're
 * [Architecture (pdf)](doc/files/Smart-Contract-UML-class-diagram.pdf)
 * [Packaging of libraries](docs/packaging.md)
 
-### Use Story 1: Register data asset
+### Use Case 1: Register data asset
 
 ```Javascript
 const Market = artifacts.require('OceanMarket.sol')
@@ -164,7 +169,7 @@ const resourcePrice = 100
 await market.register(resourceId, resourcePrice, { from: accounts[0] })
 ```
 
-### Use Story 2: Authorize access with OceanAuth contract
+### Use Case 2: Authorize access with OceanAuth contract
 
 Here is an example of authorization process with OceanAuth contract. 
 
