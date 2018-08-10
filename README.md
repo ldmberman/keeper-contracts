@@ -211,7 +211,7 @@ await auth.commitAccessRequest(accessId, true, expireTime, '', '', '', '', { fro
 // consumer sends the payment to OceanMarket contract
 await market.sendPayment(accessId, accounts[0], price, expireTime, { from: accounts[1] })
 ...
-// provider encrypt Jason Web Token (JWT) using consumer's temp public key
+// provider encrypt "JSON Web Token" (JWT) using consumer's temp public key
 const encJWT = getPubKeyPem.encrypt('JWT', 'utf8', 'hex')
 // provider delivers the encrypted JWT on-chain
 await auth.deliverAccessToken(accessId, `0x${encJWT}`, { from: accounts[0] })
