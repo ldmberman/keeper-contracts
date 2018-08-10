@@ -1,8 +1,8 @@
 #!/bin/bash
 
-ganache-cli  > /dev/null 1> /dev/null &
+ganache-cli --hostname 0.0.0.0 &
 
-sleep 5
+sleep 2
 
 truffle migrate
 

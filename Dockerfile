@@ -10,7 +10,7 @@ RUN npm install -g npm
 RUN npm install -g ganache-cli truffle
 RUN npm install
 
-CMD "scripts/keeper.sh"
+ENTRYPOINT "scripts/keeper.sh"
 
 # Expose listen port
 EXPOSE 8545
