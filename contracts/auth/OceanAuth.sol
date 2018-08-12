@@ -145,8 +145,9 @@ contract OceanAuth {
         // refund only if consumer had made payment
         if(market.verifyPaymentReceived(id)){
             require(market.refundPayment(id), 'Refund payment failed.');
-            emit AccessRequestRevoked(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
         }
+        // Always emit this event regardless of payment refund.
+        emit AccessRequestRevoked(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
     }
 
     //3. Delivery phase
