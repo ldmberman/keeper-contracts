@@ -62,17 +62,17 @@ contract OceanAuth {
     }
 
     // events
-    event AccessConsentRequested(bytes32 _id, address _consumer, address _provider, bytes32 _resourceId, uint _timeout, string _pubKey);
+    event AccessConsentRequested(bytes32 _id, address indexed _consumer, address indexed _provider, bytes32 indexed _resourceId, uint _timeout, string _pubKey);
 
-    event AccessRequestCommitted(bytes32 _id, uint256 _expirationDate, string _discovery, string _permissions, string _accessAgreementRef);
+    event AccessRequestCommitted(bytes32 indexed _id, uint256 _expirationDate, string _discovery, string _permissions, string _accessAgreementRef);
 
-    event AccessRequestRejected(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestRejected(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
 
-    event AccessRequestRevoked(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestRevoked(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
 
-    event EncryptedTokenPublished(bytes32 _id, bytes _encryptedAccessToken);
+    event EncryptedTokenPublished(bytes32 indexed _id, bytes _encryptedAccessToken);
 
-    event AccessRequestDelivered(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestDelivered(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
 
     ///////////////////////////////////////////////////////////////////
     //  Constructor function
