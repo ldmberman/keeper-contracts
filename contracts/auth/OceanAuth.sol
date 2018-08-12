@@ -211,4 +211,10 @@ contract OceanAuth {
         return false;
     }
 
+    // Get status of an access request.
+    // The status is one of the values of `AccessStatus {Requested, Committed, Delivered, Revoked}`
+    function statusOfAccessRequest(bytes32 id) public view returns (uint8) {
+        return uint8(accessControlRequests[id].status);
+    }
+
 }
