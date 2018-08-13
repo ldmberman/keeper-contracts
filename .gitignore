@@ -8,3 +8,4 @@ dist
 keeper_contracts.egg-info
 venv
 ganache-cli.log
+artifacts/

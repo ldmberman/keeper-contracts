@@ -37,7 +37,7 @@ contract('OceanAuth', (accounts) => {
 
             // consumer accounts[1] request initial funds to play
             console.log(accounts[1])
-            await market.requestTokens(2000, { from: accounts[1] })
+            await market.requestTokens(1000, { from: accounts[1] })
             const bal = await token.balanceOf.call(accounts[1])
             console.log(`consumer has balance := ${bal.valueOf()} now`)
             // consumer approve market to withdraw amount of token from his account
