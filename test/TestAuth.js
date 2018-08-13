@@ -89,13 +89,10 @@ contract('OceanAuth', (accounts) => {
             const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'hex')
             console.log('encJWT: ', `0x${encJWT}`)
             // check status
-            const accessStatus = await auth.statusOfAccessRequest(accessId, { from: accounts[1] });
-            console.log(accessStatus);
+            const accessStatus = await auth.statusOfAccessRequest(accessId, { from: accounts[1] })
 
             await auth.deliverAccessToken(accessId, `0x${encJWT}`, { from: accounts[0] })
             console.log('provider has delivered the encrypted JWT to on-chain')
-
-
 
             // 4. consumer download the encrypted token and decrypt
             const onChainencToken = await auth.getEncryptedAccessToken(accessId, { from: accounts[1] })

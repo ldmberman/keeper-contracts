@@ -33,6 +33,8 @@
   "author": "Ocean Protocol",
   "license": "Apache-2.0",
   "dependencies": {
+    "big-number": "^1.0.0",
+    "bignumber": "^1.1.0",
     "bignumber.js": "^5.0.0",
     "ethereumjs-abi": "^0.6.5",
     "ethers": "^3.0.25",
@@ -40,13 +42,13 @@
     "ethjs-abi": "^0.2.1",
     "ethjs-provider-http": "^0.1.6",
     "ethjs-rpc": "^0.2.0",
+    "truffle": "^4.1.11",
     "truffle-config": "^1.0.4",
     "truffle-expect": "0.0.3",
+    "truffle-hdwallet-provider": "^0.0.5",
     "ursa": "^0.9.4",
     "web3": "^0.18.4",
-    "web3-utils": "^1.0.0-beta.35",
-    "truffle-hdwallet-provider": "^0.0.5",
-    "truffle": "^4.1.11"
+    "web3-utils": "^1.0.0-beta.35"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
