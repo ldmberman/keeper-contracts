@@ -88,8 +88,14 @@ contract('OceanAuth', (accounts) => {
             const getPubKeyPem = ursa.coerceKey(OnChainPubKey)
             const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'hex')
             console.log('encJWT: ', `0x${encJWT}`)
+            // check status
+            const accessStatus = await auth.statusOfAccessRequest(accessId, { from: accounts[1] });
+            console.log(accessStatus);
+
             await auth.deliverAccessToken(accessId, `0x${encJWT}`, { from: accounts[0] })
             console.log('provider has delivered the encrypted JWT to on-chain')
+
+
 
             // 4. consumer download the encrypted token and decrypt
             const onChainencToken = await auth.getEncryptedAccessToken(accessId, { from: accounts[1] })
@@ -110,7 +116,7 @@ contract('OceanAuth', (accounts) => {
             const fixedMsgSha = web3.sha3(fixedMsg)
             console.log('signed message from consumer to be validated: ', fixedMsg)
 
-            const res = await auth.isSigned(accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
+            const res = await auth.verifySignature(accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
             console.log('validate the signature comes from consumer? isSigned: ', res)
 
             // 6. provider send the signed encypted JWT to ACL contract for verification (verify delivery of token)
