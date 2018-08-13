@@ -39,8 +39,8 @@ contract OceanMarket is Ownable {
 
     // limit period for reques of tokens
     mapping (address => uint256) tokenRequest; // mapping from address to last time of request
-    uint maxAmount = 10000;                      // max amount of tokens user can get for each request
-    uint minPeriod = 0;                        // min amount of time to wait before request token again
+    uint256 maxAmount = 10000;                      // max amount of tokens user can get for each request
+    uint256 minPeriod = 0;                        // min amount of time to wait before request token again
 
     // limit access to refund payment
     address private authAddress;
@@ -55,6 +55,8 @@ contract OceanMarket is Ownable {
     // EVENTS:
     // ============
     event AssetRegistered(bytes32 indexed _assetId, address indexed _owner);
+    event FrequentTokenRequest(address indexed _requester, uint256 _minPeriod);
+    event LimitTokenRequest(address indexed _requester, uint256 _amount, uint256 _maxAmount);
     event PaymentReceived(bytes32 indexed _paymentId, address indexed _receiver, uint256 _amount, uint256 _expire);
     event PaymentReleased(bytes32 indexed _paymentId, address indexed _receiver);
     event PaymentRefunded(bytes32 indexed _paymentId, address indexed _sender);
@@ -169,11 +171,13 @@ contract OceanMarket is Ownable {
     */
     function requestTokens(uint256 amount) public validAddress(msg.sender) returns (bool) {
         if( block.timestamp < tokenRequest[msg.sender] + minPeriod) {
+            emit FrequentTokenRequest(msg.sender, minPeriod);
             return false;
         }
         // amount should not exceed maxAmount
         if ( amount > maxAmount ){
             require(mToken.transfer(msg.sender, maxAmount), 'Token transfer failed.');
+            emit LimitTokenRequest(msg.sender, amount, maxAmount);
         } else {
             require(mToken.transfer(msg.sender, amount), 'Token transfer failed.');
         }
