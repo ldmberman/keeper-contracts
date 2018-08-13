@@ -1,10 +1,10 @@
 build/
 .idea/
 node_modules/
-package-lock.json
 .DS_Store
 installed_contracts/
 coverage*
 dist
 keeper_contracts.egg-info
 venv
+ganache-cli.log

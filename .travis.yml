@@ -24,7 +24,10 @@ matrix:
     - env: SOLC_NIGHTLY=true
 
 install:
+  - npm install -g npm
   - npm install
+  - npm install -g ganache-cli
+  - npm install -g release-it
 
 before_script:
   - truffle version
@@ -33,34 +36,34 @@ before_script:
 
 script:
   - npm test
-
-before_deploy:
-  - tar czvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz ${TRAVIS_BUILD_DIR}/build/contracts/
-  - ls -la ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
-  - tar tzvf ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+  - git add package-lock.json
+  - git add artifacts/*
+  - git commit -m 'Travis Build'
+  - npm run release
 
 notifications:
   email: false
+
 deploy:
   - provider: npm
     email: "devops@oceanprotocol.com"
-    api_key: "QJqM+3HLHa2Q+XAqBLA2Sy0hCv0n1YbQHmHd8GBt/pGIJ9r/px4m7IN/Ohaz5GOPVBzoGMLXpWg2oq78lWC3dnZFbc9jsffJRMfV5hPQk20jFmKVcC7VDPevLz6aSK1/9WPxKwipHDHT1XJDaowyjCK+VBGL/woVn2TEuttG7A3l5I1QCsb5Z9uJ0ruzTrCdHEy2oZyalK0+1jQ/GG2UNQSpeu40PZaYsNv/FPagUV6pXrmy1CJk4QTi24y41kGaW2tG/yYoj2OcnXQ57GgXTYQyROJd9FriOI/x552DByMRRo/sN8LLNVLDnarhL2I/zhvQtaN0QNVX3eoaNBSVyd7WXJwlnfb6nmYBdMIdLuyOC9EFlbnTbVxzLZ4dgDDqrArBaUfpkfvWK4cklToXD1zYPfw1rnBsMOLbKg9/xywxxA5+/eNzsvyZmhsd1m/0qNn9rbK/Uyqs8Bh/kibAD7/HNoMiiekfxlkYOM7HHdwygRB8zN1ObwTCDbvv5HcjuQ27FEM3NQIyDKc7xrKmsU2kfHt/DKoyKqQWHzQSWvKHlrJiEJZQaodlwC/dCWDvli3s8tUqXtOPcZ62HNArOo1HUs+P1BqbTUyT5rcEDHJFtXk8VxZF5t6vzdRGVhlFwn8B7wwb0jla90WMZT1y3T7P/woB9AsEXCeW/XV4QWA="
+    api_key: ${NPM_TOKEN}
+    skip_cleanup: true
     on:
       tags: true
-  - provider: pypi
-    distributions: sdist bdist_wheel
-    user: leucothia
-    password:
-      secure: XDDyB2Re/4s1x5AsRe3IQeIK9odl0sPhrFqpiD/lWYmzEuty31goFlApZKH/4mCy7qy3edzVGnG46Jlyq4PousvlnaqBQG3wm6ybJqLWGZDrFBTb+7tzvzEa0YvCfQX4dZrRtY84NJvVAvqZoTKGIQSRDyCGkFpiyJpCKUiVIlI/aF1RZslXuivcqgL0YkZwOFyCxQCkfdn4NA3DzGW5GMPoOyIIjEYKNy+7QiBO8L7a/X3nWKHPnrgpd8/bk+mKCH6A5bD9+F7vqFXGZoZ2WxgVp71Ea7xZRTF31TJbvE/atXk/C7xj9NfRwj+5Vz7bpmz+2e2hqQ2D+nRP8qCeQjxoHOnPy/eyaKxm6R/b2Sdm5tWim5A7t+u8I9iwDoYze0d4h9shOIHsSGBiiLutX27moEAIVqduNj9LVlFull23VVBBDyYlRsBQsU1U4nJiscei0ZBash/2yuPUzYqjwQZgnGaoOgiI5joTeHN4huP8XcenRuI5EOfkysCUqtPcmUaT2aT+zRPHwGGQ1blw7CiykNr+niuMRgwZhfKBipvlEnLv79M3VcE7NBj/YxQseIViw4kBV7KKCdvWL+ghV2E9bcEzNsRD4nSk9awAEFecBmSCIiZDIaKTg3FldoYktshwGlj34aQso39110VddjtqRH3X0GyazpMvKvOMZqc=
-    on:
-      tags: true
-      branch: master
-      repo: oceanprotocol/keeper-contracts
 
+#  - provider: pypi
+#    distributions: sdist bdist_wheel
+#    user: leucothia
+#    password:
+#      secure: XDDyB2Re/4s1x5AsRe3IQeIK9odl0sPhrFqpiD/lWYmzEuty31goFlApZKH/4mCy7qy3edzVGnG46Jlyq4PousvlnaqBQG3wm6ybJqLWGZDrFBTb+7tzvzEa0YvCfQX4dZrRtY84NJvVAvqZoTKGIQSRDyCGkFpiyJpCKUiVIlI/aF1RZslXuivcqgL0YkZwOFyCxQCkfdn4NA3DzGW5GMPoOyIIjEYKNy+7QiBO8L7a/X3nWKHPnrgpd8/bk+mKCH6A5bD9+F7vqFXGZoZ2WxgVp71Ea7xZRTF31TJbvE/atXk/C7xj9NfRwj+5Vz7bpmz+2e2hqQ2D+nRP8qCeQjxoHOnPy/eyaKxm6R/b2Sdm5tWim5A7t+u8I9iwDoYze0d4h9shOIHsSGBiiLutX27moEAIVqduNj9LVlFull23VVBBDyYlRsBQsU1U4nJiscei0ZBash/2yuPUzYqjwQZgnGaoOgiI5joTeHN4huP8XcenRuI5EOfkysCUqtPcmUaT2aT+zRPHwGGQ1blw7CiykNr+niuMRgwZhfKBipvlEnLv79M3VcE7NBj/YxQseIViw4kBV7KKCdvWL+ghV2E9bcEzNsRD4nSk9awAEFecBmSCIiZDIaKTg3FldoYktshwGlj34aQso39110VddjtqRH3X0GyazpMvKvOMZqc=
+#    on:
+#      tags: true
+#      branch: master
+#      repo: oceanprotocol/keeper-contracts
 
 #  - provider: releases
-#    api_key: $GITHUB_OAUTH_TOKEN
-#    file: ${TRAVIS_BUILD_DIR}${REPO}-abi-${BUILD_ENV}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+#    api_key: ${GITHUB_OAUTH_TOKEN}
 #    skip_cleanup: true
 #    on:
 #      tags: true
