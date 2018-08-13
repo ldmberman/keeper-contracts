@@ -62,17 +62,17 @@ contract OceanAuth {
     }
 
     // events
-    event AccessConsentRequested(bytes32 _id, address _consumer, address _provider, bytes32 _resourceId, uint _timeout, string _pubKey);
+    event AccessConsentRequested(bytes32 _id, address indexed _consumer, address indexed _provider, bytes32 indexed _resourceId, uint _timeout, string _pubKey);
 
-    event AccessRequestCommitted(bytes32 _id, uint256 _expirationDate, string _discovery, string _permissions, string _accessAgreementRef);
+    event AccessRequestCommitted(bytes32 indexed _id, uint256 _expirationDate, string _discovery, string _permissions, string _accessAgreementRef);
 
-    event AccessRequestRejected(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestRejected(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
 
-    event AccessRequestRevoked(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestRevoked(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
 
-    event EncryptedTokenPublished(bytes32 _id, bytes _encryptedAccessToken);
+    event EncryptedTokenPublished(bytes32 indexed _id, bytes _encryptedAccessToken);
 
-    event AccessRequestDelivered(address _consumer, address _provider, bytes32 _id);
+    event AccessRequestDelivered(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
 
     ///////////////////////////////////////////////////////////////////
     //  Constructor function
@@ -145,8 +145,9 @@ contract OceanAuth {
         // refund only if consumer had made payment
         if(market.verifyPaymentReceived(id)){
             require(market.refundPayment(id), 'Refund payment failed.');
-            emit AccessRequestRevoked(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
         }
+        // Always emit this event regardless of payment refund.
+        emit AccessRequestRevoked(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
     }
 
     //3. Delivery phase
@@ -209,6 +210,12 @@ contract OceanAuth {
             return true;
         }
         return false;
+    }
+
+    // Get status of an access request.
+    // The status is one of the values of `AccessStatus {Requested, Committed, Delivered, Revoked}`
+    function statusOfAccessRequest(bytes32 id) public view returns (uint8) {
+        return uint8(accessControlRequests[id].status);
     }
 
 }
