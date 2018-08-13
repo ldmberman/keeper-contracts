@@ -4,7 +4,7 @@ import '../OceanMarket.sol';
 
 /**
 @title Ocean Protocol Authorization Contract
-@author Team: Fang Gong, Ahmed Ali, Sebastian Gerske
+@author Team: Fang Gong, Ahmed Ali, Sebastian Gerske, Samer Sallam
 */
 contract OceanAuth {
 
@@ -105,12 +105,9 @@ contract OceanAuth {
     @return valid Boolean indication of if the access request has been submitted successfully
     */
     function initiateAccessRequest(bytes32 resourceId, address provider, string pubKey, uint256 timeout) public returns (bool) {
-        // pasing `id` from outside for debugging purpose; otherwise, generate Id inside automatically
         bytes32 id = keccak256(abi.encodePacked(resourceId, msg.sender, provider, pubKey));
-        // initialize AccessAgreement, and claim
         AccessAgreement memory accessAgreement = AccessAgreement(new string(0), new string(0));
         Consent memory consent = Consent(resourceId, new string(0), accessAgreement, false, 0, 0, new string(0), timeout);
-        // initialize acl handler
         AccessControlRequest memory accessControlRequest = AccessControlRequest(
             msg.sender,
             provider,
