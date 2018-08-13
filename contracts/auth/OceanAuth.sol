@@ -38,7 +38,7 @@ contract OceanAuth {
 
     mapping(bytes32 => AccessControlRequest) private accessControlRequests;
 
-    enum AccessStatus {Requested, Committed, Delivered, Revoked}
+    enum AccessStatus {Requested, Committed, Delivered, Verified, Revoked}
 
     // modifiers and access control
     modifier isAccessRequested(bytes32 id) {
@@ -48,6 +48,11 @@ contract OceanAuth {
 
     modifier isAccessCommitted(bytes32 id) {
         require(accessControlRequests[id].status == AccessStatus.Committed, 'Status not Committed.');
+        _;
+    }
+    modifier isAccessDelivered(bytes32 id) {
+        require(market.verifyPaymentReceived(id));
+        require(accessControlRequests[id].status == AccessStatus.Delivered, 'Status not Delivered.');
         _;
     }
 
@@ -141,12 +146,13 @@ contract OceanAuth {
         // timeout
         /* solium-disable-next-line */
         require(block.timestamp > accessControlRequests[id].consent.timeout, 'Timeout not exceeded.');
-        accessControlRequests[id].status = AccessStatus.Revoked;
+
         // refund only if consumer had made payment
         if(market.verifyPaymentReceived(id)){
             require(market.refundPayment(id), 'Refund payment failed.');
         }
         // Always emit this event regardless of payment refund.
+        accessControlRequests[id].status = AccessStatus.Revoked;
         emit AccessRequestRevoked(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
     }
 
@@ -155,6 +161,7 @@ contract OceanAuth {
     // the encrypted JWT is stored on-chain for alpha version release, which will be moved to off-chain in future versions.
     function deliverAccessToken(bytes32 id, bytes encryptedAccessToken) public onlyProvider(id) isAccessCommitted(id) returns (bool) {
         accessControlRequests[id].encryptedAccessToken = encryptedAccessToken;
+        accessControlRequests[id].status = AccessStatus.Delivered;
         emit EncryptedTokenPublished(id, encryptedAccessToken);
         return true;
     }
@@ -165,24 +172,24 @@ contract OceanAuth {
     }
 
     // Consumer get the encrypted JWT from on-chain
-    function getEncryptedAccessToken(bytes32 id) public view onlyConsumer(id) isAccessCommitted(id) returns (bytes) {
+    function getEncryptedAccessToken(bytes32 id) public view onlyConsumer(id) isAccessDelivered(id) returns (bytes) {
         return accessControlRequests[id].encryptedAccessToken;
     }
 
     // provider uses this function to verify the signature comes from the consumer
-    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool) {
+    function verifySignature(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool) {
         return (ecrecover(msgHash, v, r, s) == _addr);
     }
 
     // provider verify the access token is delivered to consumer and request for payment
     function verifyAccessTokenDelivery(bytes32 id, address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public
-    onlyProvider(id) isAccessCommitted(id) returns (bool) {
+    onlyProvider(id) isAccessDelivered(id) returns (bool) {
         // verify signature from consumer
-        if (isSigned(_addr, msgHash, v, r, s)) {
+        if (verifySignature(_addr, msgHash, v, r, s)) {
             // send money to provider
             require(market.releasePayment(id), 'Release payment failed.');
             // change status of Request
-            accessControlRequests[id].status = AccessStatus.Delivered;
+            accessControlRequests[id].status = AccessStatus.Verified;
             // emit an event
             emit AccessRequestDelivered(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
             return true;
@@ -192,24 +199,6 @@ contract OceanAuth {
             emit AccessRequestRevoked(accessControlRequests[id].consumer, accessControlRequests[id].provider, id);
             return false;
         }
-    }
-
-    // verify status of access request
-    // 0 - Requested; 1 - Committed; 2 - Delivered; 3 - Revoked
-    function verifyCommitted(bytes32 id, uint256 status) public view returns (bool) {
-        if (status == 0 && accessControlRequests[id].status == AccessStatus.Requested) {
-            return true;
-        }
-        if (status == 1 && accessControlRequests[id].status == AccessStatus.Committed) {
-            return true;
-        }
-        if (status == 2 && accessControlRequests[id].status == AccessStatus.Delivered) {
-            return true;
-        }
-        if (status == 3 && accessControlRequests[id].status == AccessStatus.Revoked) {
-            return true;
-        }
-        return false;
     }
 
     // Get status of an access request.
