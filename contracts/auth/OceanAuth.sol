@@ -75,7 +75,7 @@ contract OceanAuth {
 
     event AccessRequestRevoked(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
 
-    event EncryptedTokenPublished(bytes32 _id, bytes _encryptedAccessToken);
+    event EncryptedTokenPublished(bytes32 indexed _id, bytes _encryptedAccessToken);
 
     event AccessRequestDelivered(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
 
