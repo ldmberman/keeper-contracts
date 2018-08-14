@@ -5,7 +5,6 @@ const nmemoric = 'inform across tag random picture urban true effort practice wo
 
 module.exports = {
     networks: {
-        // config for solidity-coverage
         development: {
             host: 'localhost',
             port: 8545,
