@@ -44,8 +44,8 @@ The most simple way to get started is with Docker:
 git clone git@github.com:oceanprotocol/keeper-contracts.git
 cd keeper-contracts/
 
-docker build -t keeper-contracts:0.1 .
-docker run -d -p 8545:8545 keeper-contracts:0.1
+docker build -t oceanprotocol/keeper-contracts:0.1 .
+docker run -d -p 8545:8545 oceanprotocol/keeper-contracts:0.1
 ```
 
 Which will expose the Ethereum RPC client with all contracts loaded under localhost:8545, which you can add to your `truffle.js`:
@@ -118,9 +118,12 @@ The contract addresses deployed on Kovan testnet:
 
 | Contract | Address |
 |---|---|
-| OceanMarket | `0xe3139437fc2e9f2a72800f024a0733d2f374309b` |
-| OceanAuth   | `0x47173a8106303a1ca6f24fba19a0df8d209e7f79` |
-| OceanToken  | `0xfe036b08ba32b4bc8d370e7e7e86df818faf5eda` |
+| OceanMarket | `0xe7498b65bec7d673cd5157142f3fed3a044b7222` |
+| OceanAuth   | `0x826a521f9ee82d8b38ffb811b2f50321f268eb03` |
+| OceanToken  | `0xdab724698dd379147072cb3d51d67a18b7764c52` |
+| OceanRegistry  | `0x06124e24c2c42184164afe8600037f9c57c0bbb8` |
+
+
 
 ## Libraries
 
