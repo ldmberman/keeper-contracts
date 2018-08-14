@@ -1,8 +1,0 @@
-build/*
-.idea/*
-node_modules/*
-conf/*
-contracts/*
-installed_contracts/*
-migrations/*
-test/*

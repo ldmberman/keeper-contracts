@@ -11,7 +11,7 @@ from glob import glob
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-os.system("cp -rf ./build ./keeper-contracts")
+os.system("cp -rf ./artifacts ./keeper-contracts")
 
 requirements = []
 
@@ -33,7 +33,7 @@ setup(
     ],
     description=" 🐳 Integration of TCRs, CPM and Ocean Tokens in Solidity",
     data_files=[
-        ('contracts', glob('build/contracts/*.json')),
+        ('contracts', glob('artifacts/*.json')),
     ],
     install_requires=requirements,
     license="Apache Software License 2.0",

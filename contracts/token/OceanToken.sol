@@ -3,10 +3,18 @@ pragma solidity ^0.4.24;
 import '../zeppelin/StandardToken.sol';
 import '../zeppelin/Ownable.sol';
 
+/**
+@title Ocean Protocol ERC20 Token Contract
+@author Team: Fang Gong
+*/
+
 contract OceanToken is StandardToken {
 
     using SafeMath for uint256;
 
+    // ============
+    // DATA STRUCTURES:
+    // ============
     string public constant name = 'OceanToken';                         // Set the token name for display
     string public constant symbol = 'OCN';                              // Set the token symbol for display
 
@@ -70,7 +78,11 @@ contract OceanToken is StandardToken {
         return super.approve(_spender, _value);
     }
 
-    /* solium-disable-next-line no-constant */
+    /**
+    * @dev Gets the allowance amount of the specified address.
+    * @param _owner The address to query the the allowance of.
+    * @return An uint256 representing the amount allowance of the passed address.
+    */
     function allowance(address _owner, address _spender) public constant returns (uint256) {
         return super.allowance(_owner, _spender);
     }
