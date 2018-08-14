@@ -11,7 +11,7 @@ from glob import glob
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-os.system("cp -rf ./build ./keeper-contracts")
+os.system("cp -rf ./artifacts ./keeper-contracts")
 
 requirements = []
 
