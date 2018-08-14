@@ -23,6 +23,7 @@
   },
   "files": [
     "build/contracts/*",
+    "artifacts/*",
     "doc/*",
     "README.md"
   ],
