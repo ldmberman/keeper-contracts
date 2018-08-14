@@ -44,8 +44,8 @@ The most simple way to get started is with Docker:
 git clone git@github.com:oceanprotocol/keeper-contracts.git
 cd keeper-contracts/
 
-docker build -t keeper-contracts:0.1 .
-docker run -d -p 8545:8545 keeper-contracts:0.1
+docker build -t oceanprotocol/keeper-contracts:0.1 .
+docker run -d -p 8545:8545 oceanprotocol/keeper-contracts:0.1
 ```
 
 Which will expose the Ethereum RPC client with all contracts loaded under localhost:8545, which you can add to your `truffle.js`:
