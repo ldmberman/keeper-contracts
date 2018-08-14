@@ -1,6 +1,6 @@
 {
   "name": "@oceanprotocol/keeper-contracts",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "Integration of TCRs, CPM and Ocean Tokens in Solidity",
   "bugs": {
     "url": "https://github.com/oceanprotocol/keeper-contracts/issues"
@@ -23,6 +23,7 @@
   },
   "files": [
     "build/contracts/*",
+    "artifacts/*",
     "doc/*",
     "README.md"
   ],
