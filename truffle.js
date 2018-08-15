@@ -26,7 +26,7 @@ module.exports = {
             from: '0x00bd138abd70e2f00903268f3db08f2d25677c9e'
         },
         kovan: {
-            provider: () => new HDWalletProvider(nmemoric, `https://kovan.infura.io/v3/${process.env.INFURA_TOKEN}`),
+            provider: () => new HDWalletProvider(nmemoric, `https://kovan.infura.io/v2/${process.env.INFURA_TOKEN}`),
             network_id: '42'
         }
     },
