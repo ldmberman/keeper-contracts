@@ -118,10 +118,10 @@ The contract addresses deployed on Kovan testnet:
 
 | Contract | Address |
 |---|---|
-| OceanMarket | `0xe7498b65bec7d673cd5157142f3fed3a044b7222` |
-| OceanAuth   | `0x826a521f9ee82d8b38ffb811b2f50321f268eb03` |
-| OceanToken  | `0xdab724698dd379147072cb3d51d67a18b7764c52` |
-| OceanRegistry  | `0x06124e24c2c42184164afe8600037f9c57c0bbb8` |
+| OceanMarket | `0x35a9207ae77cb19bd59cf0bf932ce3a510286ccf` |
+| OceanAuth   | `0x830d15f45ecff8b786f5685f6e18625721cf3148` |
+| OceanToken  | `0x08500f6cc30cb737c15a011adce47baa71cc99ac` |
+| OceanRegistry  | `0x4bf0a92cb7151f11913c479dc22df8f064d936c7` |
 
 
 
