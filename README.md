@@ -103,7 +103,7 @@ truffle migrate --reset
 
 ### Testnet deployment
 
-Follow the steps for local deployment. Make sure that the address `0x372481Ab4BaB2e06b6737760C756bB238E9024a4` is having enough (~1) Ether. 
+Follow the steps for local deployment. Make sure that the address `0x2c0d5f47374b130ee398f4c34dbe8168824a8616` is having enough (~1) Ether. 
 
 If you managed to deploy the contracts locally do:
 
@@ -112,16 +112,16 @@ export INFURA_TOKEN=<your infura token>
 truffle migrate --network kovan
 ```
 
-The transaction should show up on: `https://kovan.etherscan.io/address/0x372481ab4bab2e06b6737760c756bb238e9024a4`
+The transaction should show up on: `https://kovan.etherscan.io/address/0x2c0d5f47374b130ee398f4c34dbe8168824a8616`
 
 The contract addresses deployed on Kovan testnet:
 
 | Contract | Address |
 |---|---|
-| OceanMarket | `0xe7498b65bec7d673cd5157142f3fed3a044b7222` |
-| OceanAuth   | `0x826a521f9ee82d8b38ffb811b2f50321f268eb03` |
-| OceanToken  | `0xdab724698dd379147072cb3d51d67a18b7764c52` |
-| OceanRegistry  | `0x06124e24c2c42184164afe8600037f9c57c0bbb8` |
+| OceanMarket | `0x35a9207ae77cb19bd59cf0bf932ce3a510286ccf` |
+| OceanAuth   | `0x830d15f45ecff8b786f5685f6e18625721cf3148` |
+| OceanToken  | `0x08500f6cc30cb737c15a011adce47baa71cc99ac` |
+| OceanRegistry  | `0x4bf0a92cb7151f11913c479dc22df8f064d936c7` |
 
 
 
