@@ -103,7 +103,7 @@ truffle migrate --reset
 
 ### Testnet deployment
 
-Follow the steps for local deployment. Make sure that the address `0x372481Ab4BaB2e06b6737760C756bB238E9024a4` is having enough (~1) Ether. 
+Follow the steps for local deployment. Make sure that the address `0x2c0d5f47374b130ee398f4c34dbe8168824a8616` is having enough (~1) Ether. 
 
 If you managed to deploy the contracts locally do:
 
@@ -112,7 +112,7 @@ export INFURA_TOKEN=<your infura token>
 truffle migrate --network kovan
 ```
 
-The transaction should show up on: `https://kovan.etherscan.io/address/0x372481ab4bab2e06b6737760c756bb238e9024a4`
+The transaction should show up on: `https://kovan.etherscan.io/address/0x2c0d5f47374b130ee398f4c34dbe8168824a8616`
 
 The contract addresses deployed on Kovan testnet:
 
