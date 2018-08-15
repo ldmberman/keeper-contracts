@@ -39,3 +39,11 @@ npm publish --access public
 ```
 
 To do that you need to be an authorized user in the NPM Ocean Protocol organization.
+
+## Java
+
+The projects includes a pom.xml file prepared to generate a JAR library. Maven packages can be generated using the following commands:
+
+```bash
+mvn package
+```

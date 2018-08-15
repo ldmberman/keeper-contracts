@@ -1,7 +1,7 @@
 const HDWalletProvider = require('truffle-hdwallet-provider')
 
-// etherbase of that nmemoric: 0x372481Ab4BaB2e06b6737760C756bB238E9024a4
-const nmemoric = 'inform across tag random picture urban true effort practice wool attitude web'
+// etherbase of that nmemoric: 0x2c0d5f47374b130ee398f4c34dbe8168824a8616
+const nmemoric = process.env.KOVAN_NMEMORIC;
 
 module.exports = {
     networks: {
@@ -26,7 +26,7 @@ module.exports = {
             from: '0x00bd138abd70e2f00903268f3db08f2d25677c9e'
         },
         kovan: {
-            provider: () => new HDWalletProvider(nmemoric, `https://kovan.infura.io/v3/${process.env.INFURA_TOKEN}`),
+            provider: () => new HDWalletProvider(nmemoric, `https://kovan.infura.io/v2/${process.env.INFURA_TOKEN}`),
             network_id: '42'
         }
     },
