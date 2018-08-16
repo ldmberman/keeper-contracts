@@ -31,14 +31,14 @@ install:
 before_script:
 - truffle version
 - ganache-cli > ganache-cli.log &
-- truffle migrate
-- docker build -t oceanprotocol/keeper-contracts .
 
 script:
 - npm test
+- truffle migrate
 - git add package-lock.json
 - git add artifacts/*
 - git commit -m 'Travis Build'
+- docker build -t oceanprotocol/keeper-contracts .
 - npm run release
 
 notifications:
