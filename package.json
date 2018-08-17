@@ -14,7 +14,7 @@
     "deploy-rinkeby": "truffle migrate --network rinkeby",
     "deploy-mainnet": "truffle migrate --network mainnet",
     "lint-fix": "eslint --fix ./**/*.js && ./node_modules/solium/bin/solium.js -d ./contracts/ --fix",
-    "lint": "eslint ./**/*.js && ./node_modules/solium/bin/solium.js -d ./contracts/",
+    "lint": "eslint --ignore-pattern '/coverage/' .  && ./node_modules/solium/bin/solium.js -d ./contracts/",
     "test": "npm run lint && truffle test"
   },
   "directories": {
@@ -36,7 +36,7 @@
   "dependencies": {
     "big-number": "^1.0.0",
     "bignumber": "^1.1.0",
-    "bignumber.js": "^5.0.0",
+    "bignumber.js": "^7.2.1",
     "ethereumjs-abi": "^0.6.5",
     "ethers": "^3.0.25",
     "ethjs": "^0.4.0",
@@ -45,16 +45,16 @@
     "ethjs-rpc": "^0.2.0",
     "truffle": "^4.1.11",
     "truffle-config": "^1.0.4",
-    "truffle-expect": "0.0.3",
-    "truffle-hdwallet-provider": "^0.0.5",
+    "truffle-expect": "0.0.4",
+    "truffle-hdwallet-provider": "^0.0.6",
     "ursa": "^0.9.4",
-    "web3": "^0.18.4",
+    "web3": "^0.20.7",
     "web3-utils": "^1.0.0-beta.35"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
     "babel-preset-env": "^1.7.0",
-    "eslint": "^4.19.1",
+    "eslint": "^5.3.0",
     "eslint-config-ascribe": "^3.0.5",
     "eslint-plugin-import": "^2.12.0",
     "solidity-coverage": "^0.5.4",
