@@ -6,7 +6,8 @@
 > [oceanprotocol.com](https://oceanprotocol.com)
 
 [![Build Status](https://travis-ci.com/oceanprotocol/keeper-contracts.svg?token=soMi2nNfCZq19zS1Rx4i&branch=master)](https://travis-ci.com/oceanprotocol/keeper-contracts)
-[![js ascribe](https://img.shields.io/badge/js-ascribe-39BA91.svg)](https://github.com/ascribe/javascript) [![Greenkeeper badge](https://badges.greenkeeper.io/oceanprotocol/keeper-contracts.svg)](https://greenkeeper.io/)
+[![js ascribe](https://img.shields.io/badge/js-ascribe-39BA91.svg)](https://github.com/ascribe/javascript)
+[![Greenkeeper badge](https://badges.greenkeeper.io/oceanprotocol/keeper-contracts.svg)](https://greenkeeper.io/)
 
 Ocean Keeper implementation where we put the following modules together:
 
@@ -103,7 +104,7 @@ truffle migrate --reset
 
 ### Testnet deployment
 
-Follow the steps for local deployment. Make sure that the address `0x2c0d5f47374b130ee398f4c34dbe8168824a8616` is having enough (~1) Ether. 
+Follow the steps for local deployment. Make sure that the address `0x2c0d5f47374b130ee398f4c34dbe8168824a8616` is having enough (~1) Ether.
 
 If you managed to deploy the contracts locally do:
 
@@ -174,11 +175,11 @@ await market.register(resourceId, resourcePrice, { from: accounts[0] })
 
 ### Use Case 2: Authorize access with OceanAuth contract
 
-Here is an example of authorization process with OceanAuth contract. 
+Here is an example of authorization process with OceanAuth contract.
 
 `accounts[0]` is provider and `accounts[1]` is consumer.
 
-Note that different cryptographic algorithms can be chosen to encrypt and decrypt access token using key pairs (i.e., public key and private key). This example uses [URSA](https://www.npmjs.com/package/ursa) to demonstrate the process for illustration purpose.  
+Note that different cryptographic algorithms can be chosen to encrypt and decrypt access token using key pairs (i.e., public key and private key). This example uses [URSA](https://www.npmjs.com/package/ursa) to demonstrate the process for illustration purpose.
 
 ```Javascript
 const Token = artifacts.require('OceanToken.sol')
@@ -196,7 +197,7 @@ const auth = await Auth.deployed()
 ...
 // consumer request some testing tokens to buy data asset
 await market.requestTokens(200, { from: accounts[1] })
-// consumers approve withdraw limit of their funds 
+// consumers approve withdraw limit of their funds
 await token.approve(market.address, 200, { from: accounts[1] })
 ...
 // consumer generates temporary key pairs in local

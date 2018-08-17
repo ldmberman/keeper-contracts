@@ -23,13 +23,15 @@ matrix:
     - env: SOLIDITY_COVERAGE=true
     - env: SOLC_NIGHTLY=true
 
+before_install:
+    - npm install -g npm
+    - npm install -g ganache-cli release-it greenkeeper-lockfile
+
 install:
-  - npm install -g npm
   - npm install
-  - npm install -g ganache-cli
-  - npm install -g release-it
 
 before_script:
+  - greenkeeper-lockfile-update
   - truffle version
 # - docker build -t ocean/plankton-keeper .
   - ganache-cli > ganache-cli.log &
@@ -40,6 +42,8 @@ script:
   - git add artifacts/*
   - git commit -m 'Travis Build'
   - npm run release
+
+after_script: greenkeeper-lockfile-upload
 
 notifications:
   email: false
