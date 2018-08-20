@@ -116,6 +116,7 @@ If you managed to deploy the contracts locally do:
 
 ```bash
 export INFURA_TOKEN=<your infura token>
+export KOVAN_NMEMORIC=<your kovan nmemoric>
 truffle migrate --network kovan
 ```
 
