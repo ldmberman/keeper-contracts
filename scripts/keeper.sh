@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ganache-cli --hostname 0.0.0.0 &
+ganache-cli -b 2 --hostname 0.0.0.0 &
 
 sleep 2
 
