@@ -1,6 +1,6 @@
-[![banner](doc/img/repo-banner@2x.png)](https://oceanprotocol.com)
+[![banner](https://raw.githubusercontent.com/oceanprotocol/art/master/github/repo-banner%402x.png)](https://oceanprotocol.com)
 
-<h1 align="center">keeper-contracts</h1>
+# keeper-contracts
 
 > 💧 Integration of TCRs, CPM and Ocean Tokens in Solidity
 > [oceanprotocol.com](https://oceanprotocol.com)
