@@ -22,9 +22,8 @@
     "test": "test"
   },
   "files": [
-    "build/contracts/*",
-    "artifacts/*",
-    "doc/*",
+    "artifacts/**/*",
+    "doc/**/*",
     "README.md"
   ],
   "repository": {
