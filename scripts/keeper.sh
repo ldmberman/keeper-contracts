@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ganache-cli -b 2 --hostname 0.0.0.0 &
+ganache-cli -b ${BLOCK_TIME} --hostname "${LISTEN_ADDRESS}" --port "${LISTEN_PORT}" &
 
 sleep 2
 
