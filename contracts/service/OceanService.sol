@@ -55,12 +55,12 @@ contract OceanService is Ownable {
     */
     function register(bytes32 serviceId, string serviceType, string endPoint) public validAddress(msg.sender) returns (bool success) {
         require(mServices[serviceId].owner == address(0), 'Owner address is not 0x0.');
-        mServices[serviceId] = Service(msg.sender, serviceType, endPoint);
+        mServices[serviceId] = Service(msg.sender, new string(0), new string(0));
+        mServices[serviceId].serviceType = serviceType;
+        mServices[serviceId].endPoint = endPoint;
         emit ServiceRegistered(serviceId, msg.sender);
         return true;
     }
-
-
 
 
     /**
