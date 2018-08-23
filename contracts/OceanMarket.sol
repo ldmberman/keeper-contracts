@@ -22,6 +22,8 @@ contract OceanMarket is Ownable {
         address owner;  // owner of the Asset
         uint256 price;  // price of asset
         bool active;    // status of asset
+        bytes32 serviceId;    // service used to store meta data
+        bytes32 metaDataHash;      // hash of the asset meta data
     }
 
     mapping(bytes32 => Asset) public mAssets;           // mapping assetId to Asset struct
@@ -103,12 +105,29 @@ contract OceanMarket is Ownable {
     */
     function register(bytes32 assetId, uint256 price) public validAddress(msg.sender) returns (bool success) {
         require(mAssets[assetId].owner == address(0), 'Owner address is not 0x0.');
-        mAssets[assetId] = Asset(msg.sender, price, false);
+        mAssets[assetId] = Asset(msg.sender, price, false, 0, 0);
         mAssets[assetId].active = true;
 
         emit AssetRegistered(assetId, msg.sender);
         return true;
     }
+
+    /**
+    * @dev provider register the new asset, fishpond extension
+    * @param assetId the integer identifier of new asset
+    * @param serviceId the integer identifier of the serviceId used to store the meta data
+    * @param metaDataHash the integer hash value of the meta data    
+    * @return valid Boolean indication of registration of new asset
+    */
+    function register(bytes32 assetId, bytes32 serviceId, bytes32 metaDataHash) public validAddress(msg.sender) returns (bool success) {
+        require(mAssets[assetId].owner == address(0), 'Owner address is not 0x0.');
+        mAssets[assetId] = Asset(msg.sender, 0, false, serviceId, metaDataHash);
+        mAssets[assetId].active = true;
+
+        emit AssetRegistered(assetId, msg.sender);
+        return true;
+    }
+
 
     /**
     * @dev sender tranfer payment to OceanMarket contract
