@@ -9,3 +9,4 @@ keeper_contracts.egg-info
 venv
 ganache-cli.log
 target/
+.python-version
