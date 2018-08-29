@@ -1,9 +1,9 @@
 /* global artifacts, assert, contract, describe, it */
 /* eslint-disable no-console, max-len */
 
-const Token = artifacts.require('OceanToken.sol')
-const Market = artifacts.require('OceanMarket.sol')
-const Auth = artifacts.require('OceanAuth.sol')
+const OceanToken = artifacts.require('OceanToken.sol')
+const OceanMarket = artifacts.require('OceanMarket.sol')
+const OceanAuth = artifacts.require('OceanAuth.sol')
 
 const ursa = require('ursa')
 const ethers = require('ethers')
@@ -24,9 +24,9 @@ contract('OceanAuth', (accounts) => {
         // support upto 50 assets and providers; each asset has one single provider at this time
         it('Should walk through Authorization Process', async () => {
             // const marketPlace = await Market.deployed();
-            const token = await Token.deployed()
-            const market = await Market.deployed()
-            const auth = await Auth.deployed()
+            const token = await OceanToken.deployed()
+            const market = await OceanMarket.deployed()
+            const auth = await OceanAuth.deployed()
 
             const str = 'resource'
             const resourceId = await market.generateId(str, { from: accounts[0] })
