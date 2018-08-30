@@ -73,7 +73,10 @@ module.exports = {
 
 ### Local development
 
-As a pre-requisite, you need Node.js >= v8.11.1.
+As a pre-requisite, you need:
+
+- Node.js >=6, <=v9 (because of ursa, see https://github.com/JoshKaufman/ursa/issues/175)
+- npm
 
 Clone the project and install all dependencies:
 
@@ -140,8 +143,8 @@ To facilitate the integration of the Ocean Keeper Smart Contracts, Python and Ja
 Using these libraries helps to avoid compiling the Smart Contracts and copying the ABI's manually to your project. In that way the integration is cleaner and easier.
 The libraries provided currently are:
 
-* Javascript NPM package - As part of the [@oceanprotocol NPM organization](https://www.npmjs.com/settings/oceanprotocol/packages), the [NPM Keeper Contracts package](https://www.npmjs.com/package/@oceanprotocol/keeper-contracts) provides the ABI's to be imported from your Javascript code.
-* Python Pypi package - The [Pypi Keeper Contracts package](https://pypi.org/project/keeper-contracts/) provides the same ABI's to be used from Python
+* JavaScript npm package - As part of the [@oceanprotocol npm organization](https://www.npmjs.com/settings/oceanprotocol/packages), the [npm keeper-contracts package](https://www.npmjs.com/package/@oceanprotocol/keeper-contracts) provides the ABI's to be imported from your JavaScript code.
+* Python Pypi package - The [Pypi keeper-contracts package](https://pypi.org/project/keeper-contracts/) provides the same ABI's to be used from Python.
 
 
 ## Testing
