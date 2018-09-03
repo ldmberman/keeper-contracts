@@ -33,6 +33,7 @@ Ocean Keeper implementation where we put the following modules together:
   - [Documentation](#documentation)
      - [Use Case 1: Register data asset](#use-case-1-register-data-asset)
      - [Use Case 2: Authorize access with OceanAuth contract](#use-case-2-authorize-access-with-oceanauth-contract)
+  - [New version](#version)
   - [Contributing](#contributing)
   - [Prior Art](#prior-art)
   - [License](#license)
@@ -241,6 +242,10 @@ const fixedMsg = `\x19Ethereum Signed Message:\n${onChainencToken.length}${onCha
 const fixedMsgSha = web3.sha3(fixedMsg)
 await auth.verifyAccessTokenDelivery(accessId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
 ```
+
+## New Version
+
+The `bumpversion.sh` script helps to bump the project version. You can execute the script using as first argument {major|minor|patch} to bump accordingly the version.
 
 ## Contributing
 
