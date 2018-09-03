@@ -54,8 +54,7 @@ notifications:
 deploy:
   - provider: npm
     email: "devops@oceanprotocol.com"
-    api_key:
-      secure: ${NPM_SECRET_TOKEN}
+    api_key: ${NPM_TOKEN}
     skip_cleanup: true
     on:
       tags: true
