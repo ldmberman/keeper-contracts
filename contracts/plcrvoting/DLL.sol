@@ -1,4 +1,4 @@
-pragma solidity^0.4.11;
+pragma solidity ^0.4.11;
 
 library DLL {
 
@@ -51,15 +51,15 @@ library DLL {
     @param _next the node which _new will be inserted before
     */
     function insert(Data storage self, uint _prev, uint _curr, uint _next) public {
-        require(_curr != NULL_NODE_ID);
+        require(_curr != NULL_NODE_ID, 'curr is not 0');
 
         remove(self, _curr);
 
-        require(_prev == NULL_NODE_ID || contains(self, _prev));
-        require(_next == NULL_NODE_ID || contains(self, _next));
+        require(_prev == NULL_NODE_ID || contains(self, _prev), 'prev is 0 or already contained');
+        require(_next == NULL_NODE_ID || contains(self, _next), 'next is 0 or already contained');
 
-        require(getNext(self, _prev) == _next);
-        require(getPrev(self, _next) == _prev);
+        require(getNext(self, _prev) == _next, 'getNext did not return next');
+        require(getPrev(self, _next) == _prev, 'getPrev did not return prev');
 
         self.dll[_curr].prev = _prev;
         self.dll[_curr].next = _next;

@@ -38,7 +38,7 @@ contract OceanMarket is Ownable {
     mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
 
     // limit period for reques of tokens
-    mapping (address => uint256) tokenRequest; // mapping from address to last time of request
+    mapping(address => uint256) tokenRequest; // mapping from address to last time of request
     uint256 maxAmount = 10000;                      // max amount of tokens user can get for each request
     uint256 minPeriod = 0;                        // min amount of time to wait before request token again
 
@@ -118,10 +118,14 @@ contract OceanMarket is Ownable {
     * @param _expire the expiration time in seconds
     * @return valid Boolean indication of payment is transferred
     */
-    function sendPayment(bytes32 _paymentId, address _receiver, uint256 _amount, uint256 _expire) public validAddress(msg.sender) returns (bool) {
+    function sendPayment(
+        bytes32 _paymentId,
+        address _receiver,
+        uint256 _amount,
+        uint256 _expire) public validAddress(msg.sender) returns (bool) {
         // consumer make payment to Market contract
         require(mToken.transferFrom(msg.sender, address(this), _amount), 'Token transferFrom failed.');
-        /* solium-disable-next-line */
+        /* solium-disable-next-line security/no-block-members */
         mPayments[_paymentId] = Payment(msg.sender, _receiver, PaymentState.Locked, _amount, block.timestamp, _expire);
         emit PaymentReceived(_paymentId, _receiver, _amount, _expire);
         return true;
@@ -170,17 +174,19 @@ contract OceanMarket is Ownable {
     * @return valid Boolean indication of tokens are requested
     */
     function requestTokens(uint256 amount) public validAddress(msg.sender) returns (bool) {
-        if( block.timestamp < tokenRequest[msg.sender] + minPeriod) {
+        /* solium-disable-next-line security/no-block-members */
+        if (block.timestamp < tokenRequest[msg.sender] + minPeriod) {
             emit FrequentTokenRequest(msg.sender, minPeriod);
             return false;
         }
         // amount should not exceed maxAmount
-        if ( amount > maxAmount ){
+        if (amount > maxAmount) {
             require(mToken.transfer(msg.sender, maxAmount), 'Token transfer failed.');
             emit LimitTokenRequest(msg.sender, amount, maxAmount);
         } else {
             require(mToken.transfer(msg.sender, amount), 'Token transfer failed.');
         }
+        /* solium-disable-next-line security/no-block-members */
         tokenRequest[msg.sender] = block.timestamp;
         return true;
     }
@@ -202,7 +208,7 @@ contract OceanMarket is Ownable {
     * @param listing the identifier of voting
     * @return valid Boolean indication of listing is whitelisted
     */
-    function checkListingStatus(bytes32 listing) public view returns(bool){
+    function checkListingStatus(bytes32 listing) public view returns (bool){
         return tcr.isWhitelisted(listing);
     }
 
@@ -212,8 +218,8 @@ contract OceanMarket is Ownable {
     * @param assetId the integer identifier of asset in the voting
     * @return valid Boolean indication of listing is whitelisted
     */
-    function changeListingStatus(bytes32 listing, bytes32 assetId) public returns(bool){
-        if (!tcr.isWhitelisted(listing) ){
+    function changeListingStatus(bytes32 listing, bytes32 assetId) public returns (bool){
+        if (!tcr.isWhitelisted(listing)) {
             mAssets[assetId].active = false;
         }
         return true;
@@ -225,7 +231,7 @@ contract OceanMarket is Ownable {
     */
     function addAuthAddress() public validAddress(msg.sender) returns (bool) {
         // authAddress can only be set at deployment of Auth contract - only once
-        require(authAddress == address(0));
+        require(authAddress == address(0), 'authAddress is not 0x0');
         authAddress = msg.sender;
         return true;
     }

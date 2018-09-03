@@ -14,7 +14,9 @@
     "deploy-rinkeby": "truffle migrate --network rinkeby",
     "deploy-mainnet": "truffle migrate --network mainnet",
     "lint-fix": "eslint --fix ./**/*.js && ./node_modules/solium/bin/solium.js -d ./contracts/ --fix",
-    "lint": "eslint --ignore-pattern '/coverage/' .  && ./node_modules/solium/bin/solium.js -d ./contracts/",
+    "lint": "eslint --ignore-pattern '/coverage/' . && npm run solium",
+    "solium": "solium -d ./contracts/",
+    "solium:watch": "solium -d ./contracts/ --watch",
     "test": "npm run lint && truffle test"
   },
   "directories": {
