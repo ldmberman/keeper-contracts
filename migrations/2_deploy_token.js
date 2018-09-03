@@ -2,10 +2,10 @@
 const OceanToken = artifacts.require('./OceanToken.sol')
 const { saveDefinition } = require('./helper')
 
-const deployOceanToken = async (deployer, network) => {
+const oceanToken = async (deployer, network) => {
     await deployer.deploy(OceanToken)
 
     saveDefinition(network, OceanToken)
 }
 
-module.exports = deployOceanToken
+module.exports = oceanToken
