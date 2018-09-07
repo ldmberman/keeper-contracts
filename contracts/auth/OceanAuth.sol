@@ -108,9 +108,20 @@ contract OceanAuth {
     */
     function initiateAccessRequest(bytes32 resourceId, address provider, string pubKey, uint256 timeout) public returns (bool) {
         bytes32 id = keccak256(abi.encodePacked(resourceId, msg.sender, provider, pubKey));
-        AccessAgreement memory accessAgreement = AccessAgreement(new string(0), new string(0));
-        Consent memory consent = Consent(resourceId, new string(0), accessAgreement, false, 0, 0, new string(0), timeout);
-        AccessControlRequest memory accessControlRequest = AccessControlRequest(
+        AccessAgreement memory accessAgreement = AccessAgreement(
+            new string(0),
+            new string(0)
+        );
+        Consent memory consent = Consent(
+            resourceId,
+            new string(0),
+            accessAgreement,
+            false,
+            0,
+            0,
+            new string(0),
+            timeout);
+        accessControlRequests[id] = AccessControlRequest(
             msg.sender,
             provider,
             resourceId,
@@ -119,8 +130,6 @@ contract OceanAuth {
             new bytes(0),
             AccessStatus.Requested
         );
-
-        accessControlRequests[id] = accessControlRequest;
         emit AccessConsentRequested(id, msg.sender, provider, resourceId, timeout, pubKey);
         return true;
     }
@@ -262,8 +271,8 @@ contract OceanAuth {
     @param id identifier associated with the access request
     @return integer representing status of `AccessStatus {Requested, Committed, Delivered, Revoked}` as uint8
     */
-    function statusOfAccessRequest(bytes32 id) public view returns (uint8) {
-        return uint8(accessControlRequests[id].status);
+    function statusOfAccessRequest(bytes32 id) public view returns (uint) {
+        return uint(accessControlRequests[id].status);
     }
 
 }

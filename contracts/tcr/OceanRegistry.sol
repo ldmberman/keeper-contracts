@@ -4,6 +4,8 @@ import '../plcrvoting/PLCRVoting.sol';
 
 contract OceanRegistry {
 
+    using SafeMath for uint;
+
     // ------
     // EVENTS
     // ------
@@ -26,8 +28,6 @@ contract OceanRegistry {
     event _ChallengeFailed(bytes32 indexed listingHash, uint indexed challengeID, uint rewardPool, uint totalTokens);
     event _ChallengeSucceeded(bytes32 indexed listingHash, uint indexed challengeID, uint rewardPool, uint totalTokens);
     event _RewardClaimed(uint indexed challengeID, uint reward, address indexed voter);
-
-    using SafeMath for uint;
 
     struct Listing {
         uint applicationExpiry; // Expiration date of apply stage
@@ -116,7 +116,7 @@ contract OceanRegistry {
 
         require(listing.owner == msg.sender, 'caller needs ot be listing owner');
 
-        listing.unstakedDeposit += _amount;
+        listing.unstakedDeposit.add(_amount);
         require(token.transferFrom(msg.sender, this, _amount), 'tokens not transferred');
 
         emit _Deposit(_listingHash, _amount, listing.unstakedDeposit, msg.sender);
@@ -289,7 +289,7 @@ contract OceanRegistry {
         uint totalTokens = challenges[_challengeID].totalTokens;
         uint rewardPool = challenges[_challengeID].rewardPool;
         uint voterTokens = voting.getNumPassingTokens(_voter, _challengeID, _salt);
-        return (voterTokens * rewardPool) / totalTokens;
+        return voterTokens.mul(rewardPool).div(totalTokens);
     }
 
     /**
