@@ -1,0 +1,123 @@
+// solium-disable security/no-block-members, emit
+
+pragma solidity ^0.4.24;
+
+import '../plcrvoting/PLCRVoting.sol';
+import '../zeppelin/Ownable.sol';
+import '../zeppelin/SafeMath.sol';
+import '../OceanMarket.sol';
+
+contract OceanDispute is Ownable {
+
+    using SafeMath for uint256;
+
+    OceanMarket private market;
+    OceanRegistry private registry;
+
+    // complainant is consumer by default
+    // voting is needed by default => any dispute needs voting to resolve.
+    struct Dispute {
+      address complainant;       // complainant address
+      bool    resolved;          // Indication of if dispute is resolved
+      uint256 pollID;           // identifier for poll
+    }
+    // mapping from service id or asset id to Dispute struct
+    mapping (bytes32 => Dispute) public mDisputes;
+
+    // ------
+    // EVENTS
+    // ------
+    event _DisputeInitiated(address indexed _complainant, bytes32 indexed  _id, uint256 _pollID);
+    event _DisputeResolved(address indexed _complainant, bytes32 indexed _id, bool _release, bool _refund);
+    // ------------
+    // CONSTRUCTOR:
+    // ------------
+
+    /**
+    @dev Contructor         Sets the addresses
+    @param _marketAddr       Address of the marketplace contract
+    */
+    constructor(address _marketAddr, address _registryAddress) public {
+        registry = OceanRegistry(_registryAddress);
+        // get instance of OceanMarket
+        market = OceanMarket(_marketAddr);
+        // add dispute resolution contract address to marketplace contract
+        market.addDisputeAddress();
+    }
+
+    // --------------------
+    // Dispute resolution functions
+    // --------------------
+    /**
+    @dev check whether there exists dispute for specific asset or service
+    @param id identifier associated with the service（i.e., asset Id or service Id）
+    @return valid Boolean indication of if the dispute exists (true: exists, false: none)
+    */
+    function disputeExist(bytes32 id) public view returns (bool) {
+        return (mDisputes[id].complainant != address(0));
+    }
+
+
+    /**
+    @dev create dispute and submit proofs for specific service agreement
+    @param id identifier associated with the service agreement （i.e., asset Id or service Id）
+    @return valid Boolean indication of if the dispute has been initiated
+    */
+    function initiateDispute(bytes32 id) public returns (uint256) {
+        // pause marketplacce to process payment
+        market.pausePayment(id);
+
+        // create registry challenge for voting if needed; pollID is used for voting
+        uint256 _pollID = registry.challenge(id, '');
+        //uint256 _pollID = 0;
+        // create Dispute struct
+        mDisputes[id] = Dispute({
+            complainant: msg.sender,
+            resolved: false,
+            pollID: _pollID
+        });
+        emit _DisputeInitiated(msg.sender, id, _pollID);
+        return _pollID;
+    }
+
+    /**
+    @dev check whether voting of poll ends
+    @param id identifier associated with the service（i.e., asset Id or service Id）
+    @return valid Boolean indication of if the voting ends
+    */
+    function votingEnded(bytes32 id) public view returns (bool) {
+        return registry.challengeCanBeResolved(id);
+    }
+
+
+    /**
+    @dev resolve the dispute after the voting ends
+    @param id identifier associated with the service
+    @return valid Boolean indication of if the dispute has been resolved
+    */
+    function resolveDispute(bytes32 id) public returns (bool) {
+        // voting should be ended at this time
+        if(registry.challengeCanBeResolved(id) == false)
+            return false;
+        // resolve challenge in registry
+        registry.updateStatus(id);
+        // update status of dispute
+        mDisputes[id].resolved = true;
+
+        bool release = false;
+        bool refund = false;
+        // complainant wins the dispute => refund
+        if (!registry.isWhitelisted(id)) {
+            refund = true;
+        // complainant loses the dispute => release payment
+        } else {
+            release = true;
+        }
+        // resolve the dispute and process payments by passing release and refund flags
+        market.processPayment(id, release, refund);
+
+        emit _DisputeResolved(msg.sender, id, release, refund);
+        return true;
+    }
+
+}
