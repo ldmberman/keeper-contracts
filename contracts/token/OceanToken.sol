@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
-import '../zeppelin/StandardToken.sol';
-import '../zeppelin/Ownable.sol';
+import 'openzeppelin-zos/contracts/token/ERC20/StandardToken.sol';
+import 'openzeppelin-zos/contracts/ownership/Ownable.sol';
 
 /**
 @title Ocean Protocol ERC20 Token Contract
