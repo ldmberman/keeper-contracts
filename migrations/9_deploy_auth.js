@@ -5,7 +5,6 @@ const OceanDispute = artifacts.require('OceanDispute.sol')
 const { saveDefinition } = require('./helper')
 
 const oceanAuth = async (deployer, network) => {
-
     await deployer.deploy(
         OceanAuth,
         OceanMarket.address,

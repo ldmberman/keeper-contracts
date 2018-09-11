@@ -19,9 +19,9 @@ contract OceanDispute is Ownable {
     // complainant is consumer by default
     // voting is needed by default => any dispute needs voting to resolve.
     struct Dispute {
-      address complainant;       // complainant address
-      bool    resolved;          // Indication of if dispute is resolved
-      uint256 pollID;           // identifier for poll
+        address complainant;       // complainant address
+        bool    resolved;          // Indication of if dispute is resolved
+        uint256 pollID;           // identifier for poll
     }
     // mapping from service id or asset id to Dispute struct
     mapping (bytes32 => Dispute) public mDisputes;

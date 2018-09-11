@@ -77,10 +77,7 @@ contract OceanMarket is Ownable {
     }
 
     modifier isAuthContract() {
-        require(msg.sender == authAddress ||
-              msg.sender == address(this) ||
-              msg.sender == disputeAddress,
-              'Sender is not an authorized contract.');
+        require(msg.sender == authAddress || msg.sender == address(this) || msg.sender == disputeAddress, 'Sender is not an authorized contract.');
         _;
     }
 
@@ -144,7 +141,7 @@ contract OceanMarket is Ownable {
     * @dev dispute resolution calls this function to process payment
     * @param _paymentId the integer identifier of payment (the same as dispute Id and service agreement Id)
     * @param _release the boolean value indication of release payment
-    * @param _refund the boolean value indication of refund payment 
+    * @param _refund the boolean value indication of refund payment
     */
     function processPayment(bytes32 _paymentId, bool _release, bool _refund) public isLocked(_paymentId) isAuthContract() {
         // unpause the payment
