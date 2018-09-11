@@ -211,12 +211,7 @@ contract OceanRegistry {
         // Takes tokens from challenger
         require(token.transferFrom(tx.origin, this, minDeposit));
 
-        uint commitEndDate;
-        uint revealEndDate;
-        uint voteQuorum;	    /// number of votes required for a proposal to pass
-        uint votesFor;		    /// tally of votes supporting proposal
-        uint votesAgainst;      /// tally of votes countering proposal
-        (commitEndDate, revealEndDate, voteQuorum, votesFor, votesAgainst) = voting.pollMap(pollID);
+        (uint commitEndDate, uint revealEndDate, , , ,) = voting.pollMap(pollID);
 
         emit _Challenge(_listingHash, pollID, _data, commitEndDate, revealEndDate, tx.origin);
         return pollID;

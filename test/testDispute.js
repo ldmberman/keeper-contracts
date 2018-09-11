@@ -156,6 +156,10 @@ contract('OceanDispute', (accounts) => {
           const pollID = disputeReceipt.logs[0].args._pollID;
           console.log('consumer initiated a dispute against the service and create voting')
 
+          // add authorized voters
+          await dispute.addAuthorizedVoter(accessId, accounts[2], { from: accounts[0] });
+          console.log('add accounts[1] as authorized voter')
+
           // 6. provider send the signed encypted JWT to ACL contract for verification (verify delivery of token)
           const requestResult = await auth.verifyAccessTokenDelivery(accessId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
           assert.strictEqual(requestResult.logs[0].args._dispute, true, 'request of release payment should fail because dispute exists.')

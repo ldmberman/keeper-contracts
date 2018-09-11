@@ -3,6 +3,7 @@
 pragma solidity ^0.4.8;
 
 import '../token/OceanToken.sol';
+import '../dispute/OceanDispute.sol';
 import './DLL.sol';
 import './AttributeStore.sol';
 import '../zeppelin/SafeMath.sol';
@@ -23,6 +24,7 @@ contract PLCRVoting {
     event _VotingRightsGranted(uint numTokens, address indexed voter);
     event _VotingRightsWithdrawn(uint numTokens, address indexed voter);
     event _TokensRescued(uint indexed pollID, address indexed voter);
+    event _VoterPermissionDeclined(uint indexed pollID, address indexed voter);
 
     // ============
     // DATA STRUCTURES:
@@ -38,8 +40,10 @@ contract PLCRVoting {
         uint voteQuorum;	    /// number of votes required for a proposal to pass
         uint votesFor;		    /// tally of votes supporting proposal
         uint votesAgainst;      /// tally of votes countering proposal
+        bool permissioned;      /// indicates whether permission list is enforced
         mapping(address => bool) didCommit;  /// indicates whether an address committed a vote for this poll
         mapping(address => bool) didReveal;   /// indicates whether an address revealed a vote for this poll
+        mapping (address => bool) permission; /// indicates whether an address has permission to vote
     }
 
     // ============
@@ -57,6 +61,14 @@ contract PLCRVoting {
 
     //EIP20Interface public token;
     OceanToken public token;
+    OceanDispute public dispute;
+
+    address public disputeAddress;
+
+    modifier isDisputeContract() {
+        require(msg.sender == disputeAddress,'Caller is not OceanDispute contract.');
+        _;
+    }
 
     // ============
     // CONSTRUCTOR:
@@ -70,6 +82,19 @@ contract PLCRVoting {
         //token = EIP20Interface(_tokenAddr);
         token = OceanToken(_tokenAddr);
         pollNonce = INITIAL_POLL_NONCE;
+    }
+
+    /**
+    * @dev OceanDispute add the deployed address
+    * @return valid Boolean indication of contract address is updated
+    */
+    function getDisputeInstance(address _disputeContract) public returns (bool) {
+        // authAddress can only be set at deployment of Auth contract - only once
+        require(disputeAddress == address(0));
+        disputeAddress = _disputeContract;
+        // get instance of OceanDispute
+        dispute = OceanDispute(disputeAddress);
+        return true;
     }
 
     // ================
@@ -127,6 +152,14 @@ contract PLCRVoting {
         require(commitPeriodActive(_pollID));
         require(voteTokenBalance[msg.sender] >= _numTokens); // prevent user from overspending
         require(_pollID != 0);                // prevent user from committing to zero node placeholder
+
+        // check if permission check is needed
+        Poll storage poll = pollMap[_pollID];
+        // need permission but current voter does not have permission
+        if(poll.permissioned == true && poll.permission[msg.sender] == false){
+            emit _VoterPermissionDeclined(_pollID, msg.sender);
+            return;
+        }
 
         // Check if _prevPollID exists in the user's DLL or if _prevPollID is 0
         require(_prevPollID == 0 || dllMap[msg.sender].contains(_prevPollID));
@@ -240,7 +273,8 @@ contract PLCRVoting {
             commitEndDate: commitEndDate,
             revealEndDate: revealEndDate,
             votesFor: 0,
-            votesAgainst: 0
+            votesAgainst: 0,
+            permissioned: false
         });
 
         emit _PollCreated(_voteQuorum, commitEndDate, revealEndDate, pollNonce, msg.sender);
@@ -342,6 +376,24 @@ contract PLCRVoting {
     */
     function pollExists(uint _pollID) constant public returns (bool exists) {
         return (_pollID != 0 && _pollID <= pollNonce);
+    }
+
+
+    /**
+    @dev add authorized voter into the list
+    @param _pollID The pollID whose existance is to be evaluated.
+    @param _voter the address of authorized voter
+    @return Boolean Indicates whether a poll exists for the provided pollID
+    */
+    function addAuthorizedVoter(uint _pollID, address _voter) public isDisputeContract() returns (bool success) {
+        require(pollExists(_pollID));
+        // add voter into permission list
+        Poll storage poll = pollMap[_pollID];
+        // set flag indicating permission check is needed
+        poll.permissioned = true;
+        // add voter
+        poll.permission[_voter] = true;
+        return true;
     }
 
     // ---------------------------

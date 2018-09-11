@@ -2,6 +2,7 @@
 
 pragma solidity ^0.4.24;
 
+import '../tcr/OceanRegistry.sol';
 import '../plcrvoting/PLCRVoting.sol';
 import '../zeppelin/Ownable.sol';
 import '../zeppelin/SafeMath.sol';
@@ -11,8 +12,9 @@ contract OceanDispute is Ownable {
 
     using SafeMath for uint256;
 
-    OceanMarket private market;
-    OceanRegistry private registry;
+    OceanMarket public market;
+    OceanRegistry public registry;
+    PLCRVoting public voting;
 
     // complainant is consumer by default
     // voting is needed by default => any dispute needs voting to resolve.
@@ -37,12 +39,16 @@ contract OceanDispute is Ownable {
     @dev Contructor         Sets the addresses
     @param _marketAddr       Address of the marketplace contract
     */
-    constructor(address _marketAddr, address _registryAddress) public {
+    constructor(address _marketAddr, address _registryAddress, address _plcrAddr) public {
         registry = OceanRegistry(_registryAddress);
         // get instance of OceanMarket
         market = OceanMarket(_marketAddr);
         // add dispute resolution contract address to marketplace contract
         market.addDisputeAddress();
+        // add dispute resolution contract address to PLCRVoting contract
+        voting = PLCRVoting(_plcrAddr);
+        // get instance of dispute inside PLCRVoting contract
+        voting.getDisputeInstance(address(this));
     }
 
     // --------------------
@@ -78,6 +84,20 @@ contract OceanDispute is Ownable {
         });
         emit _DisputeInitiated(msg.sender, id, _pollID);
         return _pollID;
+    }
+
+    /**
+    @dev add authorized voter into the poll
+    @param id identifier associated with the service agreement （i.e., asset Id or service Id）
+    @param voter address of voter
+    @return valid Boolean indication of if the dispute has been initiated
+    */
+    function addAuthorizedVoter(bytes32 id, address voter) public onlyOwner() returns (bool) {
+        uint pollID = mDisputes[id].pollID;
+        require(voting.pollExists(pollID) == true);
+        // add authorized voter
+        voting.addAuthorizedVoter(pollID, voter);
+        return true;
     }
 
     /**
