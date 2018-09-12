@@ -1,9 +1,10 @@
 pragma solidity 0.4.24;
 
+import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+
 import './token/OceanToken.sol';
 import './tcr/OceanRegistry.sol';
-import './zeppelin/Ownable.sol';
-import './zeppelin/SafeMath.sol';
 
 /**
 @title Ocean Protocol Marketplace Contract
