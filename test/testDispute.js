@@ -7,15 +7,12 @@ const Market = artifacts.require('OceanMarket.sol')
 const PLCRVoting = artifacts.require('PLCRVoting.sol')
 const Dispute = artifacts.require('OceanDispute.sol')
 const OceanAuth = artifacts.require('OceanAuth.sol')
-const BN = require('bignumber.js')
 const Web3 = require('web3')
 const ursa = require('ursa')
 const ethers = require('ethers')
 
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
 const utils = require('./utils.js')
-
-const bigTen = number => new BN(number.toString(10), 10)
 
 function mineBlock(web, reject, resolve) {
     web.currentProvider.sendAsync({
@@ -86,7 +83,7 @@ contract('OceanDispute', (accounts) => {
             const voting = await PLCRVoting.deployed()
             const dispute = await Dispute.deployed()
 
-            const minDeposit = bigTen(10)
+            const minDeposit = 10
 
             // provider : accounts[0], consumer : accounts[1], voter : accounts[2]
 
