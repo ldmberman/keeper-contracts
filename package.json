@@ -40,7 +40,7 @@
     "bignumber": "^1.1.0",
     "bignumber.js": "^7.2.1",
     "ethereumjs-abi": "^0.6.5",
-    "ethers": "^3.0.25",
+    "ethers": "^3.0.27",
     "ethjs": "^0.4.0",
     "ethjs-abi": "^0.2.1",
     "ethjs-provider-http": "^0.1.6",
@@ -52,7 +52,7 @@
     "truffle-hdwallet-provider": "^0.0.6",
     "ursa": "^0.9.4",
     "web3": "^0.20.7",
-    "web3-utils": "^1.0.0-beta.35"
+    "web3-utils": "^1.0.0-beta.36"
   },
   "devDependencies": {
     "babel-eslint": "^9.0.0",
