@@ -1,9 +1,10 @@
 pragma solidity ^0.4.8;
 
+import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+
 import '../token/OceanToken.sol';
 import './DLL.sol';
 import './AttributeStore.sol';
-import '../zeppelin/SafeMath.sol';
 
 /**
 @title Partial-Lock-Commit-Reveal Voting scheme with ERC20 tokens
