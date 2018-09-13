@@ -11,7 +11,7 @@ const oceanRegistry = async (deployer, network) => {
     deployer.link(AttributeStore, OceanRegistry)
 
     const tokenAddress = OceanToken.address
-    await deployer.deploy(OceanRegistry, tokenAddress, PLCRVoting.address) // , Parameterizer.address)
+    await deployer.deploy(OceanRegistry, tokenAddress, PLCRVoting.address)
 
     saveDefinition(network, OceanRegistry)
 }
