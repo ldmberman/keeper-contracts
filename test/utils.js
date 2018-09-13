@@ -3,10 +3,8 @@
 
 const Eth = require('ethjs')
 const HttpProvider = require('ethjs-provider-http')
-const EthRPC = require('ethjs-rpc')
 const abi = require('ethereumjs-abi')
 
-const ethRPC = new EthRPC(new HttpProvider('http://localhost:7545'))
 const ethQuery = new Eth(new HttpProvider('http://localhost:7545'))
 
 const PLCRVoting = artifacts.require('PLCRVoting.sol')
@@ -16,28 +14,6 @@ const Token = artifacts.require('ERC20.sol')
 const BN = small => new Eth.BN(small.toString(10), 10)
 
 const utils = {
-    getVoting: async () => {
-        const registry = await Registry.deployed()
-        const votingAddr = await registry.voting.call()
-        return PLCRVoting.at(votingAddr)
-    },
-
-    increaseTime: async seconds =>
-        new Promise((resolve, reject) => ethRPC.sendAsync({
-            method: 'evm_increaseTime',
-            params: [seconds],
-        }, (err) => {
-            if (err) reject(err)
-            resolve()
-        }))
-            .then(() => new Promise((resolve, reject) => ethRPC.sendAsync({
-                method: 'evm_mine',
-                params: [],
-            }, (err) => {
-                if (err) reject(err)
-                resolve()
-            }))),
-
     getVoteSaltHash: (vote, salt) => (
         `0x${abi.soliditySHA3(['uint', 'uint'], [vote, salt]).toString('hex')}`
     ),
@@ -109,7 +85,7 @@ const utils = {
     },
 
     commitVote: async (pollID, voteOption, tokensArg, salt, voter) => {
-        const voting = await utils.getVoting()
+        const voting = await PLCRVoting.deployed()
         const hash = utils.getVoteSaltHash(voteOption, salt)
         await utils.as(voter, voting.requestVotingRights, tokensArg)
 

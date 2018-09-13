@@ -40,7 +40,7 @@ contract('OceanDispute', (accounts) => {
             const market = await Market.deployed()
             const tcr = await Registry.deployed()
             const plcr = await PLCRVoting.deployed()
-            const scale = 1
+            const scale = 1000000000000000000
 
             // request initial fund
             await market.requestTokens(1000 * scale, { from: accounts[0] })
@@ -82,14 +82,14 @@ contract('OceanDispute', (accounts) => {
             const registry = await Registry.deployed()
             const voting = await PLCRVoting.deployed()
             const dispute = await Dispute.deployed()
-
-            const minDeposit = 10
+            const scale = 1000000000000000000
+            const minDeposit = 10 * scale
 
             // provider : accounts[0], consumer : accounts[1], voter : accounts[2]
 
             const str = 'resource'
             const resourceId = await market.generateId(str, { from: accounts[0] })
-            const resourcePrice = 100
+            const resourcePrice = 100 * scale
             // 1. provider register dataset
             await market.register(resourceId, resourcePrice, { from: accounts[0] })
 
@@ -102,30 +102,31 @@ contract('OceanDispute', (accounts) => {
 
             // consumer submit request and provider apply the service to registry
             const receipt = await auth.initiateAccessRequest(resourceId, accounts[0], publicKey, 9999999999, { from: accounts[1] })
-            const accessId = receipt.logs[0].args._id
-            console.log('consumer creates an access request with id : ', accessId)
+            const receiptId = receipt.logs[0].args._id
+            console.log('consumer creates an service request with id : ', receiptId)
 
             // provider submit application of access service with id so that voting can be created agains this service
-            await utils.as(accounts[0], registry.apply, accessId, minDeposit, '')
+            // 0 - asset, 1 - service
+            await utils.as(accounts[0], registry.apply, receiptId, minDeposit, 1, '')
 
             // 3. provider commit the request
-            await auth.commitAccessRequest(accessId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', { from: accounts[0] })
+            await auth.commitAccessRequest(receiptId, true, 9999999999, 'discovery', 'read', 'slaLink', 'slaType', { from: accounts[0] })
 
             // 4. consumer make payment
-            await market.sendPayment(accessId, accounts[0], 100, 9999999999, { from: accounts[1] })
+            await market.sendPayment(receiptId, accounts[0], 100 * scale, 9999999999, { from: accounts[1] })
             console.log('consumer has made payment for the order: 100 tokens')
 
             // 5. provider delivery the encrypted JWT token
-            const OnChainPubKey = await auth.getTempPubKey(accessId, { from: accounts[0] })
+            const OnChainPubKey = await auth.getTempPubKey(receiptId, { from: accounts[0] })
             assert.strictEqual(publicKey, OnChainPubKey, 'two public keys should match.')
             const getPubKeyPem = ursa.coerceKey(OnChainPubKey)
             const encJWT = getPubKeyPem.encrypt('eyJhbGciOiJIUzI1', 'utf8', 'hex')
             // check status
-            await auth.deliverAccessToken(accessId, `0x${encJWT}`, { from: accounts[0] })
+            await auth.deliverAccessToken(receiptId, `0x${encJWT}`, { from: accounts[0] })
             console.log('provider has delivered the encrypted JWT to on-chain')
 
             // 4. consumer download the encrypted token and decrypt
-            const onChainencToken = await auth.getEncryptedAccessToken(accessId, { from: accounts[1] })
+            const onChainencToken = await auth.getEncryptedAccessToken(receiptId, { from: accounts[1] })
             const decryptJWT = privatePem.decrypt(onChainencToken.slice(2), 'hex', 'utf8') // remove '0x' prefix
             assert.strictEqual(decryptJWT.toString(), 'eyJhbGciOiJIUzI1', 'two public keys should match.')
 
@@ -140,16 +141,16 @@ contract('OceanDispute', (accounts) => {
             console.log('validate the signature comes from consumer? isSigned: ', res)
 
             // consumer raise a dispute before provider can request the payment!
-            const disputeReceipt = await dispute.initiateDispute(accessId, { from: accounts[1] })
+            const disputeReceipt = await dispute.initiateDispute(receiptId, { from: accounts[1] })
             const pollID = disputeReceipt.logs[0].args._pollID
             console.log('consumer initiated a dispute against the service and create voting')
 
             // add authorized voters
-            await dispute.addAuthorizedVoter(accessId, accounts[2], { from: accounts[0] })
+            await dispute.addAuthorizedVoter(receiptId, accounts[2], { from: accounts[0] })
             console.log('add accounts[1] as authorized voter')
 
             // 6. provider send the signed encypted JWT to ACL contract for verification (verify delivery of token)
-            const requestResult = await auth.verifyAccessTokenDelivery(accessId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
+            const requestResult = await auth.verifyAccessTokenDelivery(receiptId, accounts[1], fixedMsgSha, sig.v, sig.r, sig.s, { from: accounts[0] })
             assert.strictEqual(requestResult.logs[0].args._dispute, true, 'request of release payment should fail because dispute exists.')
             console.log('provider cannot release payment because dispute exists')
 
@@ -159,7 +160,7 @@ contract('OceanDispute', (accounts) => {
             assert.strictEqual(cpa, true, 'Commit period should be active')
 
             // Virgin commit
-            const tokensArg = 10
+            const tokensArg = 10 * scale
             const salt = 420
             const voteOption = 0
             await utils.commitVote(pollID, voteOption, tokensArg, salt, accounts[2], voting)
@@ -189,18 +190,18 @@ contract('OceanDispute', (accounts) => {
             console.log('Voting result is revealed: consumer wins')
 
             // /////////////////////////// voting finished ////////////////////////////
-            const voteEnded = await dispute.votingEnded(accessId, { from: accounts[1] })
+            const voteEnded = await dispute.votingEnded(receiptId, { from: accounts[1] })
             assert.strictEqual(voteEnded, true, 'Poll should be finished')
 
             // check balance
             const balanceBefore = await token.balanceOf.call(accounts[1])
-            console.log(`consumer has balance := ${balanceBefore.valueOf()} before resolving dispute`)
-            await dispute.resolveDispute(accessId, { from: accounts[1] })
+            console.log(`consumer has balance := ${balanceBefore.valueOf() / scale} before resolving dispute`)
+            await dispute.resolveDispute(receiptId, { from: accounts[1] })
             console.log('consumer wins the dispute and get refund')
 
             // check balance
             const balanceAfter = await token.balanceOf.call(accounts[1])
-            console.log(`consumer has balance := ${balanceAfter.valueOf()} after refund`)
+            console.log(`consumer has balance := ${balanceAfter.valueOf() / scale} after refund`)
             console.log('current balance 1005 = previous balance 890 + refund payment 100 + deposit for challenge 10 + reward for wining the voting 5')
         })
     })
