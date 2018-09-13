@@ -1,10 +1,10 @@
-// solium-disable security/no-block-members, emit
-
 pragma solidity ^0.4.11;
 
 import '../plcrvoting/PLCRVoting.sol';
 
 contract OceanRegistry {
+
+    using SafeMath for uint;
 
     // ------
     // EVENTS
@@ -29,8 +29,6 @@ contract OceanRegistry {
     event _ChallengeSucceeded(bytes32 indexed listingHash, uint indexed challengeID, uint rewardPool, uint totalTokens);
     event _RewardClaimed(uint indexed challengeID, uint reward, address indexed voter);
 
-    using SafeMath for uint;
-
     struct Listing {
         uint applicationExpiry; // Expiration date of apply stage
         bool whitelisted;       // Indicates registry status
@@ -49,10 +47,10 @@ contract OceanRegistry {
     }
 
     // Maps challengeIDs to associated challenge data
-    mapping(uint => Challenge) public challenges;
+    mapping(uint => Challenge) private challenges;
 
     // Maps listingHashes to associated listingHash data
-    mapping(bytes32 => Listing) public listings;
+    mapping(bytes32 => Listing) private listings;
 
     // Global Variables
     OceanToken public token;
@@ -87,20 +85,23 @@ contract OceanRegistry {
     @param _data        Extra data relevant to the application. Think IPFS hashes.
     */
     function apply(bytes32 _listingHash, uint _amount, string _data) external {
-        require(!isWhitelisted(_listingHash));
-        require(!appWasMade(_listingHash));
-        require(_amount >= 10); //parameterizer.get('minDeposit'));
+        require(!isWhitelisted(_listingHash), 'already whitelisted');
+        require(!appWasMade(_listingHash), 'listing already added');
+        require(_amount >= 10, 'min stake size is 10');
+        //parameterizer.get('minDeposit'));
 
         // Sets owner
         Listing storage listing = listings[_listingHash];
         listing.owner = msg.sender;
 
         // Sets apply stage end time
-        listing.applicationExpiry = block.timestamp.add(1 hours);//parameterizer.get('applyStageLen'));
+        /* solium-disable-next-line security/no-block-members */
+        listing.applicationExpiry = block.timestamp.add(1 hours);
+        //parameterizer.get('applyStageLen'));
         listing.unstakedDeposit = _amount;
 
         // Transfers tokens from user to Registry contract
-        require(token.transferFrom(listing.owner, this, _amount));
+        require(token.transferFrom(listing.owner, this, _amount), 'tokens not transferred');
 
         emit _Application(_listingHash, _amount, listing.applicationExpiry, _data, msg.sender);
     }
@@ -113,10 +114,10 @@ contract OceanRegistry {
     function deposit(bytes32 _listingHash, uint _amount) external {
         Listing storage listing = listings[_listingHash];
 
-        require(listing.owner == msg.sender);
+        require(listing.owner == msg.sender, 'caller needs ot be listing owner');
 
-        listing.unstakedDeposit += _amount;
-        require(token.transferFrom(msg.sender, this, _amount));
+        listing.unstakedDeposit.add(_amount);
+        require(token.transferFrom(msg.sender, this, _amount), 'tokens not transferred');
 
         emit _Deposit(_listingHash, _amount, listing.unstakedDeposit, msg.sender);
     }
@@ -129,12 +130,13 @@ contract OceanRegistry {
     function withdraw(bytes32 _listingHash, uint _amount) external {
         Listing storage listing = listings[_listingHash];
 
-        require(listing.owner == msg.sender);
-        require(_amount <= listing.unstakedDeposit);
-        require(listing.unstakedDeposit - _amount >= 10); //parameterizer.get('minDeposit'));
+        require(listing.owner == msg.sender, 'caller needs ot be listing owner');
+        require(_amount <= listing.unstakedDeposit, 'withdraw amount to high');
+        require(listing.unstakedDeposit.sub(_amount) >= 10, 'withdraw would go below min deposit');
+        //parameterizer.get('minDeposit'));
 
         listing.unstakedDeposit -= _amount;
-        require(token.transfer(msg.sender, _amount));
+        require(token.transfer(msg.sender, _amount), 'tokens not transferred');
 
         emit _Withdrawal(_listingHash, _amount, listing.unstakedDeposit, msg.sender);
     }
@@ -147,11 +149,11 @@ contract OceanRegistry {
     function exit(bytes32 _listingHash) external {
         Listing storage listing = listings[_listingHash];
 
-        require(msg.sender == listing.owner);
-        require(isWhitelisted(_listingHash));
+        require(msg.sender == listing.owner, 'caller needs ot be listing owner');
+        require(isWhitelisted(_listingHash), 'not whitelisted');
 
         // Cannot exit during ongoing challenge
-        require(listing.challengeID == 0 || challenges[listing.challengeID].resolved);
+        require(listing.challengeID == 0 || challenges[listing.challengeID].resolved, 'challenge not yet resolved');
 
         // Remove listingHash & return tokens
         resetListing(_listingHash);
@@ -171,12 +173,13 @@ contract OceanRegistry {
     */
     function challenge(bytes32 _listingHash, string _data) external returns (uint challengeID) {
         Listing storage listing = listings[_listingHash];
-        uint minDeposit = 10; //parameterizer.get('minDeposit');
+        uint minDeposit = 10;
+        //parameterizer.get('minDeposit');
 
         // Listing must be in apply stage or already on the whitelist
-        require(appWasMade(_listingHash) || listing.whitelisted);
+        require(appWasMade(_listingHash) || listing.whitelisted, 'not whitelisted');
         // Prevent multiple challenges
-        require(listing.challengeID == 0 || challenges[listing.challengeID].resolved);
+        require(listing.challengeID == 0 || challenges[listing.challengeID].resolved, 'challenge not yet resolved');
 
         if (listing.unstakedDeposit < minDeposit) {
             // Not enough tokens, listingHash auto-delisted
@@ -187,20 +190,20 @@ contract OceanRegistry {
 
         // Starts poll
         uint pollID = voting.startPoll(
-            50,  //parameterizer.get('voteQuorum'),
+            50, //parameterizer.get('voteQuorum'),
             1 hours, //parameterizer.get('commitStageLen'),
             1 hours  //parameterizer.get('revealStageLen')
         );
 
         challenges[pollID] = Challenge({
             // set tx.origin to trace the original caller: complainant in dispute contract
-            challenger: tx.origin,
+            challenger : tx.origin,
             //parameterizer.get('dispensationPct') = 50
-            rewardPool: ((100 - 50) * minDeposit) / 100,
-            stake: minDeposit,
-            resolved: false,
-            totalTokens: 0
-        });
+            rewardPool : ((100 - 50) * minDeposit) / 100,
+            stake : minDeposit,
+            resolved : false,
+            totalTokens : 0
+            });
 
         // Updates listingHash to store most recent challenge
         listing.challengeID = pollID;
@@ -209,7 +212,7 @@ contract OceanRegistry {
         listing.unstakedDeposit -= minDeposit;
 
         // Takes tokens from challenger
-        require(token.transferFrom(tx.origin, this, minDeposit));
+        require(token.transferFrom(tx.origin, this, minDeposit), 'tokens not transferred');
 
         (uint commitEndDate, uint revealEndDate, , , ,) = voting.pollMap(pollID);
 
@@ -228,7 +231,7 @@ contract OceanRegistry {
         } else if (challengeCanBeResolved(_listingHash)) {
             resolveChallenge(_listingHash);
         } else {
-            revert();
+            revert('status cannot be updated');
         }
     }
 
@@ -244,8 +247,8 @@ contract OceanRegistry {
     */
     function claimReward(uint _challengeID, uint _salt) public {
         // Ensures the voter has not already claimed tokens and challenge results have been processed
-        require(challenges[_challengeID].tokenClaims[msg.sender] == false);
-        require(challenges[_challengeID].resolved == true);
+        require(challenges[_challengeID].tokenClaims[msg.sender] == false, 'tokens already claimed');
+        require(challenges[_challengeID].resolved == true, 'challenge not resolved');
 
         uint voterTokens = voting.getNumPassingTokens(msg.sender, _challengeID, _salt);
         uint reward = voterReward(msg.sender, _challengeID, _salt);
@@ -258,7 +261,7 @@ contract OceanRegistry {
         // Ensures a voter cannot claim tokens again
         challenges[_challengeID].tokenClaims[msg.sender] = true;
 
-        require(token.transfer(msg.sender, reward));
+        require(token.transfer(msg.sender, reward), 'tokens not transferred');
 
         emit _RewardClaimed(_challengeID, reward, msg.sender);
     }
@@ -279,14 +282,14 @@ contract OceanRegistry {
         uint totalTokens = challenges[_challengeID].totalTokens;
         uint rewardPool = challenges[_challengeID].rewardPool;
         uint voterTokens = voting.getNumPassingTokens(_voter, _challengeID, _salt);
-        return (voterTokens * rewardPool) / totalTokens;
+        return voterTokens.mul(rewardPool).div(totalTokens);
     }
 
     /**
     @dev                Determines whether the given listingHash be whitelisted.
     @param _listingHash The listingHash whose status is to be examined
     */
-    function canBeWhitelisted(bytes32 _listingHash) view public returns (bool) {
+    function canBeWhitelisted(bytes32 _listingHash) public view returns (bool) {
         uint challengeID = listings[_listingHash].challengeID;
 
         // Ensures that the application was made,
@@ -294,7 +297,8 @@ contract OceanRegistry {
         // the listingHash can be whitelisted,
         // and either: the challengeID == 0, or the challenge has been resolved.
         if (
-            appWasMade(_listingHash) && listings[_listingHash].applicationExpiry < now && !isWhitelisted(_listingHash) && (challengeID == 0 || challenges[challengeID].resolved == true)
+        /* solium-disable-next-line security/no-block-members */
+            appWasMade(_listingHash) && listings[_listingHash].applicationExpiry < block.timestamp && !isWhitelisted(_listingHash) && (challengeID == 0 || challenges[challengeID].resolved == true)
         ) {
             return true;
         }
@@ -306,7 +310,7 @@ contract OceanRegistry {
     @dev                Returns true if the provided listingHash is whitelisted
     @param _listingHash The listingHash whose status is to be examined
     */
-    function isWhitelisted(bytes32 _listingHash) view public returns (bool whitelisted) {
+    function isWhitelisted(bytes32 _listingHash) public view returns (bool whitelisted) {
         return listings[_listingHash].whitelisted;
     }
 
@@ -314,7 +318,7 @@ contract OceanRegistry {
     @dev                Returns true if apply was called for this listingHash
     @param _listingHash The listingHash whose status is to be examined
     */
-    function appWasMade(bytes32 _listingHash) view public returns (bool exists) {
+    function appWasMade(bytes32 _listingHash) public view returns (bool exists) {
         return listings[_listingHash].applicationExpiry > 0;
     }
 
@@ -322,7 +326,7 @@ contract OceanRegistry {
     @dev                Returns true if the application/listingHash has an unresolved challenge
     @param _listingHash The listingHash whose status is to be examined
     */
-    function challengeExists(bytes32 _listingHash) view public returns (bool) {
+    function challengeExists(bytes32 _listingHash) public view returns (bool) {
         uint challengeID = listings[_listingHash].challengeID;
 
         return (listings[_listingHash].challengeID > 0 && !challenges[challengeID].resolved);
@@ -333,10 +337,10 @@ contract OceanRegistry {
                         listingHash. Throws if no challenge exists.
     @param _listingHash A listingHash with an unresolved challenge
     */
-    function challengeCanBeResolved(bytes32 _listingHash) view public returns (bool) {
+    function challengeCanBeResolved(bytes32 _listingHash) public view returns (bool) {
         uint challengeID = listings[_listingHash].challengeID;
 
-        require(challengeExists(_listingHash));
+        require(challengeExists(_listingHash), 'challenge does not exist');
 
         return voting.pollEnded(challengeID);
     }
@@ -346,7 +350,7 @@ contract OceanRegistry {
     @param _challengeID The challengeID to determine a reward for
     */
     function determineReward(uint _challengeID) public view returns (uint) {
-        require(!challenges[_challengeID].resolved && voting.pollEnded(_challengeID));
+        require(!challenges[_challengeID].resolved && voting.pollEnded(_challengeID), 'challenge not resolved or poll not ended yet');
 
         // Edge case, nobody voted, give all tokens to the challenger.
         if (voting.getTotalNumberOfTokensForWinningOption(_challengeID) == 0) {
@@ -399,7 +403,7 @@ contract OceanRegistry {
         else {
             resetListing(_listingHash);
             // Transfer the reward to the challenger
-            require(token.transfer(challenges[challengeID].challenger, reward));
+            require(token.transfer(challenges[challengeID].challenger, reward), 'tokens not transferred');
 
             emit _ChallengeSucceeded(_listingHash, challengeID, challenges[challengeID].rewardPool, challenges[challengeID].totalTokens);
         }
@@ -438,8 +442,8 @@ contract OceanRegistry {
         delete listings[_listingHash];
 
         // Transfers any remaining balance back to the owner
-        if (unstakedDeposit > 0){
-            require(token.transfer(owner, unstakedDeposit));
+        if (unstakedDeposit > 0) {
+            require(token.transfer(owner, unstakedDeposit), 'tokens not transferred');
         }
     }
 }

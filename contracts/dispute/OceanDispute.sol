@@ -20,16 +20,16 @@ contract OceanDispute is Ownable {
     // voting is needed by default => any dispute needs voting to resolve.
     struct Dispute {
         address complainant;       // complainant address
-        bool    resolved;          // Indication of if dispute is resolved
+        bool resolved;          // Indication of if dispute is resolved
         uint256 pollID;           // identifier for poll
     }
     // mapping from service id or asset id to Dispute struct
-    mapping (bytes32 => Dispute) public mDisputes;
+    mapping(bytes32 => Dispute) public mDisputes;
 
     // ------
     // EVENTS
     // ------
-    event _DisputeInitiated(address indexed _complainant, bytes32 indexed  _id, uint256 _pollID);
+    event _DisputeInitiated(address indexed _complainant, bytes32 indexed _id, uint256 _pollID);
     event _DisputeResolved(address indexed _complainant, bytes32 indexed _id, bool _release, bool _refund);
     // ------------
     // CONSTRUCTOR:
@@ -78,10 +78,10 @@ contract OceanDispute is Ownable {
         //uint256 _pollID = 0;
         // create Dispute struct
         mDisputes[id] = Dispute({
-            complainant: msg.sender,
-            resolved: false,
-            pollID: _pollID
-        });
+            complainant : msg.sender,
+            resolved : false,
+            pollID : _pollID
+            });
         emit _DisputeInitiated(msg.sender, id, _pollID);
         return _pollID;
     }
@@ -94,7 +94,7 @@ contract OceanDispute is Ownable {
     */
     function addAuthorizedVoter(bytes32 id, address voter) public onlyOwner() returns (bool) {
         uint pollID = mDisputes[id].pollID;
-        require(voting.pollExists(pollID) == true);
+        require(voting.pollExists(pollID) == true, 'poll does not exist');
         // add authorized voter
         voting.addAuthorizedVoter(pollID, voter);
         return true;
@@ -117,7 +117,7 @@ contract OceanDispute is Ownable {
     */
     function resolveDispute(bytes32 id) public returns (bool) {
         // voting should be ended at this time
-        if(registry.challengeCanBeResolved(id) == false)
+        if (registry.challengeCanBeResolved(id) == false)
             return false;
         // resolve challenge in registry
         registry.updateStatus(id);
@@ -129,7 +129,7 @@ contract OceanDispute is Ownable {
         // complainant wins the dispute => refund
         if (!registry.isWhitelisted(id)) {
             refund = true;
-        // complainant loses the dispute => release payment
+            // complainant loses the dispute => release payment
         } else {
             release = true;
         }

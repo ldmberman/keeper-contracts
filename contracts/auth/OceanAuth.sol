@@ -59,7 +59,7 @@ contract OceanAuth {
         _;
     }
     modifier isAccessDelivered(bytes32 id) {
-        require(market.verifyPaymentReceived(id));
+        require(market.verifyPaymentReceived(id), 'payment not received');
         require(accessControlRequests[id].status == AccessStatus.Delivered, 'Status not Delivered.');
         _;
     }
@@ -77,7 +77,9 @@ contract OceanAuth {
     // ============
     // EVENTS:
     // ============
+    /* solium-disable-next-line max-len */
     event AccessConsentRequested(bytes32 _id, address indexed _consumer, address indexed _provider, bytes32 indexed _resourceId, uint _timeout, string _pubKey);
+    /* solium-disable-next-line max-len */
     event AccessRequestCommitted(bytes32 indexed _id, uint256 _expirationDate, string _discovery, string _permissions, string _accessAgreementRef);
     event AccessRequestRejected(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
     event AccessRequestRevoked(address indexed _consumer, address indexed _provider, bytes32 indexed _id);
@@ -110,9 +112,20 @@ contract OceanAuth {
     */
     function initiateAccessRequest(bytes32 resourceId, address provider, string pubKey, uint256 timeout) public returns (bool) {
         bytes32 id = keccak256(abi.encodePacked(resourceId, msg.sender, provider, pubKey));
-        AccessAgreement memory accessAgreement = AccessAgreement(new string(0), new string(0));
-        Consent memory consent = Consent(resourceId, new string(0), accessAgreement, false, 0, 0, new string(0), timeout);
-        AccessControlRequest memory accessControlRequest = AccessControlRequest(
+        AccessAgreement memory accessAgreement = AccessAgreement(
+            new string(0),
+            new string(0)
+        );
+        Consent memory consent = Consent(
+            resourceId,
+            new string(0),
+            accessAgreement,
+            false,
+            0,
+            0,
+            new string(0),
+            timeout);
+        accessControlRequests[id] = AccessControlRequest(
             msg.sender,
             provider,
             resourceId,
@@ -121,8 +134,6 @@ contract OceanAuth {
             new bytes(0),
             AccessStatus.Requested
         );
-
-        accessControlRequests[id] = accessControlRequest;
         emit AccessConsentRequested(id, msg.sender, provider, resourceId, timeout, pubKey);
         return true;
     }
@@ -138,13 +149,20 @@ contract OceanAuth {
     @param accessAgreementType type such as PDF/DOC/JSON/XML file.
     @return valid Boolean indication of if the access request has been committed successfully
     */
-    function commitAccessRequest(bytes32 id, bool isAvailable, uint256 expirationDate, string discovery, string permissions, string accessAgreementRef, string accessAgreementType)
+    function commitAccessRequest(
+        bytes32 id,
+        bool isAvailable,
+        uint256 expirationDate,
+        string discovery,
+        string permissions,
+        string accessAgreementRef,
+        string accessAgreementType)
     public onlyProvider(id) isAccessRequested(id) returns (bool) {
-        /* solium-disable-next-line */
+        /* solium-disable-next-line security/no-block-members */
         if (isAvailable && block.timestamp < expirationDate) {
             accessControlRequests[id].consent.isAvailable = isAvailable;
             accessControlRequests[id].consent.expirationDate = expirationDate;
-            /* solium-disable-next-line */
+            /* solium-disable-next-line security/no-block-members */
             accessControlRequests[id].consent.startDate = block.timestamp;
             accessControlRequests[id].consent.discovery = discovery;
             accessControlRequests[id].consent.permissions = permissions;
@@ -167,11 +185,11 @@ contract OceanAuth {
     // you can cancel consent and do refund only after consumer makes the payment and timeout.
     function cancelAccessRequest(bytes32 id) public isAccessCommitted(id) onlyConsumer(id) {
         // timeout
-        /* solium-disable-next-line */
+        /* solium-disable-next-line security/no-block-members */
         require(block.timestamp > accessControlRequests[id].consent.timeout, 'Timeout not exceeded.');
 
         // refund only if consumer had made payment
-        if(market.verifyPaymentReceived(id)){
+        if (market.verifyPaymentReceived(id)) {
             require(market.refundPayment(id), 'Refund payment failed.');
         }
         // Always emit this event regardless of payment refund.
@@ -262,8 +280,8 @@ contract OceanAuth {
     @param id identifier associated with the access request
     @return integer representing status of `AccessStatus {Requested, Committed, Delivered, Revoked}` as uint8
     */
-    function statusOfAccessRequest(bytes32 id) public view returns (uint8) {
-        return uint8(accessControlRequests[id].status);
+    function statusOfAccessRequest(bytes32 id) public view returns (uint) {
+        return uint(accessControlRequests[id].status);
     }
 
 }
