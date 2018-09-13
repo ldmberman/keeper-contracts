@@ -4,13 +4,8 @@
     "security"
   ],
   "rules": {
-    "quotes": [
-      "error",
-      "single"
-    ],
-    "indentation": [
-      "error",
-      4
-    ]
+    "quotes": ["error", "single"],
+    "indentation": ["error", 4],
+    "security/no-tx-origin": ["warning"]
   }
 }
