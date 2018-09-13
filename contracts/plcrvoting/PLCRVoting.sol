@@ -49,9 +49,9 @@ contract PLCRVoting {
     uint public pollNonce;
 
     mapping(uint => Poll) public pollMap; // maps pollID to Poll struct
-    mapping(address => uint) public voteTokenBalance; // maps user's address to voteToken balance
+    mapping(address => uint) private voteTokenBalance; // maps user's address to voteToken balance
+    mapping(address => DLL.Data) private dllMap;
 
-    mapping(address => DLL.Data) dllMap;
     AttributeStore.Data store;
 
     //EIP20Interface public token;

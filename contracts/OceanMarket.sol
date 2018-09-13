@@ -25,7 +25,7 @@ contract OceanMarket is Ownable {
         bool active;    // status of asset
     }
 
-    mapping(bytes32 => Asset) public mAssets;           // mapping assetId to Asset struct
+    mapping(bytes32 => Asset) private mAssets;           // mapping assetId to Asset struct
 
     struct Payment {
         address sender;             // payment sender
@@ -36,10 +36,10 @@ contract OceanMarket is Ownable {
         uint256 expiration;         // consumer may request refund after expiration timestamp (in sec.)
     }
     enum PaymentState {Locked, Released, Refunded}
-    mapping(bytes32 => Payment) mPayments;  // mapping from id to associated payment struct
+    mapping(bytes32 => Payment) private mPayments;  // mapping from id to associated payment struct
 
     // limit period for reques of tokens
-    mapping(address => uint256) tokenRequest; // mapping from address to last time of request
+    mapping(address => uint256) private tokenRequest; // mapping from address to last time of request
     uint256 maxAmount = 10000;                      // max amount of tokens user can get for each request
     uint256 minPeriod = 0;                        // min amount of time to wait before request token again
 

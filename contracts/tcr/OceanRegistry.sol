@@ -47,10 +47,10 @@ contract OceanRegistry {
     }
 
     // Maps challengeIDs to associated challenge data
-    mapping(uint => Challenge) public challenges;
+    mapping(uint => Challenge) private challenges;
 
     // Maps listingHashes to associated listingHash data
-    mapping(bytes32 => Listing) public listings;
+    mapping(bytes32 => Listing) private listings;
 
     // Global Variables
     OceanToken public token;
@@ -132,7 +132,7 @@ contract OceanRegistry {
 
         require(listing.owner == msg.sender, 'caller needs ot be listing owner');
         require(_amount <= listing.unstakedDeposit, 'withdraw amount to high');
-        require(listing.unstakedDeposit - _amount >= 10, 'withdraw would go below min deposit');
+        require(listing.unstakedDeposit.sub(_amount) >= 10, 'withdraw would go below min deposit');
         //parameterizer.get('minDeposit'));
 
         listing.unstakedDeposit -= _amount;
