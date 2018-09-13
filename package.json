@@ -17,7 +17,7 @@
     "lint": "eslint --ignore-pattern '/coverage/' . && npm run solium",
     "solium": "solium -d ./contracts/",
     "solium:watch": "solium -d ./contracts/ --watch",
-    "mythril": "truffle compile && myth -x --truffle --outform markdown > mythril-report.md",
+    "mythril": "truffle compile && myth -x --truffle --max-depth 8 --outform markdown > mythril-report.md",
     "test": "npm run lint && truffle test"
   },
   "directories": {
