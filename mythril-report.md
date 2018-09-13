@@ -44,7 +44,7 @@ No issues found.
 ### Description
 
 This contract executes a message call to to another contract. Make sure that the called contract is trusted and does not execute user-supplied code.
-In file: OceanAuth.sol:61
+In file: OceanAuth.sol:62
 
 ### Code
 
@@ -53,6 +53,9 @@ market.verifyPaymentReceived(id)
 ```
 
 # Analysis result for SafeMath
+
+No issues found.
+# Analysis result for OceanDispute
 
 No issues found.
 # Analysis result for BasicToken
@@ -89,13 +92,13 @@ string public name
 - Type: Warning
 - Contract: OceanMarket
 - Function name: `generateId(bytes)`
-- PC address: 340
+- PC address: 373
 
 ### Description
 
 A possible integer overflow exists in the function `generateId(bytes)`.
 The addition or multiplication may result in a value higher than the maximum representable integer.
-In file: OceanMarket.sol:246
+In file: OceanMarket.sol:289
 
 ### Code
 
@@ -111,12 +114,12 @@ function generateId(string contents) public pure returns (bytes32) {
 - Type: Informational
 - Contract: OceanMarket
 - Function name: `fallback`
-- PC address: 958
+- PC address: 1070
 
 ### Description
 
 This contract executes a message call to to another contract. Make sure that the called contract is trusted and does not execute user-supplied code.
-In file: OceanMarket.sol:223
+In file: OceanMarket.sol:256
 
 ### Code
 
@@ -129,12 +132,12 @@ tcr.isWhitelisted(listing)
 - Type: Informational
 - Contract: OceanMarket
 - Function name: `verifyPaymentReceived(bytes32)`
-- PC address: 1288
+- PC address: 1400
 
 ### Description
 
 A reachable exception (opcode 0xfe) has been detected. This can be caused by type errors, division by zero, out-of-bounds array access, or assert violations. This is acceptable in most situations. Note however that `assert()` should only be used to check invariants. Use `require()` for regular input checking.
-In file: OceanMarket.sol:166
+In file: OceanMarket.sol:199
 
 ### Code
 
