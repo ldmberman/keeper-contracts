@@ -57,7 +57,7 @@ contract OceanRegistry {
     PLCRVoting public voting;
 
     // ------------
-    // CONSTRUCTOR:  
+    // CONSTRUCTOR:
     // ------------
 
     /**
@@ -196,7 +196,8 @@ contract OceanRegistry {
         );
 
         challenges[pollID] = Challenge({
-            challenger : msg.sender,
+            // set tx.origin to trace the original caller: complainant in dispute contract
+            challenger : tx.origin,
             //parameterizer.get('dispensationPct') = 50
             rewardPool : ((100 - 50) * minDeposit) / 100,
             stake : minDeposit,
@@ -211,19 +212,11 @@ contract OceanRegistry {
         listing.unstakedDeposit -= minDeposit;
 
         // Takes tokens from challenger
-        require(token.transferFrom(msg.sender, this, minDeposit), 'tokens not transferred');
+        require(token.transferFrom(tx.origin, this, minDeposit), 'tokens not transferred');
 
-        uint commitEndDate;
-        uint revealEndDate;
-        uint voteQuorum;
-        /// number of votes required for a proposal to pass
-        uint votesFor;
-        /// tally of votes supporting proposal
-        uint votesAgainst;
-        /// tally of votes countering proposal
-        (commitEndDate, revealEndDate, voteQuorum, votesFor, votesAgainst) = voting.pollMap(pollID);
+        (uint commitEndDate, uint revealEndDate, , , ,) = voting.pollMap(pollID);
 
-        emit _Challenge(_listingHash, pollID, _data, commitEndDate, revealEndDate, msg.sender);
+        emit _Challenge(_listingHash, pollID, _data, commitEndDate, revealEndDate, tx.origin);
         return pollID;
     }
 
