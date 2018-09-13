@@ -78,7 +78,9 @@ contract OceanMarket is Ownable {
     }
 
     modifier isAuthContract() {
-        require(msg.sender == authAddress || msg.sender == address(this) || msg.sender == disputeAddress, 'Sender is not an authorized contract.');
+        require(
+            msg.sender == authAddress || msg.sender == address(this) || msg.sender == disputeAddress, 'Sender is not an authorized contract.'
+        );
         _;
     }
 
@@ -152,7 +154,7 @@ contract OceanMarket is Ownable {
         // unpause the payment
         mPayments[_paymentId].paused = false;
         // process payment
-        if (_release == true && _refund == false){
+        if (_release == true && _refund == false) {
             releasePayment(_paymentId);
         } else if (_release == false && _refund == true) {
             refundPayment(_paymentId);
@@ -167,7 +169,7 @@ contract OceanMarket is Ownable {
     */
     function releasePayment(bytes32 _paymentId) public isLocked(_paymentId) isAuthContract() returns (bool) {
         // payment must not be paused
-        require(mPayments[_paymentId].paused == false);
+        require(mPayments[_paymentId].paused == false, 'Payment is paused');
         // update state to avoid re-entry attack
         mPayments[_paymentId].state = PaymentState.Released;
         require(mToken.transfer(mPayments[_paymentId].receiver, mPayments[_paymentId].amount), 'Token transfer failed.');
@@ -182,7 +184,7 @@ contract OceanMarket is Ownable {
     */
     function refundPayment(bytes32 _paymentId) public isLocked(_paymentId) isAuthContract() returns (bool) {
         // payment must not be paused
-        require(mPayments[_paymentId].paused == false);
+        require(mPayments[_paymentId].paused == false, 'Payment is paused');
         // refund payment to consumer
         mPayments[_paymentId].state = PaymentState.Refunded;
         require(mToken.transfer(mPayments[_paymentId].sender, mPayments[_paymentId].amount), 'Token transfer failed.');
@@ -276,7 +278,7 @@ contract OceanMarket is Ownable {
     */
     function addDisputeAddress() public validAddress(msg.sender) returns (bool) {
         // authAddress can only be set at deployment of Auth contract - only once
-        require(disputeAddress == address(0));
+        require(disputeAddress == address(0), 'disputeAddress is not 0x0');
         disputeAddress = msg.sender;
         return true;
     }

@@ -89,7 +89,7 @@ contract PLCRVoting {
     */
     function getDisputeInstance(address _disputeContract) public returns (bool) {
         // authAddress can only be set at deployment of Auth contract - only once
-        require(disputeAddress == address(0));
+        require(disputeAddress == address(0), 'disputeAddress is not 0x0');
         disputeAddress = _disputeContract;
         // get instance of OceanDispute
         dispute = OceanDispute(disputeAddress);
@@ -385,7 +385,7 @@ contract PLCRVoting {
     @return Boolean Indicates whether a poll exists for the provided pollID
     */
     function addAuthorizedVoter(uint _pollID, address _voter) public isDisputeContract() returns (bool success) {
-        require(pollExists(_pollID));
+        require(pollExists(_pollID), 'poll does not exist');
         // add voter into permission list
         Poll storage poll = pollMap[_pollID];
         // set flag indicating permission check is needed
