@@ -83,7 +83,7 @@ contract OceanToken is StandardToken {
     * @param _owner The address to query the the allowance of.
     * @return An uint256 representing the amount allowance of the passed address.
     */
-    function allowance(address _owner, address _spender) public constant returns (uint256) {
+    function allowance(address _owner, address _spender) public view returns (uint256) {
         return super.allowance(_owner, _spender);
     }
 
