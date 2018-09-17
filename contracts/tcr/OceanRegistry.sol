@@ -486,7 +486,7 @@ contract OceanRegistry is Ownable {
         Listing storage listing = listings[_listingHash];
         // change asset status according to voting result
         if(listing.objType == ListingType.Asset){
-            market.changeAssetStatus(_listingHash);
+            market.deactivateAsset(_listingHash);
         }
     }
 

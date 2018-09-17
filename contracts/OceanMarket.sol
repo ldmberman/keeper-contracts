@@ -255,7 +255,7 @@ contract OceanMarket is Ownable {
     * @param assetId the integer identifier of asset in the voting
     * @return valid Boolean indication of asset is whitelisted
     */
-    function changeAssetStatus(bytes32 assetId) public returns(bool){
+    function deactivateAsset(bytes32 assetId) public returns(bool){
         // disable asset if it is not whitelisted in the registry
         if (!tcr.isWhitelisted(assetId)){
             mAssets[assetId].active = false;
