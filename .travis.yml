@@ -24,7 +24,7 @@ before_install:
   - npm install -g ganache-cli release-it greenkeeper-lockfile
 
 install:
-    - npm install
+  - npm install
 
 before_script:
   - greenkeeper-lockfile-update
