@@ -37,7 +37,6 @@ script:
   - git add package-lock.json
   - git add artifacts/*
   - git commit -m 'Travis Build'
-  - docker build -t oceanprotocol/keeper-contracts .
   - npm run release
 
 after_script:
