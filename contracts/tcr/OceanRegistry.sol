@@ -1,8 +1,10 @@
 pragma solidity ^0.4.11;
 
 import '../plcrvoting/PLCRVoting.sol';
+import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 
-contract OceanRegistry {
+contract OceanRegistry is Ownable {
 
     using SafeMath for uint;
 
@@ -11,13 +13,7 @@ contract OceanRegistry {
     // ------
 
     event _Application(bytes32 indexed listingHash, uint deposit, uint appEndDate, string data, address indexed applicant);
-    event _Challenge(
-        bytes32 indexed listingHash,
-        uint challengeID,
-        string data, uint commitEndDate,
-        uint revealEndDate,
-        address indexed challenger
-    );
+    event _Challenge(bytes32 indexed listingHash, uint challengeID, string data, uint commitEndDate, uint revealEndDate, address indexed challenger);
     event _Deposit(bytes32 indexed listingHash, uint added, uint newTotal, address indexed owner);
     event _Withdrawal(bytes32 indexed listingHash, uint withdrew, uint newTotal, address indexed owner);
     event _ApplicationWhitelisted(bytes32 indexed listingHash);
@@ -29,12 +25,14 @@ contract OceanRegistry {
     event _ChallengeSucceeded(bytes32 indexed listingHash, uint indexed challengeID, uint rewardPool, uint totalTokens);
     event _RewardClaimed(uint indexed challengeID, uint reward, address indexed voter);
 
+    enum ListingType {Asset, Service}
     struct Listing {
         uint applicationExpiry; // Expiration date of apply stage
         bool whitelisted;       // Indicates registry status
         address owner;          // Owner of Listing
         uint unstakedDeposit;   // Number of tokens in the listing not locked in a challenge
         uint challengeID;       // Corresponds to a PollID in PLCRVoting
+        ListingType objType;    // object type of challenge
     }
 
     struct Challenge {
@@ -53,8 +51,17 @@ contract OceanRegistry {
     mapping(bytes32 => Listing) private listings;
 
     // Global Variables
-    OceanToken public token;
-    PLCRVoting public voting;
+    OceanMarket private market;
+    OceanToken private token;
+    PLCRVoting private voting;
+
+    // general reference of Voting Parameters
+    uint minDeposit;        // minimum deposits
+    uint applyStageLength;  // time period for application to accept challenges
+    uint commitStageLength; // time period for committing votes
+    uint revealStageLength; // time period for revealing votes
+    uint dispensationPct;   // percentage of slashed tokens for distribution
+    uint voteQuorum;        // percentage of majority votes to win
 
     // ------------
     // CONSTRUCTOR:
@@ -69,8 +76,58 @@ contract OceanRegistry {
         address _tokenAddr,
         address _plcrAddr
     ) public {
+        require(_tokenAddr != 0 && address(token) == 0, 'Token contract address is invalid.');
+        require(_plcrAddr != 0 && address(voting) == 0, 'Voting contract address is invalid.');
+
         token = OceanToken(_tokenAddr);
         voting = PLCRVoting(_plcrAddr);
+
+        // default settings of parameters
+        minDeposit = 10 * 10 ** 18;
+        applyStageLength = 1 hours;
+        commitStageLength = 1 hours;
+        revealStageLength = 1 hours;
+        dispensationPct = 50;
+        voteQuorum = 50;
+    }
+
+      /**
+     * @dev create instance of deployed OceanMarket contract
+     * @return valid Boolean indication of contract address is updated
+     */
+    bool oneTime = true;
+    function setMarketInstance(address _market) public returns (bool) {
+        require(_market != address(0) && address(market) == address(0) && oneTime, 'Marketplace contract address is invalid.');
+        market = OceanMarket(_market);
+        oneTime = false;
+        return true;
+    }
+
+      /**
+     @dev                Allows owner to update parameters of voting.
+     @param _mDeposit    minimum deposits
+     @param _applyTime  time period for application to accept challenges
+     @param _commitTime time period for committing votes
+     @param _revealTime time period for revealing votes
+     @param _dispPct percentage of slashed tokens for distribution
+     @param _voteQ percentage of majority votes to win
+     */
+    function updateParameters(uint _mDeposit, uint _applyTime, uint _commitTime, uint _revealTime, uint _dispPct, uint _voteQ) public onlyOwner() {
+        if (_dispPct > 100 || _voteQ > 100)
+            return;
+
+        minDeposit = _mDeposit;
+        applyStageLength = _applyTime;
+        commitStageLength = _commitTime;
+        revealStageLength = _revealTime;
+        dispensationPct = _dispPct;
+        voteQuorum = _voteQ;
+    }
+      /**
+     @dev                Allows owner to query current parameters of voting.
+     */
+    function getParameters() public view onlyOwner() returns (uint, uint, uint, uint, uint, uint) {
+        return (minDeposit, applyStageLength, commitStageLength, revealStageLength, dispensationPct, voteQuorum);
     }
 
     // --------------------
@@ -82,13 +139,13 @@ contract OceanRegistry {
                         apply stage end time.
     @param _listingHash The hash of a potential listing a user is applying to add to the registry
     @param _amount      The number of ERC20 tokens a user is willing to potentially stake
+    @param _type        the type of listing: 0 - asset, 1 - asset, ...
     @param _data        Extra data relevant to the application. Think IPFS hashes.
     */
-    function apply(bytes32 _listingHash, uint _amount, string _data) external {
+    function apply(bytes32 _listingHash, uint _amount, uint _type, string _data) external {
         require(!isWhitelisted(_listingHash), 'already whitelisted');
         require(!appWasMade(_listingHash), 'listing already added');
-        require(_amount >= 10, 'min stake size is 10');
-        //parameterizer.get('minDeposit'));
+        require(_amount >= minDeposit, 'min stake size is 10');
 
         // Sets owner
         Listing storage listing = listings[_listingHash];
@@ -96,9 +153,10 @@ contract OceanRegistry {
 
         // Sets apply stage end time
         /* solium-disable-next-line security/no-block-members */
-        listing.applicationExpiry = block.timestamp.add(1 hours);
-        //parameterizer.get('applyStageLen'));
+        listing.applicationExpiry = block.timestamp.add(applyStageLength);
         listing.unstakedDeposit = _amount;
+        // set listing type
+        listing.objType = ListingType(_type);
 
         // Transfers tokens from user to Registry contract
         require(token.transferFrom(listing.owner, this, _amount), 'tokens not transferred');
@@ -132,7 +190,7 @@ contract OceanRegistry {
 
         require(listing.owner == msg.sender, 'caller needs ot be listing owner');
         require(_amount <= listing.unstakedDeposit, 'withdraw amount to high');
-        require(listing.unstakedDeposit.sub(_amount) >= 10, 'withdraw would go below min deposit');
+        require(listing.unstakedDeposit.sub(_amount) >= minDeposit, 'withdraw would go below min deposit');
         //parameterizer.get('minDeposit'));
 
         listing.unstakedDeposit -= _amount;
@@ -173,8 +231,6 @@ contract OceanRegistry {
     */
     function challenge(bytes32 _listingHash, string _data) external returns (uint challengeID) {
         Listing storage listing = listings[_listingHash];
-        uint minDeposit = 10;
-        //parameterizer.get('minDeposit');
 
         // Listing must be in apply stage or already on the whitelist
         require(appWasMade(_listingHash) || listing.whitelisted, 'not whitelisted');
@@ -190,16 +246,16 @@ contract OceanRegistry {
 
         // Starts poll
         uint pollID = voting.startPoll(
-            50, //parameterizer.get('voteQuorum'),
-            1 hours, //parameterizer.get('commitStageLen'),
-            1 hours  //parameterizer.get('revealStageLen')
+            voteQuorum,
+            commitStageLength,
+            revealStageLength
         );
 
+        uint oneHundred = 100;
         challenges[pollID] = Challenge({
-            // set tx.origin to trace the original caller: complainant in dispute contract
+            // set tx.origin to trace the original caller in dispute contract
             challenger : tx.origin,
-            //parameterizer.get('dispensationPct') = 50
-            rewardPool : ((100 - 50) * minDeposit) / 100,
+            rewardPool: ((oneHundred.sub(dispensationPct)).mul(minDeposit)).div(100),
             stake : minDeposit,
             resolved : false,
             totalTokens : 0
@@ -423,6 +479,18 @@ contract OceanRegistry {
     }
 
     /**
+    @dev                Updates a Asset or Actor status in Marketplace when 'exit' or 'updateStatus'
+    @param _listingHash The Id of asset or actor whose status is being updated
+    */
+    function changeListingStatus(bytes32 _listingHash) public {
+        Listing storage listing = listings[_listingHash];
+        // change asset status according to voting result
+        if(listing.objType == ListingType.Asset){
+            market.deactivateAsset(_listingHash);
+        }
+    }
+
+    /**
     @dev                Deletes a listingHash from the whitelist and transfers tokens back to owner
     @param _listingHash The listing hash to delete
     */
@@ -435,6 +503,10 @@ contract OceanRegistry {
         } else {
             emit _ApplicationRemoved(_listingHash);
         }
+
+        // update asset or actor status to be disabled
+        listings[_listingHash].whitelisted = false;
+        changeListingStatus(_listingHash);
 
         // Deleting listing to prevent reentry
         address owner = listing.owner;
