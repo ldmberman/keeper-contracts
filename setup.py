@@ -11,7 +11,8 @@ from glob import glob
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-os.system("cp -rf ./artifacts ./keeper-contracts")
+os.system("truffle compile")
+os.system("cp -rf ./build/contracts ./keeper-contracts")
 
 requirements = []
 
@@ -50,3 +51,4 @@ setup(
 )
 
 os.system("rm -rf ./keeper-contracts")
+os.system("rm -rf ./build")
