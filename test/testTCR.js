@@ -77,7 +77,6 @@ contract('Registry', (accounts) => {
             const scale = 1000000000000000000
             const minDeposit = 10000000000000000000
 
-
             const assetId = '0x7ace91f25e0838f9ed7ae259670bdf4156b3d82a76db72092f1baf06f31f5038'
             // challenge for asset: use assetId as the challenge listing Id
             const listing = assetId

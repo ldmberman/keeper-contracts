@@ -109,7 +109,7 @@ const utils = {
     multiplyByPercentage: (x, y, z = 100) => {
         const weiQuotient = utils.divideAndGetWei(y, z)
         return utils.multiplyFromWei(x, weiQuotient)
-    },
+    }
 }
 
 module.exports = utils

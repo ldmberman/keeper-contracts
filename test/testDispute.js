@@ -73,7 +73,6 @@ contract('OceanDispute', (accounts) => {
             await token.approve(plcr.address, 1000 * scale, { from: accounts[4] })
         })
 
-
         it('should purchase service, raise dispute, and refund', async () => {
             // const marketPlace = await Market.deployed();
             const token = await Token.deployed()
