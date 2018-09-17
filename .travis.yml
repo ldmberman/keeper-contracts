@@ -59,7 +59,6 @@ deploy:
     password: ${PYPI_PASSWORD}
     on:
       tags: true
-      branch: master
       repo: oceanprotocol/keeper-contracts
       python: 3.6
 

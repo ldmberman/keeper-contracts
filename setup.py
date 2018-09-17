@@ -12,7 +12,6 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 os.system("truffle compile")
-os.system("cp -rf ./build/contracts ./keeper-contracts")
 
 requirements = []
 
@@ -34,7 +33,7 @@ setup(
     ],
     description=" 🐳 Integration of TCRs, CPM and Ocean Tokens in Solidity",
     data_files=[
-        ('contracts', glob('artifacts/*.json')),
+        ('contracts', glob('build/contracts/*.json')),
     ],
     install_requires=requirements,
     license="Apache Software License 2.0",
@@ -50,5 +49,4 @@ setup(
     zip_safe=False,
 )
 
-os.system("rm -rf ./keeper-contracts")
 os.system("rm -rf ./build")
