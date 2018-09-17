@@ -96,7 +96,7 @@ contract OceanRegistry is Ownable {
      * @return valid Boolean indication of contract address is updated
      */
     bool oneTime = true;
-    function getMarketInstance(address _market) public returns (bool) {
+    function setMarketInstance(address _market) public returns (bool) {
         require(_market != address(0) && address(market) == address(0) && oneTime, 'Marketplace contract address is invalid.');
         market = OceanMarket(_market);
         oneTime = false;

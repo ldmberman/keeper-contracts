@@ -99,7 +99,7 @@ contract OceanMarket is Ownable {
         // set the token receiver to be marketplace
         mToken.setReceiver(address(this));
         // create market contract instance in tcr
-        tcr.getMarketInstance(address(this));
+        tcr.setMarketInstance(address(this));
     }
 
     /**
