@@ -27,7 +27,7 @@ contract('OceanAuth', (accounts) => {
             const token = await OceanToken.deployed()
             const market = await OceanMarket.deployed()
             const auth = await OceanAuth.deployed()
-            const scale = 1000000000000000000
+            const scale = 10 ** 18
 
             const str = 'resource'
             const resourceId = await market.generateId(str, { from: accounts[0] })

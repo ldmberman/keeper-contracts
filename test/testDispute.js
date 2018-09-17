@@ -40,7 +40,7 @@ contract('OceanDispute', (accounts) => {
             const market = await Market.deployed()
             const tcr = await Registry.deployed()
             const plcr = await PLCRVoting.deployed()
-            const scale = 1000000000000000000
+            const scale = 10 ** 18
 
             // request initial fund
             await market.requestTokens(1000 * scale, { from: accounts[0] })
@@ -81,7 +81,7 @@ contract('OceanDispute', (accounts) => {
             const registry = await Registry.deployed()
             const voting = await PLCRVoting.deployed()
             const dispute = await Dispute.deployed()
-            const scale = 1000000000000000000
+            const scale = 10 ** 18
             const minDeposit = 10 * scale
 
             // provider : accounts[0], consumer : accounts[1], voter : accounts[2]

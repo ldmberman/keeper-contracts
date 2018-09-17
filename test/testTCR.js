@@ -36,7 +36,7 @@ contract('Registry', (accounts) => {
             const market = await Market.deployed()
             const tcr = await Registry.deployed()
             const plcr = await PLCRVoting.deployed()
-            const scale = 1000000000000000000
+            const scale = 10 ** 18
 
             // request initial fund
             await market.requestTokens(1000 * scale, { from: accounts[0] })
@@ -74,7 +74,7 @@ contract('Registry', (accounts) => {
             const voting = await PLCRVoting.deployed()
             const token = await Token.deployed()
             const market = await Market.deployed()
-            const scale = 1000000000000000000
+            const scale = 18 ** 18
             const minDeposit = 10000000000000000000
 
             const assetId = '0x7ace91f25e0838f9ed7ae259670bdf4156b3d82a76db72092f1baf06f31f5038'
