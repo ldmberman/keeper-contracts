@@ -11,7 +11,7 @@ from glob import glob
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-os.system("cp -rf ./artifacts ./keeper-contracts")
+os.system("truffle compile")
 
 requirements = []
 
@@ -33,7 +33,7 @@ setup(
     ],
     description=" 🐳 Integration of TCRs, CPM and Ocean Tokens in Solidity",
     data_files=[
-        ('contracts', glob('artifacts/*.json')),
+        ('contracts', glob('build/contracts/*.json')),
     ],
     install_requires=requirements,
     license="Apache Software License 2.0",
@@ -45,8 +45,8 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/oceanprotocol/keeper-contracts',
-    version='0.0.1.2',
+    version='0.0.2',
     zip_safe=False,
 )
 
-os.system("rm -rf ./keeper-contracts")
+os.system("rm -rf ./build")
