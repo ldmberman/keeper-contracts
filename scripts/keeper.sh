@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm -f /keeper-contracts/artifacts/ready
 ganache-cli -b ${BLOCK_TIME} --hostname "${LISTEN_ADDRESS}" --port "${LISTEN_PORT}" &
 
 sleep 2
