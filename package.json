@@ -39,7 +39,7 @@
     "bignumber": "^1.1.0",
     "bignumber.js": "^7.2.1",
     "ethereumjs-abi": "^0.6.5",
-    "ethers": "^3.0.27",
+    "ethers": "^3.0.29",
     "ethjs": "^0.4.0",
     "ethjs-abi": "^0.2.1",
     "ethjs-provider-http": "^0.1.6",
