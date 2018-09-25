@@ -1,16 +1,31 @@
 FROM node:8-alpine
-MAINTAINER Ocean Protocol <devops@oceanprotocol.com>
+LABEL maintainer="Ocean Protocol <devops@oceanprotocol.com>"
 
-RUN apk add --no-cache --update git python krb5 krb5-libs gcc make g++ krb5-dev bash
+RUN apk add --no-cache --update\
+      bash\
+      g++\
+      gcc\
+      git\
+      krb5-dev\
+      krb5-libs\
+      krb5\
+      make\
+      python
 
-COPY . keeper-contracts
-WORKDIR keeper-contracts
+COPY . /keeper-contracts
+WORKDIR /keeper-contracts
 
 RUN npm install -g npm
 RUN npm install -g ganache-cli truffle
 RUN npm install
 
-ENTRYPOINT "scripts/keeper.sh"
+# Default ENV values
+# scripts/keeper.sh
+ENV BLOCK_TIME='2'
+ENV LISTEN_ADDRESS='0.0.0.0'
+ENV LISTEN_PORT='8545'
+
+ENTRYPOINT ["/keeper-contracts/scripts/keeper.sh"]
 
 # Expose listen port
 EXPOSE 8545

@@ -1,7 +1,7 @@
 const HDWalletProvider = require('truffle-hdwallet-provider')
 
 // etherbase of that nmemoric: 0x2c0d5f47374b130ee398f4c34dbe8168824a8616
-const nmemoric = process.env.KOVAN_NMEMORIC;
+const nmemoric = process.env.KOVAN_NMEMORIC
 
 module.exports = {
     networks: {
@@ -9,7 +9,7 @@ module.exports = {
             host: 'localhost',
             port: 8545,
             network_id: '*',
-            gas: 6000000,
+            gas: 6000000
         },
         ocean_poa_net_local: {
             host: 'localhost',
@@ -34,6 +34,6 @@ module.exports = {
         optimizer: {
             enabled: true,
             runs: 200
-        },
-    },
+        }
+    }
 }

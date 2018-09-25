@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
-import '../zeppelin/StandardToken.sol';
-import '../zeppelin/Ownable.sol';
+import 'openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 
 /**
 @title Ocean Protocol ERC20 Token Contract
@@ -19,8 +19,8 @@ contract OceanToken is StandardToken {
     string public constant symbol = 'OCN';                              // Set the token symbol for display
 
     // SUPPLY
-    uint8 public constant decimals = 0;                               // Set the number of decimals for display
-    uint256 public constant TOTAL_SUPPLY = 1400000000;                 // OceanToken total supply
+    uint8 public constant decimals = 18;                               // Set the number of decimals for display
+    uint256 public constant TOTAL_SUPPLY = 1400000000 * 10 ** 18;      // OceanToken total supply
 
     // EMIT TOKENS
     address public _receiver = 0x0;                                   // address to receive TOKENS
@@ -83,7 +83,7 @@ contract OceanToken is StandardToken {
     * @param _owner The address to query the the allowance of.
     * @return An uint256 representing the amount allowance of the passed address.
     */
-    function allowance(address _owner, address _spender) public constant returns (uint256) {
+    function allowance(address _owner, address _spender) public view returns (uint256) {
         return super.allowance(_owner, _spender);
     }
 
