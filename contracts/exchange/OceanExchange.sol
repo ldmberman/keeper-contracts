@@ -8,6 +8,11 @@ import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import '../token/OceanToken.sol';
 
 
+/**
+ * Exchange between Ethers and Ocean tokensIn
+ * Developed based on Uniswap project. https://github.com/Uniswap/
+ */
+
 contract OceanExchange {
     using SafeMath for uint256;
 
