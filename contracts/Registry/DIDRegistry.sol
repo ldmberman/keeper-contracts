@@ -18,6 +18,7 @@ contract DIDRegistry {
 
     event DIDRegistered(string _DID, string _docUrl, address _owner, string _status);
     event DIDUpdated(string _DID, string _docUrl, address _owner, string _status);
+    event DIDDeleted(address _owner, string did , string _status);
     event NotExist(string _data);
 
     constructor () public {
@@ -48,5 +49,14 @@ contract DIDRegistry {
         }else{
             emit NotExist(_docUrl);
         }
+    }
+
+    function unregisterDID() public returns (bool){
+        if (DIDs[msg.sender].status == true){
+            emit DIDDeleted(msg.sender, DIDs[msg.sender].did , "Deleted");
+            delete DIDs[msg.sender];
+            return true;
+        }
+        return false;
     }
 }
