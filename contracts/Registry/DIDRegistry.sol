@@ -2,37 +2,51 @@ pragma solidity ^0.4.24;
 
 /**
 @title Ocean DID Registry Contract
-@author Team: Ahmed Ali
+@author Team: Ahmed Ali, Aitor Argomaniz
 */
 
 contract DIDRegistry {
 
     struct DID {
-        address owner;
-        string docUrl;
+        bool status;
+        string did;
+        string url;
     }
 
     address private owner;
-    mapping (string => DID) DIDs;
+    mapping (address => DID) DIDs;
 
-    event DIDRegistered(string indexed _DID, string indexed _docUrl, address indexed _owner);
-    event DIDUpdated(string indexed _DID, string indexed _docUrl, address indexed _owner);
+    event DIDRegistered(string _DID, string _docUrl, address _owner, string _status);
+    event DIDUpdated(string _DID, string _docUrl, address _owner, string _status);
+    event NotExist(string _data);
 
     constructor () public {
         assert(msg.sender!=address(0));
         owner = msg.sender;
     }
 
-    function registerDID(string _DID, string _docUrl) public returns (bool) {
+    function registerDID(string _DID, string _docUrl) public {
         assert(msg.sender!=address(0));
-        if(msg.sender == DIDs[_DID].owner){
-            DIDs[_DID].docUrl = _docUrl;
-            emit DIDUpdated(_DID, _docUrl, msg.sender);
+        require(!DIDs[msg.sender].status);
+        DIDs[msg.sender] = DID(true, _DID, _docUrl);
+        emit DIDRegistered(_DID,  _docUrl, msg.sender, "Registered");
+    }
+
+    function updateDIDReference(string _DID) public {
+        if (DIDs[msg.sender].status == true) {
+            DIDs[msg.sender].did = _DID;
+            emit DIDUpdated(_DID, DIDs[msg.sender].url, msg.sender, "Updated");
+         }else {
+            emit NotExist(_DID);
+         }
+    }
+
+    function updateUrlReference(string _docUrl) public {
+        if (DIDs[msg.sender].status == true) {
+            DIDs[msg.sender].url = _docUrl;
+            emit DIDUpdated(DIDs[msg.sender].did, DIDs[msg.sender].url, msg.sender, "Updated");
         }else{
-            DID memory newDID = DID(msg.sender, _docUrl);
-            DIDs[_DID] = newDID;
-            emit DIDRegistered(_DID, _docUrl, msg.sender);
+            emit NotExist(_docUrl);
         }
-        return true;
     }
 }
