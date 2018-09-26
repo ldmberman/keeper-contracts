@@ -32,7 +32,7 @@ contract('DIDRegistry', (accounts) => {
             })
 
 
-            console.log("\t >> Update unregistered did")
+            console.log("\t >> Update did for unregistered actor")
             const urlUpdated = registry.DIDUpdated({fromBlock: 0,toBlock: 'latest'})
             await registry.updateUrlReference("https://myprovider.example.com",{ from: accounts[4] })
             urlUpdated.watch((error, result) => {
@@ -41,12 +41,19 @@ contract('DIDRegistry', (accounts) => {
                 }
             })
 
+            console.log("Not Exist record!")
             const notExist = registry.NotExist({fromBlock: 0,toBlock: 'latest'})
             notExist.watch((error, result) => {
                 if (!error) {
                     console.log(result.args)
                 }
             })
+
+//            console.log("\t >> Repeat DID Registry for the same actor")
+//            await registry.registerDID("did:ocn:21tDAKCERh95uGgKbJNHYp",
+//                                                      "https://myprovider.example.com",
+//                                                      { from: accounts[1] }
+//                                                      )
         })
     })
 })
