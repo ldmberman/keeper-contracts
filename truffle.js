@@ -1,3 +1,4 @@
+const process = require('process')
 const HDWalletProvider = require('truffle-hdwallet-provider')
 
 // etherbase of that nmemoric: 0x2c0d5f47374b130ee398f4c34dbe8168824a8616
@@ -12,10 +13,10 @@ module.exports = {
             gas: 6000000
         },
         ocean_poa_net_local: {
-            host: 'localhost',
+            host: process.env.POA_HOST,
             port: 8545,
             network_id: '*',
-            gas: 6000000,
+            gas: 4500000,
             from: '0x00bd138abd70e2f00903268f3db08f2d25677c9e'
         },
         ocean_poa_net: {
