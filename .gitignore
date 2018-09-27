@@ -10,3 +10,9 @@ venv
 ganache-cli.log
 target/
 .python-version
+artifacts/OceanAuth.development.json
+artifacts/OceanDispute.development.json
+artifacts/OceanExchange.development.json
+artifacts/OceanMarket.development.json
+artifacts/OceanRegistry.development.json
+artifacts/OceanToken.development.json
