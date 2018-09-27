@@ -4,7 +4,6 @@ node_modules/
 .DS_Store
 installed_contracts/
 coverage*
-artifacts/*development.json
 dist
 keeper_contracts.egg-info
 venv
