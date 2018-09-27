@@ -19,9 +19,11 @@ contract('OceanExchange', (accounts) => {
         })
 
         it('Should initialize exchange', async () => {
+            // user request initial 100 Ether and 1000 Ocean tokens from market
             await market.requestTokens(1000 * scale, { from: accounts[0] })
-            const bal1 = await token.balanceOf.call(accounts[0])
-            console.log(`User has ${bal1.toNumber() / scale} Ocean tokens now.`)
+            const bal = await token.balanceOf.call(accounts[0])
+            const ethbal = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]))
+            console.log(`user has ${ethbal.toNumber()} ether and ${bal.toNumber() / scale} Ocean tokens before initialization.`)
 
             await token.approve(exchange.address, 1000 * scale, { from: accounts[0] })
 
@@ -29,10 +31,16 @@ contract('OceanExchange', (accounts) => {
             let [ethPool, tokenPool, invariant, totalShare] = await exchange.exchangeStatus({ from: accounts[0] })
             console.log('initial status: ethPool=' + ethPool + ' tokenPool=' + tokenPool + ' invariant=' + invariant + ' totalShare=' + totalShare)
 
-            // initialize exchange with ether and tokens
+            // initialize exchange with 1 ether and 100 tokens
             await exchange.initializeExchange(100 * scale, { from: accounts[0],  value: web3.toWei(1, "ether")})
             let [ethPool1, tokenPool1, invariant1, totalShare1] = await exchange.exchangeStatus({ from: accounts[0] })
             console.log('status (Initialized): ethPool=' + ethPool1 / scale + ' tokenPool=' + tokenPool1 / scale + ' invariant=' + invariant1 / scale ** 2 + ' totalShare=' + totalShare1)
+
+            // user has 99 Ether and 900 Ocean tokens left in his wallet
+            const bal1 = await token.balanceOf.call(accounts[0])
+            const ethbal1 = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]))
+            console.log(`user has ${ethbal1.toNumber()} ether and ${bal1.toNumber() / scale} Ocean tokens after initialization.`)
+
         })
 
         it('Should add liquidity', async () => {
@@ -67,6 +75,11 @@ contract('OceanExchange', (accounts) => {
         })
 
         it('Should remove liquidity', async () => {
+          const bal1 = await token.balanceOf.call(accounts[0])
+          const ethbal1 = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]))
+          console.log(`user has ${ethbal1.toNumber()} ether and ${bal1.toNumber() / scale} Ocean tokens available now.`)
+
+
           await exchange.removeLiquidity(300, web3.toWei(0.001, "ether"), 1 * scale, 99999999999999, { from: accounts[0]})
           let [ethPool, tokenPool, invariant, totalShare] = await exchange.exchangeStatus({ from: accounts[0] })
           console.log('status (liquidity removed): ethPool=' + ethPool / scale + ' tokenPool=' + tokenPool / scale + ' invariant=' + invariant / scale ** 2 + ' totalShare=' + totalShare)
