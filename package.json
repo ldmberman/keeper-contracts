@@ -1,6 +1,6 @@
 {
   "name": "@oceanprotocol/keeper-contracts",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Integration of TCRs, CPM and Ocean Tokens in Solidity",
   "bugs": {
     "url": "https://github.com/oceanprotocol/keeper-contracts/issues"
@@ -39,7 +39,7 @@
     "bignumber": "^1.1.0",
     "bignumber.js": "^7.2.1",
     "ethereumjs-abi": "^0.6.5",
-    "ethers": "^3.0.29",
+    "ethers": "^4.0.0",
     "ethjs": "^0.4.0",
     "ethjs-abi": "^0.2.1",
     "ethjs-provider-http": "^0.1.6",
