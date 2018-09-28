@@ -35,6 +35,8 @@ before_script:
 script:
   - npm test
   - truffle migrate
+  - git status
+  - git diff
   - npm run release
 
 after_script:
