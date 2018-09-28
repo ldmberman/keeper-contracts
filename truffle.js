@@ -12,10 +12,10 @@ module.exports = {
             gas: 6000000
         },
         ocean_poa_net_local: {
-            host: 'localhost',
+            host: process.env.POA_HOST,
             port: 8545,
             network_id: '*',
-            gas: 6000000,
+            gas: 4500000,
             from: '0x00bd138abd70e2f00903268f3db08f2d25677c9e'
         },
         ocean_poa_net: {
