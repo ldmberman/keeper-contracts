@@ -32,6 +32,9 @@ No issues found.
 # Analysis result for OceanRegistry
 
 No issues found.
+# Analysis result for OceanExchange
+
+No issues found.
 # Analysis results for OceanAuth.sol
 
 ## Message call to external contract
