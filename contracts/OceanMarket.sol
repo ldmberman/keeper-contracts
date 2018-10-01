@@ -102,9 +102,9 @@ contract OceanMarket is Ownable {
 
     function init() public onlyOwner {
         // set the token receiver to be marketplace
-        mToken.setReceiver(address(this));
+        require(mToken.setReceiver(address(this)), 'Setting receiver failed.');
         // create market contract instance in tcr
-        tcr.setMarketInstance(address(this));
+        require(tcr.setMarketInstance(address(this)), 'Setting market failed.');
     }
 
     /**
