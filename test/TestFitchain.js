@@ -71,23 +71,28 @@ contract('Fitchain', (accounts) => {
             const prefix = '0x'
             const hexString = Buffer.from(PoTMessage).toString('hex')
             console.log(`${prefix}${hexString}`)
-            const signature = web3.eth.sign(accounts[1], `${prefix}${hexString}`)
-            console.log('consumer signature: ', signature)
-
-            const sig = ethers.utils.splitSignature(signature)
+            const signature1 = web3.eth.sign(validator1, `${prefix}${hexString}`)
+            const signature2 = web3.eth.sign(validator2, `${prefix}${hexString}`)
+            console.log('\t >> Validator1 signature: ', signature1)
+            console.log('\t >> Validator1 signature: ', signature2)
 
             const EthereumPoTMessage = `\x19Ethereum Signed Message:\n${PoTMessage.length}${PoTMessage}`
             const EthereumPoTMessageHash = web3.sha3(EthereumPoTMessage)
             console.log('signed message from consumer to be validated: ', EthereumPoTMessage)
 
-            const res = await fitchain.verifySignature(accounts[1], EthereumPoTMessageHash, sig.v, sig.r, sig.s, { from: accounts[0] })
-            console.log('validate the signature comes from consumer: ', res)
+            //const res = await fitchain.verifySignature(validator1, EthereumPoTMessageHash, sig.v, sig.r, sig.s, { from: accounts[0] })
+            //console.log('validate the signature comes from consumer: ', res)
 
             // catenating the signatures into one piece (Final Proof)
             //const signatures = signature1+signature2
+            // "0xff04120c5fc487949b44cfa352a5b4135d9511286c79f32a8579ebde40dbdb67", "0x9c4e477188259ef2c9f7953526cc868a7b1cd66e", "0x5a62da9f19b466881d616361b268ae5f1835259b990cfd309c0da2d1c917a007604ffd4727be435ccf03517e2802f2d895cffad2d5470bca88864d4af26734e001",0
 
+            const isValid1 = await fitchain.isValidSignature(EthereumPoTMessageHash, validator1, signature1, 0, { from : dataProvider })
+            assert.strictEqual(isValid1, true, "Valid Signature")
+            const isValid2 = await fitchain.isValidSignature(EthereumPoTMessageHash, validator2, signature2, 0, { from : dataProvider })
+            assert.strictEqual(isValid2, true, "Valid Signature")
             //console.log(condition, PoTMessage , signatures, [validator1, validator2], IPFSResult)
-            //await fitchain.getProof(condition, PoTMessage , signatures, [validator1, validator2], IPFSResult, { from: accounts[0] })
+            //await fitchain.getProof(condition, EthereumPoTMessageHash , signature, [validator1], IPFSResult, { from: accounts[0] })
 
 
         })

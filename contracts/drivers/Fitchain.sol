@@ -47,7 +47,7 @@ contract Fitchain {
     }
 
     function splitSignature(bytes memory sig, uint256  index) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
-        uint256 maxLength = index * 65;
+        uint256 maxLength = (index+1) * 65;
         uint256 rIndex  = (index * 96 ) + 32;
         uint256 sIndex  = (index * 96 ) + rIndex + 32;
         uint256 vIndex  = (index * 96 ) + sIndex + 32;
@@ -62,6 +62,10 @@ contract Fitchain {
             v := byte(0, mload(add(sig, vIndex)))
         }
 
+        if (v < 27) {
+             v += 27;
+         }
+
         return (v, r, s);
     }
 
@@ -71,7 +75,7 @@ contract Fitchain {
         return ecrecover(message, v, r, s);
     }
 
-    function isValidSignature(bytes32 message, address validator, bytes memory signature, uint256 index) private pure returns (bool) {
+    function isValidSignature(bytes32 message, address validator, bytes memory signature, uint256 index) public pure returns (bool) {
         return getSignerAddress(message, signature, index) == validator;
     }
 
@@ -103,8 +107,8 @@ contract Fitchain {
         return models[modelId].result;
     }
 
-    function verifySignature(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool) {
-        return (ecrecover(msgHash, v, r, s) == _addr);
-    }
+//    function verifySignature(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool) {
+//        return (ecrecover(msgHash, v, r, s) == _addr);
+//    }
 
 }
