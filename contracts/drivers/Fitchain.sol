@@ -103,4 +103,8 @@ contract Fitchain {
         return models[modelId].result;
     }
 
+    function verifySignature(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool) {
+        return (ecrecover(msgHash, v, r, s) == _addr);
+    }
+
 }
