@@ -41,13 +41,13 @@ contract OceanExchange {
 
     /// CONSTRUCTOR
     constructor(address _tokenAddress) public {
-      require(_tokenAddress != address(0x0), 'Token address is 0x0.');
-      // instantiate Ocean token contract
-      token = OceanToken(_tokenAddress);
+        require(_tokenAddress != address(0x0), 'Token address is 0x0.');
+        // instantiate Ocean token contract
+        token = OceanToken(_tokenAddress);
     }
 
     // display current exchange snapshot
-    function exchangeStatus() public view returns(uint256, uint256, uint256, uint256) {
+    function exchangeStatus() public view returns (uint256, uint256, uint256, uint256) {
         return (ethPool, tokenPool, invariant, totalShares);
     }
 
@@ -61,7 +61,7 @@ contract OceanExchange {
     function initializeExchange(uint256 _tokenAmount) external payable {
         require(invariant == 0 && totalShares == 0);
         // Prevents share cost from being too high or too low - potentially needs work
-        require(msg.value >= 10000 && _tokenAmount >= 10000 && msg.value <= 5*10**18);
+        require(msg.value >= 10000 && _tokenAmount >= 10000 && msg.value <= 5 * 10 ** 18);
         ethPool = msg.value;
         tokenPool = _tokenAmount;
         invariant = ethPool.mul(tokenPool);
@@ -82,8 +82,8 @@ contract OceanExchange {
         uint256 ethIn,
         uint256 minTokensOut
     )
-        internal
-        exchangeInitialized
+    internal
+    exchangeInitialized
     {
         // calculate value of tx fee
         uint256 fee = ethIn.div(FEE_RATE);
@@ -113,11 +113,11 @@ contract OceanExchange {
         uint256 _minTokens,
         uint256 _timeout
     )
-        external
-        payable
+    external
+    payable
     {
         require(msg.value > 0 && _minTokens > 0 && now < _timeout);
-        ethToToken(msg.sender, msg.sender, msg.value,  _minTokens);
+        ethToToken(msg.sender, msg.sender, msg.value, _minTokens);
     }
 
     // Payer pays in ETH, recipient receives Tokens
@@ -126,12 +126,12 @@ contract OceanExchange {
         uint256 _timeout,
         address _recipient
     )
-        external
-        payable
+    external
+    payable
     {
         require(msg.value > 0 && _minTokens > 0 && now < _timeout);
         require(_recipient != address(0) && _recipient != address(this));
-        ethToToken(msg.sender, _recipient, msg.value,  _minTokens);
+        ethToToken(msg.sender, _recipient, msg.value, _minTokens);
     }
 
     //////////////////////////
@@ -144,8 +144,8 @@ contract OceanExchange {
         uint256 tokensIn,
         uint256 minEthOut
     )
-        internal
-        exchangeInitialized
+    internal
+    exchangeInitialized
     {
         // calculate tx fee
         uint256 fee = tokensIn.div(FEE_RATE);
@@ -178,7 +178,7 @@ contract OceanExchange {
         uint256 _minEth,
         uint256 _timeout
     )
-        external
+    external
     {
         require(_tokenAmount > 0 && _minEth > 0 && now < _timeout);
         tokenToEth(msg.sender, msg.sender, _tokenAmount, _minEth);
@@ -191,7 +191,7 @@ contract OceanExchange {
         uint256 _timeout,
         address _recipient
     )
-        external
+    external
     {
         require(_tokenAmount > 0 && _minEth > 0 && now < _timeout);
         require(_recipient != address(0) && _recipient != address(this));
@@ -268,7 +268,7 @@ contract OceanExchange {
     }
 
     // Utility Function : View share balance of an address
-    function getShares(address _provider) external view returns(uint256 _shares) {
+    function getShares(address _provider) external view returns (uint256 _shares) {
         return shares[_provider];
     }
 }
