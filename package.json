@@ -9,6 +9,7 @@
   "main": "truffle.js",
   "scripts": {
     "compile": "truffle compile",
+    "migrate": "truffle migrate",
     "coverage": "solidity-coverage",
     "release": "release-it patch -n",
     "deploy-rinkeby": "truffle migrate --network rinkeby",

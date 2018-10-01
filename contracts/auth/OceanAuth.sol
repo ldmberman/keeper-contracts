@@ -1,12 +1,14 @@
 pragma solidity 0.4.24;
 
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import '../OceanMarket.sol';
 import '../dispute/OceanDispute.sol';
+
 /**
 @title Ocean Protocol Authorization Contract
 @author Team: Fang Gong, Ahmed Ali, Sebastian Gerske, Samer Sallam
 */
-contract OceanAuth {
+contract OceanAuth is Ownable {
 
     // ============
     // DATA STRUCTURES:
@@ -96,10 +98,13 @@ contract OceanAuth {
         require(_marketAddress != address(0), 'Market address cannot be 0x0');
         // instance of Market
         market = OceanMarket(_marketAddress);
-        // add auth contract to access list in market contract - function in market contract
-        market.addAuthAddress();
         // instance of dispute
         dispute = OceanDispute(_disputeAddress);
+    }
+
+    function init() onlyOwner public {
+        // add auth contract to access list in market contract - function in market contract
+        market.addAuthAddress();
     }
 
     /**

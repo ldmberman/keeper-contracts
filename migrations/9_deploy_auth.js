@@ -11,6 +11,10 @@ const oceanAuth = async (deployer, network) => {
         OceanDispute.address
     )
 
+    OceanAuth.deployed()
+        .then((auth) => {
+            auth.init()
+        })
     saveDefinition(network, OceanAuth)
 }
 

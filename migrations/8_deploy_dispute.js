@@ -18,6 +18,10 @@ const oceanDispute = async (deployer, network) => {
         PLCRVoting.address
     )
 
+    OceanDispute.deployed()
+        .then((dispute) => {
+            dispute.init()
+        })
     saveDefinition(network, OceanDispute)
 }
 

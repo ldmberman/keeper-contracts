@@ -43,10 +43,13 @@ contract OceanDispute is Ownable {
         registry = OceanRegistry(_registryAddress);
         // get instance of OceanMarket
         market = OceanMarket(_marketAddr);
-        // add dispute resolution contract address to marketplace contract
-        market.addDisputeAddress();
         // add dispute resolution contract address to PLCRVoting contract
         voting = PLCRVoting(_plcrAddr);
+    }
+
+    function init() onlyOwner public {
+        // add dispute resolution contract address to marketplace contract
+        market.addDisputeAddress();
         // get instance of dispute inside PLCRVoting contract
         voting.getDisputeInstance(address(this));
     }

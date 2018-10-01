@@ -96,6 +96,9 @@ contract OceanMarket is Ownable {
         mToken = OceanToken(_tokenAddress);
         // instance of TCR
         tcr = OceanRegistry(_tcrAddress);
+    }
+
+    function init() public onlyOwner {
         // set the token receiver to be marketplace
         mToken.setReceiver(address(this));
         // create market contract instance in tcr
@@ -255,9 +258,9 @@ contract OceanMarket is Ownable {
     * @param assetId the integer identifier of asset in the voting
     * @return valid Boolean indication of asset is whitelisted
     */
-    function deactivateAsset(bytes32 assetId) public returns(bool){
+    function deactivateAsset(bytes32 assetId) public returns (bool){
         // disable asset if it is not whitelisted in the registry
-        if (!tcr.isWhitelisted(assetId)){
+        if (!tcr.isWhitelisted(assetId)) {
             mAssets[assetId].active = false;
         }
         return true;
