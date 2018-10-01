@@ -38,7 +38,7 @@ script:
   - git status
   - git diff
   - git add package-lock.json
-  - git commit -m "Travis update"
+  - git diff-index --quiet HEAD || git commit -m "Travis update"
   - npm run release
 
 after_script:
