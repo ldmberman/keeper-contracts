@@ -10,6 +10,7 @@ cache:
     - node_modules
 
 env:
+  -
   - SOLIDITY_COVERAGE=true
   - SOLC_NIGHTLY=true
 
@@ -34,9 +35,10 @@ before_script:
 script:
   - npm test
   - truffle migrate
+  - git status
+  - git diff
   - git add package-lock.json
-  - git add artifacts/*
-  - git commit -m 'Travis Build'
+  - git commit -m "Travis update"
   - npm run release
 
 after_script:
@@ -61,7 +63,6 @@ deploy:
       tags: true
       repo: oceanprotocol/keeper-contracts
       python: 3.6
-
 
 #  - provider: releases
 #    api_key: ${GITHUB_OAUTH_TOKEN}
