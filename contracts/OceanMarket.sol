@@ -51,6 +51,7 @@ contract OceanMarket is Ownable {
     // marketplace global variables
     OceanToken  public  mToken;
 
+    // todo: rename to registry
     // tcr global variable
     OceanRegistry  public  tcr;
 
@@ -87,15 +88,16 @@ contract OceanMarket is Ownable {
     /**
     * @dev OceanMarket Constructor
     * @param _tokenAddress The deployed contract address of OceanToken
-    * @param _tcrAddress The deployed contract address of OceanRegistry
+    * @param _registryAddress The deployed contract address of OceanRegistry
     * Runs only on initial contract creation.
     */
-    constructor(address _tokenAddress, address _tcrAddress) public {
+    constructor(address _tokenAddress, address _registryAddress) public {
         require(_tokenAddress != address(0x0), 'Token address is 0x0.');
         // instantiate Ocean token contract
         mToken = OceanToken(_tokenAddress);
-        // instance of TCR
-        tcr = OceanRegistry(_tcrAddress);
+        // todo: rename to registry
+        // instance of registry
+        tcr = OceanRegistry(_registryAddress);
     }
 
     function init() public onlyOwner {
