@@ -97,10 +97,10 @@ contract OceanAuth {
         require(_marketAddress != address(0), 'Market address cannot be 0x0');
         // instance of Market
         market = OceanMarket(_marketAddress);
-        // instance of dispute
-        dispute = OceanDispute(_disputeAddress);
         // add auth contract to access list in market contract - function in market contract
         market.addAuthAddress();
+        // instance of dispute
+        dispute = OceanDispute(_disputeAddress);
     }
 
     /**
