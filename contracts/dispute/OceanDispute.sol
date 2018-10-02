@@ -45,9 +45,6 @@ contract OceanDispute is Ownable {
         market = OceanMarket(_marketAddr);
         // add dispute resolution contract address to PLCRVoting contract
         voting = PLCRVoting(_plcrAddr);
-    }
-
-    function init() onlyOwner public {
         // add dispute resolution contract address to marketplace contract
         market.addDisputeAddress();
         // get instance of dispute inside PLCRVoting contract

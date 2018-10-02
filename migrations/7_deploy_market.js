@@ -14,10 +14,6 @@ const oceanMarket = async (deployer, network) => {
         registryAddress
     )
 
-    OceanMarket.deployed()
-        .then((market) => {
-            market.init()
-        })
     saveDefinition(network, OceanMarket)
 }
 

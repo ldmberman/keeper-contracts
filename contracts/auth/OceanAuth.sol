@@ -100,9 +100,6 @@ contract OceanAuth is Ownable {
         market = OceanMarket(_marketAddress);
         // instance of dispute
         dispute = OceanDispute(_disputeAddress);
-    }
-
-    function init() onlyOwner public {
         // add auth contract to access list in market contract - function in market contract
         market.addAuthAddress();
     }
