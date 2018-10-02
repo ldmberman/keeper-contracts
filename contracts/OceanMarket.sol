@@ -99,9 +99,9 @@ contract OceanMarket is Ownable {
         // instance of registry
         tcr = OceanRegistry(_registryAddress);
         // set the token receiver to be marketplace
-        require(mToken.setReceiver(address(this)), 'Setting receiver failed.');
+        mToken.setReceiver(address(this));
         // create market contract instance in tcr
-        require(tcr.setMarketInstance(address(this)), 'Setting market failed.');
+        tcr.setMarketInstance(address(this));
     }
 
     /**
