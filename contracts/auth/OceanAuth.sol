@@ -2,6 +2,7 @@ pragma solidity 0.4.25;
 
 import '../OceanMarket.sol';
 import '../dispute/OceanDispute.sol';
+
 /**
 @title Ocean Protocol Authorization Contract
 @author Team: Fang Gong, Ahmed Ali, Sebastian Gerske, Samer Sallam

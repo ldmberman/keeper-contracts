@@ -47,7 +47,7 @@ No issues found.
 ### Description
 
 This contract executes a message call to to another contract. Make sure that the called contract is trusted and does not execute user-supplied code.
-In file: OceanAuth.sol:62
+In file: OceanAuth.sol:63
 
 ### Code
 
@@ -80,7 +80,7 @@ No issues found.
 
 A possible integer overflow exists in the function `generateId(bytes)`.
 The addition or multiplication may result in a value higher than the maximum representable integer.
-In file: OceanMarket.sol:293
+In file: OceanMarket.sol:295
 
 ### Code
 
@@ -101,7 +101,7 @@ function generateId(string contents) public pure returns (bytes32) {
 ### Description
 
 A reachable exception (opcode 0xfe) has been detected. This can be caused by type errors, division by zero, out-of-bounds array access, or assert violations. This is acceptable in most situations. Note however that `assert()` should only be used to check invariants. Use `require()` for regular input checking.
-In file: OceanMarket.sol:203
+In file: OceanMarket.sol:205
 
 ### Code
 

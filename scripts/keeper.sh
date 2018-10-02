@@ -13,7 +13,7 @@ then
 elif [ "${NETWORK_NAME}" = "ocean_poa_net_local" ]
 then
     echo "private poa network should already be running."
-    if [ "${DEPLOY_CONTRACTS}" = "true" ]
+    if [ "${DEPLOY_CONTRACTS}" != "false" ]
     then
 
         truffle migrate --network="ocean_poa_net_local"
@@ -27,7 +27,7 @@ else
         ganache-cli -d -b ${BLOCK_TIME} --hostname "${LISTEN_ADDRESS}" --port "${LISTEN_PORT}" &
     fi
     sleep 2
-    if [ "${DEPLOY_CONTRACTS}" = "true" ]
+    if [ "${DEPLOY_CONTRACTS}" != "false" ]
     then
         echo "deploy contracts is ${DEPLOY_CONTRACTS}"
         truffle migrate
