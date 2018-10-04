@@ -47,7 +47,7 @@ contract OceanExchange {
     }
 
     // display current exchange snapshot
-    function exchangeStatus() public view returns (uint256, uint256, uint256, uint256) {
+    function exchangeStatus() public view returns (uint256 _ethPool, uint256 _tokenPool, uint256 _invariant, uint256 _totalShares) {
         return (ethPool, tokenPool, invariant, totalShares);
     }
 
