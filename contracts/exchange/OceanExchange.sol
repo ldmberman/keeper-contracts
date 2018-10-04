@@ -1,6 +1,6 @@
 // solium-disable security/no-block-members, emit
 
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
@@ -47,7 +47,7 @@ contract OceanExchange {
     }
 
     // display current exchange snapshot
-    function exchangeStatus() public view returns (uint256, uint256, uint256, uint256) {
+    function exchangeStatus() public view returns (uint256 _ethPool, uint256 _tokenPool, uint256 _invariant, uint256 _totalShares) {
         return (ethPool, tokenPool, invariant, totalShares);
     }
 
