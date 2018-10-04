@@ -64,8 +64,8 @@
     "truffle-expect": "0.0.4",
     "truffle-hdwallet-provider": "^1.0.0-web3one.0",
     "ursa": "^0.9.4",
-    "web3": "^1.0.0-beta.36",
-    "web3-utils": "^1.0.0-beta.36"
+    "web3": "1.0.0-beta.36",
+    "web3-utils": "1.0.0-beta.36"
   },
   "engines": {
     "node": ">=8.11.1"
