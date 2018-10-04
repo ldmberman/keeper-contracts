@@ -29,12 +29,11 @@ install:
 
 before_script:
   - greenkeeper-lockfile-update
-  - truffle version
   - ganache-cli > ganache-cli.log &
 
 script:
   - npm test
-  - truffle migrate
+  - npm run migrate
   - git status
   - git add package-lock.json
   - git diff-index --quiet HEAD || git commit -m "Travis update"

@@ -16,7 +16,7 @@ then
     if [ "${DEPLOY_CONTRACTS}" != "false" ]
     then
 
-        truffle migrate --network="ocean_poa_net_local"
+        npm run migrate:poa
     fi
 else
     if [ "${REUSE_DATABASE}" = "true" -a "${DATABASE_PATH}" != "" ]
@@ -30,7 +30,7 @@ else
     if [ "${DEPLOY_CONTRACTS}" != "false" ]
     then
         echo "deploy contracts is ${DEPLOY_CONTRACTS}"
-        truffle migrate
+        npm run migrate
     fi
 fi
 
