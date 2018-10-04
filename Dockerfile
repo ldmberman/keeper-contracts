@@ -16,7 +16,7 @@ COPY . /keeper-contracts
 WORKDIR /keeper-contracts
 
 RUN npm install -g npm
-RUN npm install -g ganache-cli truffle
+RUN npm install -g ganache-cli
 RUN npm install
 
 # Default ENV values
