@@ -94,7 +94,7 @@ npm install -g ganache-cli
 Compile the solidity contracts:
 
 ```bash
-truffle compile
+npm run compile
 ```
 
 In a new terminal, launch an Ethereum RPC client, e.g. [ganache-cli](https://github.com/trufflesuite/ganache-cli):
@@ -106,10 +106,10 @@ ganache-cli
 Switch back to your other terminal and deploy the contracts:
 
 ```bash
-truffle migrate
+npm run migrate
 
 # for redeployment run this instead
-truffle migrate --reset
+npm run migrate -- --reset
 ```
 
 ### Testnet deployment
@@ -121,7 +121,7 @@ If you managed to deploy the contracts locally do:
 ```bash
 export INFURA_TOKEN=<your infura token>
 export KOVAN_NMEMORIC=<your kovan nmemoric>
-truffle migrate --network kovan
+npm run migrate:kovan
 ```
 
 The transaction should show up on: `https://kovan.etherscan.io/address/0x2c0d5f47374b130ee398f4c34dbe8168824a8616`
@@ -150,10 +150,10 @@ The libraries provided currently are:
 
 ## Testing
 
-Run tests with `truffle test`, e.g.:
+Run tests with `npm test`, e.g.:
 
 ```bash
-truffle test test/TestAuth.js
+npm test -- test/TestAuth.js
 ```
 
 ### Code Linting
