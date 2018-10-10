@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity 0.4.25;
 
 import '../plcrvoting/PLCRVoting.sol';
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
